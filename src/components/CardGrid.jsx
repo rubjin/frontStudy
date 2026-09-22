@@ -1,19 +1,42 @@
+import { products } from '../data/products'
 import Card from './Card'
 
-const dummyData = [
-  { id: 1, name: 'Wireless Headphones', price: '$129.99' },
-  { id: 2, name: 'Smart Watch', price: '$199.99' },
-  { id: 3, name: 'Bluetooth Speaker', price: '$79.99' },
-  { id: 4, name: 'Mechanical Keyboard', price: '$149.99' },
-]
+function CardGrid({ query }) {
+  const keyword = query.trim().toLowerCase()
+  const visible = keyword
+    ? products.filter(
+        (p) =>
+          p.name.toLowerCase().includes(keyword) ||
+          p.category.toLowerCase().includes(keyword)
+      )
+    : products
 
-function CardGrid() {
+  if (visible.length === 0) {
+    return (
+      <div className="py-20 text-center">
+        <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          &lsquo;{query.trim()}&rsquo;에 대한 검색 결과가 없습니다
+        </p>
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          다른 키워드로 검색하거나 카테고리명을 입력해 보세요.
+        </p>
+      </div>
+    )
+  }
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {dummyData.map((item) => (
-        <Card key={item.id} name={item.name} price={item.price} />
-      ))}
-    </div>
+    <>
+      <p aria-live="polite" className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+        총 {visible.length}개의 상품
+      </p>
+      <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {visible.map((product) => (
+          <li key={product.id}>
+            <Card product={product} />
+          </li>
+        ))}
+      </ul>
+    </>
   )
 }
 
