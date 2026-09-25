@@ -15,8 +15,8 @@
 
 ## 프로젝트
 - 이름: **Shoppr** (상품 목록 쇼핑몰 UI)
-- 스택: Vite + React 18 + Tailwind CSS 3 (다크 모드는 `dark` 클래스 방식)
-- 구조: `src/components/` (Header, SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons), `src/data/products.js` (목 데이터), `src/lib/` (format, filterProducts, sortProducts — 순수 함수)
+- 스택: Vite + React 18 + Tailwind CSS 3 (다크 모드는 `dark` 클래스 방식) + react-router 7 (v8은 React 19 필요라 v7 사용)
+- 구조: `src/pages/` (ProductListPage, ProductDetailPage, NotFoundPage), `src/components/` (Header, SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons), `src/data/products.js` (목 데이터), `src/lib/` (format, filterProducts, sortProducts — 순수 함수)
 - 스텝별 설명: `docs/steps/`
 - 실행: `npm run dev` / 빌드: `npm run build` / 린트: `npm run lint`
 
@@ -43,5 +43,6 @@
 ## 진행 상황
 - 2026-09-22: Step 1 완료 (커밋 `7722df3`)
 - 2026-09-25: 이전 Codespace에서 진행하던 Step 2가 커밋되지 않아 유실됨. Step 2부터 다시 시작.
-  - Step 2 완료: 2-1 카테고리 필터, 2-2 정렬, 2-3 품절 숨기기 + useMemo. 다음은 Step 3 라우팅. 코드 주석과 `docs/steps/` 스텝 설명 문서 추가.
+  - Step 2 완료: 2-1 카테고리 필터, 2-2 정렬, 2-3 품절 숨기기 + useMemo. 코드 주석과 `docs/steps/` 스텝 설명 문서 추가.
+  - Step 3 진행 중: 3-1 라우터 설치, 페이지 나누기 완료. 다음은 3-2 상세 페이지.
   - 이 로드맵은 원래 계획이 사라진 뒤 대화와 코드 기준으로 다시 정리한 것이다. 사용자가 기억하는 원래 계획과 다르면 이 파일을 수정한다.
