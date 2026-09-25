@@ -20,10 +20,13 @@ export function getCategories(products) {
   return [ALL_CATEGORIES, ...new Set(products.map((p) => p.category))]
 }
 
-// 검색어(query)와 카테고리(category) 조건을 모두 만족하는 상품만 돌려준다.
-// 두 번째 인자를 객체로 받는 이유: 나중에 조건(정렬, 품절 숨기기 등)이 늘어나도
-// 인자 순서를 신경 쓰지 않고 { 이름: 값 } 형태로 추가할 수 있다.
-export function filterProducts(products, { query, category }) {
+// 검색어(query), 카테고리(category), 품절 숨기기(hideSoldOut) 조건을 모두 만족하는 상품만 돌려준다.
+// 두 번째 인자를 객체로 받는 이유: 조건이 늘어나도 인자 순서를 신경 쓰지 않고
+// { 이름: 값 } 형태로 추가할 수 있다. (실제로 Step 2-3에서 hideSoldOut을 이렇게 추가했다)
+//
+// hideSoldOut = false: 기본값 매개변수.
+// 호출하는 쪽에서 hideSoldOut을 안 넘기면 false로 취급한다. → 기존 호출 코드가 깨지지 않는다.
+export function filterProducts(products, { query, category, hideSoldOut = false }) {
   // 앞뒤 공백을 지우고(trim) 소문자로 바꿔서(toLowerCase) 대소문자 구분 없이 비교한다.
   const keyword = query.trim().toLowerCase()
 
@@ -39,7 +42,10 @@ export function filterProducts(products, { query, category }) {
     // 카테고리 조건: '전체'를 골랐으면 무조건 통과, 아니면 카테고리가 같아야 통과
     const matchesCategory = category === ALL_CATEGORIES || p.category === category
 
-    // 두 조건을 모두 만족해야(&&) 목록에 남는다
-    return matchesKeyword && matchesCategory
+    // 재고 조건 (Step 2-3): 숨기기를 켰으면 재고가 있어야(stock > 0) 통과, 껐으면 무조건 통과
+    const matchesStock = !hideSoldOut || p.stock > 0
+
+    // 세 조건을 모두 만족해야(&&) 목록에 남는다
+    return matchesKeyword && matchesCategory && matchesStock
   })
 }

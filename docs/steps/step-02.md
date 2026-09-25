@@ -1,6 +1,6 @@
 # Step 2. 카테고리 필터 · 정렬 · 품절 숨기기
 
-> 상태: 진행 중 (2-1, 2-2 완료)
+> 상태: 완료 (2-1, 2-2, 2-3)
 
 ## 목표
 검색 하나만 있던 화면에 **여러 조건(카테고리, 정렬, 품절 숨기기)** 을 동시에 적용한다.
@@ -9,7 +9,7 @@
 ## 세부 단계
 - [x] **2-1** 카테고리 필터
 - [x] **2-2** 정렬(가격 낮은순·높은순, 평점순)
-- [ ] **2-3** 품절 숨기기 + `useMemo` 정리
+- [x] **2-3** 품절 숨기기 + `useMemo` 정리
 
 ---
 
@@ -135,3 +135,89 @@ React는 "값이 바뀌었는지"를 보고 화면을 다시 그린다. 원본�
 3. 정렬을 바꾼 뒤 "기본순"으로 돌아오면 처음 순서(헤드폰부터)로 돌아오는지 확인 → 불변성이 지켜졌다는 뜻
 4. "주변기기" + "가격 높은순"처럼 필터와 정렬이 함께 적용되는지 확인
 5. 브라우저 폭을 좁히면 필터와 정렬이 세로로 쌓이는지 확인
+
+---
+
+## 2-3. 품절 숨기기 + `useMemo`
+
+### 바뀐 구조
+```
+App (상태: query, category, sort, hideSoldOut)
+ ├─ SearchBar
+ ├─ 툴바
+ │   ├─ CategoryFilter
+ │   └─ 보기 옵션
+ │       ├─ SoldOutToggle   ← checked / onChange (새로 추가)
+ │       └─ SortSelect
+ └─ CardGrid
+
+useMemo( ① filterProducts({ query, category, hideSoldOut }) → ② sortProducts(sort) )
+        └ 의존성: [query, category, hideSoldOut, sort] 중 하나가 바뀔 때만 다시 계산
+```
+
+### 파일별 설명
+| 파일 | 역할 |
+| --- | --- |
+| `src/components/SoldOutToggle.jsx` (새 파일) | 품절 숨기기 체크박스. `checked` / `e.target.checked` 사용 |
+| `src/lib/filterProducts.js` | `hideSoldOut` 조건 추가. 기본값 매개변수(`= false`)로 기존 호출이 깨지지 않게 함 |
+| `src/App.jsx` | `hideSoldOut` 상태 추가. 목록 계산을 `useMemo`로 감쌈. 툴바 오른쪽에 보기 옵션 묶음 추가 |
+
+### 핵심 개념
+
+**1. 조건 추가가 쉬운 구조 — 2-1에서 잡은 구조의 효과**
+2-1에서 `filterProducts(products, { query, category })`처럼 조건을 객체로 받게 해 두었다.
+그래서 이번에는 `hideSoldOut` 한 줄만 추가하면 됐고, `CardGrid`는 전혀 고치지 않았다.
+**"기능을 추가할 때 고쳐야 하는 파일이 적다"** 가 좋은 구조의 기준이다.
+
+**2. 기본값 매개변수**
+```js
+function filterProducts(products, { query, category, hideSoldOut = false }) { ... }
+```
+`hideSoldOut`을 넘기지 않으면 `false`로 처리된다. 새 옵션을 추가해도 기존 호출 코드가 그대로 동작한다.
+
+**3. 체크박스는 `checked`**
+| input 종류 | 상태 연결 | 이벤트에서 읽는 값 |
+| --- | --- | --- |
+| text, select | `value` | `e.target.value` (문자열) |
+| checkbox | `checked` | `e.target.checked` (true/false) |
+
+**4. `useMemo` — 계산 결과 기억하기**
+```js
+const visible = useMemo(() => {
+  const filtered = filterProducts(products, { query, category, hideSoldOut })
+  return sortProducts(filtered, sort)
+}, [query, category, hideSoldOut, sort])
+```
+- React는 state가 바뀌면 컴포넌트 함수 전체를 다시 실행한다. 다크 모드만 바꿔도 목록 계산이 다시 돈다.
+- `useMemo`를 쓰면 **의존성 배열의 값이 바뀔 때만** 다시 계산하고, 아니면 지난 결과를 재사용한다.
+- **의존성 배열에 계산에 쓰는 값을 빠뜨리면** 값이 바뀌어도 화면이 갱신되지 않는다. ESLint 경고(`react-hooks/exhaustive-deps`)를 꼭 확인한다.
+
+**솔직한 이야기: 지금은 꼭 필요하지 않다**
+상품이 12개라 `useMemo` 없이도 성능 차이는 거의 없다. 이번에는 **개념을 익히려고** 넣었다.
+실무에서는 모든 계산에 `useMemo`를 붙이지 않는다. 기억하는 것 자체에도 비용이 들고 코드가 복잡해지기 때문이다.
+이럴 때 쓴다.
+- 목록이 수백~수천 개로 크거나 계산이 무거울 때
+- 계산 결과를 자식 컴포넌트에 props로 넘기고, 자식이 `React.memo`로 불필요한 렌더링을 막고 있을 때 (배열은 매번 새로 만들면 '다른 값'으로 취급되기 때문)
+
+면접에서 "`useMemo`를 언제 쓰나요?"라는 질문에 **"필요할 때만 쓴다"** 와 그 이유를 말할 수 있으면 좋다.
+
+**5. 접근성: label로 input 감싸기**
+`<label><input type="checkbox" /> 품절 상품 숨기기</label>` 처럼 감싸면 `htmlFor`/`id` 없이도 연결된다.
+글자를 눌러도 체크되니 클릭 영역이 넓어진다. 체크박스 색은 `accent-color`로만 바꿔서, 브라우저 기본 체크박스의 키보드·스크린리더 지원을 그대로 살렸다.
+
+### 확인 방법
+1. "품절 상품 숨기기"를 체크 → 상품 수가 12개에서 10개로 줄어드는지 (스피커, 오픈형 이어폰이 사라짐)
+2. "오디오" + 품절 숨기기 → 헤드폰 1개만 남는지
+3. 체크박스 옆 **글자**를 눌러도 체크되는지
+4. Tab 키로 이동해서 Space 키로 체크할 수 있는지 (키보드 접근성)
+5. 다크 모드를 켜고 꺼도 필터 상태가 유지되는지
+
+---
+
+## Step 2 정리 — 면접에서 이렇게 말할 수 있다
+> "검색·카테고리·재고·정렬 조건을 모두 상위 컴포넌트의 state로 관리하고, 화면에 보여 줄 목록은 state로 따로 저장하지 않고 파생 값으로 계산했습니다.
+> 걸러내기와 정렬은 순수 함수로 분리해 컴포넌트와 독립적으로 테스트할 수 있게 했고, `sort()`가 원본을 바꾸는 문제는 배열을 복사해서 불변성을 지켰습니다."
+
+## 다음 스텝 예고 — Step 3 라우팅
+지금은 새로고침하면 검색어와 필터가 모두 초기화되고, 필터를 건 화면을 링크로 공유할 수도 없다.
+Step 3에서는 react-router로 **상품 상세 페이지**를 만들고, 필터 상태를 **URL 쿼리**(`?category=오디오&sort=price-asc`)로 옮겨서 이 문제를 해결한다.
