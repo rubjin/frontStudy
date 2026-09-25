@@ -1,6 +1,6 @@
 # Step 2. 카테고리 필터 · 정렬 · 품절 숨기기
 
-> 상태: 진행 중 (2-1 완료)
+> 상태: 진행 중 (2-1, 2-2 완료)
 
 ## 목표
 검색 하나만 있던 화면에 **여러 조건(카테고리, 정렬, 품절 숨기기)** 을 동시에 적용한다.
@@ -8,7 +8,7 @@
 
 ## 세부 단계
 - [x] **2-1** 카테고리 필터
-- [ ] **2-2** 정렬(가격 낮은순·높은순, 평점순)
+- [x] **2-2** 정렬(가격 낮은순·높은순, 평점순)
 - [ ] **2-3** 품절 숨기기 + `useMemo` 정리
 
 ---
@@ -71,3 +71,67 @@ const visible = filterProducts(products, { query, category })
 2. 카테고리 버튼을 누르면 목록이 바뀌는지 확인
 3. "오디오" 선택 후 "무선" 검색 → 2개가 나오는지 확인 (검색 + 카테고리 동시 적용)
 4. "저장장치" 선택 후 "헤드폰" 검색 → 빈 상태 화면이 나오는지 확인
+
+---
+
+## 2-2. 정렬
+
+### 바뀐 구조
+```
+App (상태: query, category, sort)
+ ├─ SearchBar
+ ├─ 툴바
+ │   ├─ CategoryFilter
+ │   └─ SortSelect      ← value / onChange 로 정렬 기준을 주고받음 (새로 추가)
+ └─ CardGrid
+
+products ─① filterProducts() → filtered ─② sortProducts() → visible → CardGrid
+```
+
+### 파일별 설명
+| 파일 | 역할 |
+| --- | --- |
+| `src/lib/sortProducts.js` (새 파일) | `SORT_OPTIONS`: 정렬 옵션 목록 · `sortProducts()`: 기준에 맞게 정렬한 새 배열 반환 |
+| `src/components/SortSelect.jsx` (새 파일) | 정렬 기준 `<select>`. `label`과 `id`로 연결 |
+| `src/App.jsx` | `sort` 상태 추가. 걸러내기 → 정렬 순서로 계산. 필터와 정렬을 한 줄에 놓는 툴바 추가 |
+| `src/components/CategoryFilter.jsx` | 바깥 여백(`mb-6`)을 빼고 부모 툴바가 간격을 정하도록 변경 |
+
+### 핵심 개념
+
+**1. `sort()`의 비교 함수**
+```js
+products.sort((a, b) => a.price - b.price) // 결과가 음수면 a가 앞 → 오름차순
+products.sort((a, b) => b.price - a.price) // 뒤집으면 내림차순
+```
+Step 1에서 가격을 숫자로 바꿔 둔 덕분에 빼기 한 번으로 비교할 수 있다.
+
+**2. 불변성 — 원본 배열을 바꾸지 않는다**
+```js
+// ❌ sort()는 원본을 직접 바꾼다 → '기본순'으로 돌아갈 수 없게 됨
+return products.sort(compare)
+
+// ✅ 복사본을 만들어 정렬한다
+return [...products].sort(compare)
+```
+React는 "값이 바뀌었는지"를 보고 화면을 다시 그린다. 원본을 직접 고치면 React가 변화를 알아차리지 못하거나,
+다른 곳에서 쓰는 데이터까지 망가질 수 있다. **props와 state는 직접 수정하지 않는다**가 React의 기본 규칙이다.
+(`filter`, `map`은 원래 새 배열을 만들어서 안전하고, `sort`, `reverse`, `push`, `splice`는 원본을 바꾸니 주의)
+
+**3. 설정을 데이터로 — `SORT_OPTIONS` 배열**
+옵션을 JSX에 직접 쓰지 않고 `{ value, label }` 배열로 만들어 `map`으로 그린다.
+정렬 기준을 추가할 때 JSX는 건드리지 않고 배열과 비교 함수만 추가하면 된다.
+
+**4. 접근성: `label` + `htmlFor`**
+`<label htmlFor="sort">`와 `<select id="sort">`를 연결하면 스크린리더가 "정렬"이라는 이름을 읽어 주고,
+라벨을 클릭해도 select에 포커스가 간다. (JSX에서는 `for` 대신 `htmlFor`)
+
+**5. 여백은 배치하는 쪽이 정한다**
+`CategoryFilter`에서 `mb-6`을 빼고 툴바 `div`가 간격을 맡게 했다.
+컴포넌트 안에 바깥 여백이 박혀 있으면 다른 위치에 재사용할 때 여백이 방해가 된다. (퍼블리싱에서도 익숙한 원칙)
+
+### 확인 방법
+1. "가격 낮은순" → 첫 카드가 ₩38,000(노트북 거치대)인지 확인
+2. "평점 높은순" → 첫 카드가 ★4.8(기계식 키보드)인지 확인
+3. 정렬을 바꾼 뒤 "기본순"으로 돌아오면 처음 순서(헤드폰부터)로 돌아오는지 확인 → 불변성이 지켜졌다는 뜻
+4. "주변기기" + "가격 높은순"처럼 필터와 정렬이 함께 적용되는지 확인
+5. 브라우저 폭을 좁히면 필터와 정렬이 세로로 쌓이는지 확인

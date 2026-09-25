@@ -9,10 +9,13 @@
 // - categories: 버튼으로 보여 줄 카테고리 이름 배열
 // - value:      현재 선택된 카테고리
 // - onChange:   버튼을 눌렀을 때 호출할 함수 (선택한 카테고리 이름을 넘겨준다)
+//
+// ※ Step 2-2: 정렬 드롭다운과 한 줄에 놓기 위해 바깥 여백(mb-6)은 App의 툴바가 맡도록 뺐다.
+//   컴포넌트 자체에는 바깥 여백을 두지 않고, 배치하는 쪽(부모)이 간격을 정하는 게 재사용에 유리하다.
 function CategoryFilter({ categories, value, onChange }) {
   return (
     // role="group" + aria-label: 스크린리더가 "카테고리 필터 그룹"이라고 읽어 준다
-    <div role="group" aria-label="카테고리 필터" className="mb-6 flex flex-wrap gap-2">
+    <div role="group" aria-label="카테고리 필터" className="flex flex-wrap gap-2">
       {categories.map((category) => {
         const selected = category === value
         return (
