@@ -249,6 +249,24 @@ function handleClick() {
 - **돌아갈 기록이 없는 경우**: 주소를 직접 입력했거나 새 탭에서 처음 열었으면 `history.length`가 1이다. 이때 `back()`은 아무 일도 안 하므로 홈으로 보낸다. (다른 사이트에서 링크로 들어온 경우까지 구분하지는 못한다)
 - **서버 컴포넌트 안의 클라이언트 컴포넌트**: `not-found.tsx`는 서버 컴포넌트(metadata를 내보내야 함)로 두고, 클릭이 필요한 버튼만 `'use client'`로 뺐다. 서버 → 클라이언트 방향으로 넣는 것은 자유롭다.
 - **버튼 배치**: `[← 이전 페이지로(secondary)] [홈으로 가기(primary)]`. 가장 중요한 행동 하나만 primary.
+- **Button이 있는데 왜 BackButton을 따로?** 새 버튼이 아니라 **Button을 감싸서 동작만 더한** 컴포넌트다.
+  | 층 | 컴포넌트 | 맡는 일 |
+  | --- | --- | --- |
+  | 기본 부품 | `ui/Button` | 모양만 (무슨 동작인지 모름) |
+  | 동작 부품 | `BackButton` | Button + 정해진 동작 (뒤로 가기, 기록 없으면 홈) |
+  | 페이지 | `not-found.tsx` | 부품 배치 |
+
+  `not-found.tsx`에서 `<Button onClick={() => router.back()}>`로 직접 쓸 수 없는 이유:
+  ① 훅(`useRouter`)은 서버 컴포넌트에서 못 쓴다.
+  ② 서버 컴포넌트는 클라이언트 컴포넌트에 **함수를 props로 넘길 수 없다.** 서버의 props는 텍스트(JSON)로 전송되는데 함수는 텍스트로 바꿀 수 없다. (문자열·숫자·배열은 가능)
+  ③ 파일 전체를 `'use client'`로 만들면 metadata를 못 내보낸다.
+- **props 타입은 복사하지 말고 물려받는다**
+  ```ts
+  type BackButtonProps = Omit<ComponentProps<typeof Button>, 'onClick'> & { fallbackHref?: string }
+  ```
+  - `ComponentProps<typeof Button>`: Button의 props 타입을 그대로 가져온다. Button에 variant가 늘어나면 BackButton도 자동으로 따라간다.
+  - `Omit<..., 'onClick'>`: 그중 `onClick`만 뺀다. 클릭 동작은 BackButton이 정하므로 밖에서 덮어쓰지 못하게 막는다. (`<BackButton onClick={...}>`는 타입 에러)
+  - 처음에는 `variant?: 'primary' | 'secondary' | 'ghost'`를 직접 적었는데, 그러면 Button과 목록이 따로 놀고 `size`·`disabled`도 못 넘겨서 이렇게 고쳤다.
 
 ### 확인 방법
 1. `npm run dev` 후 http://localhost:3000 에서 목록 · 검색 · 카테고리 · 정렬 · 품절 숨기기가 전과 똑같이 동작하는지
