@@ -2,6 +2,7 @@
 
 import StatusView from '@/components/StatusView'
 import { Button } from '@/components/ui/Button'
+import { formatTitle } from '@/lib/site'
 import './globals.css'
 
 // 최후의 에러 화면 — 루트 레이아웃(layout.tsx) 자체에서 에러가 났을 때 (Step 3-1)
@@ -15,6 +16,9 @@ import './globals.css'
 //
 // 거의 볼 일이 없는 화면이지만, 없으면 사용자는 아무 안내 없는 빈 화면을 보게 된다.
 // metadata를 쓸 수 없는 클라이언트 컴포넌트라서 <title> 태그를 직접 넣는다. (React 19부터 가능)
+// 탭 제목과 화면 제목에 같은 문구를 쓰므로 상수로 한 번만 적는다
+const TITLE = '문제가 발생했습니다'
+
 interface GlobalErrorProps {
   error: Error & { digest?: string }
   retry: () => void
@@ -24,9 +28,9 @@ export default function GlobalError({ retry }: GlobalErrorProps) {
   return (
     <html lang="ko">
       <body className="min-h-screen">
-        <title>문제가 발생했습니다 | Shoppr</title>
+        <title>{formatTitle(TITLE)}</title>
         <main className="mx-auto max-w-7xl px-4">
-          <StatusView code="500" title="문제가 발생했습니다" description="페이지를 불러오지 못했습니다. 다시 시도해 주세요.">
+          <StatusView code="500" title={TITLE} description="페이지를 불러오지 못했습니다. 다시 시도해 주세요.">
             <Button onClick={() => retry()}>다시 시도</Button>
           </StatusView>
         </main>

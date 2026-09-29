@@ -67,6 +67,7 @@ src/index.css                        →    src/app/globals.css
 | `eslint.config.mjs` | Next.js 권장 규칙(`core-web-vitals`) + TypeScript 규칙으로 교체 |
 | `tailwind.config.ts`, `postcss.config.mjs` | 확장자만 변경, `content` 경로 수정. **3-2에서 삭제 예정** |
 | `.gitignore` | `.next`(빌드 결과), `next-env.d.ts`, `*.tsbuildinfo` 추가 |
+| `src/lib/site.ts` (새 파일) | 사이트 이름(`SITE_NAME`)과 제목 형식(`formatTitle`). layout의 template과 에러 페이지 `<title>`이 함께 사용 |
 | `src/types/product.ts` (새 파일) | 상품 데이터 모양(`Product` 인터페이스) |
 | `src/app/layout.tsx` | `<html lang="ko">`, `<body>`, Header, `<main>`. `metadata`로 제목 틀(`title.template`)·설명·Open Graph 설정 |
 | `src/app/page.tsx` (새 파일) | "/" 페이지. 스크린리더용 `h1` + `ProductCatalog` |
@@ -175,6 +176,19 @@ import { formatPrice } from '@/lib/format'     // 지금: 어디서든 같은 �
   <Link href="/">홈으로 가기</Link>
 </StatusView>
 ```
+**문구는 StatusView가 아니라 각 페이지에 둔다**
+- StatusView가 404·500 문구까지 가지면(프리셋 방식) 새 상황(없는 상품, 로그인 필요…)이 생길 때마다 공통 부품을 고쳐야 한다. 공통 틀은 **내용을 모를수록 재사용하기 쉽다.**
+- 같은 문구를 여러 곳에서 쓰게 되면 그때 StatusView 안이 아니라 **별도 파일**(`constants/messages.ts`, 다국어라면 `messages/ko.json`)로 모은다.
+- 대신 **같은 파일 안의 중복은 상수로** 없앤다. 탭 제목(metadata)과 화면 제목에 같은 문구를 쓰므로 `const TITLE = '...'`로 한 번만 적는다.
+- 사이트 이름과 `제목 | Shoppr` 형식은 layout·에러 페이지 여러 곳에서 쓰므로 `lib/site.ts`(`SITE_NAME`, `formatTitle`)로 모았다.
+  ```ts
+  // layout.tsx
+  title: { template: formatTitle('%s'), default: `${SITE_NAME} — 상품 목록 쇼핑몰` }
+  // error.tsx ('use client'라 template이 적용되지 않음)
+  <title>{formatTitle(TITLE)}</title>
+  ```
+  **기준: 한 파일에서만 쓰면 그 파일 안에 상수로, 여러 파일에서 쓰면 공통 파일로.**
+
 버튼을 props가 아닌 **children**으로 받는 이유: 화면마다 버튼 개수와 종류(링크/버튼)가 달라서, 모양 컴포넌트가 그것까지 알 필요가 없게 하려는 것이다. (컴포지션 패턴)
 
 Next.js의 에러 관련 파일 규칙

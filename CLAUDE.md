@@ -22,11 +22,12 @@
   - `src/app/` — 파일 기반 라우팅. `layout.tsx`(공통 틀·Header), `page.tsx`("/"), `products/[id]/page.tsx`(상세), `not-found.tsx`(404), `error.tsx`(실행 에러), `global-error.tsx`(레이아웃 에러), `globals.css`
   - `src/components/ui/` — 기능과 무관한 기본 부품. Button(`Button`=`<button>` / `ButtonLink`=`<a>`, `variant`·`size`)
   - `src/components/` — Header, ProductCatalog(목록 화면·상태, `'use client'`), StatusView(404·에러 공통 화면), BackButton(이전 페이지로), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
-  - `src/lib/` — format, filterProducts, sortProducts (순수 함수) / `src/data/products.ts` (목 데이터) / `src/types/` (공통 타입)
+  - `src/lib/` — format, filterProducts, sortProducts (순수 함수), site(`SITE_NAME`, `formatTitle`) / `src/data/products.ts` (목 데이터) / `src/types/` (공통 타입)
   - import는 `@/` 별칭(= `src/`) 사용
 - 원칙: `page.tsx`·`layout.tsx`는 서버 컴포넌트로 두고, 상태·이벤트가 필요한 부분만 작은 `'use client'` 컴포넌트로 뺀다.
 - 원칙: 버튼 모양이 필요하면 직접 클래스를 쓰지 말고 `ui/Button`을 쓴다. 페이지 이동은 `ButtonLink`, 화면 안 동작은 `Button`.
-- 원칙: 404·에러처럼 모양이 같은 안내 화면은 `StatusView`를 재사용하고, 각 파일은 문구와 버튼만 정한다.
+- 원칙: 404·에러처럼 모양이 같은 안내 화면은 `StatusView`를 재사용하고, 각 파일은 문구와 버튼만 정한다. 공통 틀에는 문구를 넣지 않는다.
+- 원칙: 같은 값이 한 파일 안에서 반복되면 그 파일의 상수로, 여러 파일에서 쓰이면 공통 파일(`lib/`, 나중에 `constants/`)로 모은다.
 - 원칙: 페이지를 만들면 metadata도 함께 정한다. 레이아웃에 `title.template: '%s | Shoppr'`가 있으므로 페이지는 `title`만 적는다. 고정 제목은 `metadata` 객체, 주소에 따라 다르면 `generateMetadata`, `'use client'` 파일은 `<title>` 태그.
 - Next.js 16 주의: `error.tsx`의 복구 함수는 `retry`(예전 `reset`). API가 헷갈리면 `node_modules/next/dist/docs/`의 설치 버전 문서를 확인한다.
 - 스텝별 설명: `docs/steps/`

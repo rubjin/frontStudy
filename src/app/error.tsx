@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import StatusView from '@/components/StatusView'
 import { Button, ButtonLink } from '@/components/ui/Button'
+import { formatTitle } from '@/lib/site'
 
 // 에러 페이지 — 페이지를 그리다가 예상하지 못한 에러가 났을 때 (Step 3-1)
 //
@@ -21,6 +22,9 @@ import { Button, ButtonLink } from '@/components/ui/Button'
 //   · digest:  서버 로그에서 같은 에러를 찾을 때 쓰는 식별 번호
 // - retry: 에러 난 부분을 다시 불러와 그려 보는 함수. 일시적인 네트워크 문제라면 이걸로 복구된다.
 //   (예전 Next.js 문서에는 reset으로 나오지만, 지금 버전에서는 retry를 권장한다)
+// 탭 제목(<title>)과 화면 제목(StatusView)에 같은 문구를 쓰므로 상수로 한 번만 적는다
+const TITLE = '문제가 발생했습니다'
+
 interface ErrorPageProps {
   error: Error & { digest?: string }
   retry: () => void
@@ -37,9 +41,9 @@ export default function ErrorPage({ error, retry }: ErrorPageProps) {
     <>
       {/* error.tsx는 'use client'라서 metadata를 내보낼 수 없다.
           대신 React 19부터는 컴포넌트 어디에서든 <title>을 쓰면 React가 <head>로 옮겨 준다.
-          이 방식은 레이아웃의 title.template이 적용되지 않으므로 '| Shoppr'까지 직접 적는다. */}
-      <title>문제가 발생했습니다 | Shoppr</title>
-      <StatusView code="500" title="문제가 발생했습니다" description="일시적인 오류일 수 있습니다. 잠시 후 다시 시도해 주세요.">
+          이 방식은 레이아웃의 title.template이 적용되지 않으므로, 같은 형식을 만드는 formatTitle로 직접 감싼다. */}
+      <title>{formatTitle(TITLE)}</title>
+      <StatusView code="500" title={TITLE} description="일시적인 오류일 수 있습니다. 잠시 후 다시 시도해 주세요.">
         {/* 다시 시도 = 현재 화면에서 동작 실행 → Button (가장 중요한 행동이라 primary) */}
         <Button onClick={() => retry()}>다시 시도</Button>
         {/* 홈으로 = 페이지 이동 → ButtonLink (보조 행동이라 secondary) */}

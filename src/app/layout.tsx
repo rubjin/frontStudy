@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import Header from '@/components/Header'
+import { SITE_NAME, formatTitle } from '@/lib/site'
 import './globals.css'
 
 // 루트 레이아웃 — 모든 페이지를 감싸는 공통 틀 (Step 3-1, Vite의 App.jsx + index.html 역할)
@@ -36,12 +37,13 @@ import './globals.css'
 // ※ 미리보기 이미지(og:image)는 절대 주소가 필요해서, 배포 주소가 생기는 Step 11에서 metadataBase와 함께 추가한다.
 export const metadata: Metadata = {
   title: {
-    template: '%s | Shoppr',
-    default: 'Shoppr — 상품 목록 쇼핑몰',
+    // formatTitle('%s') → '%s | Shoppr'. error 페이지의 <title>과 같은 형식을 쓰려고 함수로 만든다 (lib/site.ts)
+    template: formatTitle('%s'),
+    default: `${SITE_NAME} — 상품 목록 쇼핑몰`,
   },
   description: '검색·카테고리 필터·정렬을 지원하는 상품 목록 쇼핑몰 UI — 프론트엔드 포트폴리오',
   openGraph: {
-    siteName: 'Shoppr',
+    siteName: SITE_NAME,
     locale: 'ko_KR',
     type: 'website',
   },

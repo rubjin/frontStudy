@@ -16,13 +16,21 @@ import { ButtonLink } from '@/components/ui/Button'
 // metadata: 레이아웃의 title.template('%s | Shoppr')에 들어가서 '페이지를 찾을 수 없습니다 | Shoppr'가 된다.
 // 404 응답에는 Next.js가 <meta name="robots" content="noindex">를 자동으로 넣어 준다.
 // → 없는 페이지가 검색 결과에 나오지 않도록 따로 설정할 필요가 없다.
+//
+// TITLE, DESCRIPTION 상수: 탭 제목(metadata)과 화면 제목(StatusView)에 같은 문구를 쓰므로 한 번만 적는다.
+// 한쪽만 고쳐서 탭 제목과 화면 제목이 어긋나는 실수를 막는다.
+// 문구는 이 페이지에서만 쓰므로 공통 파일이 아니라 이 파일 안에 둔다.
+const TITLE = '페이지를 찾을 수 없습니다'
+const DESCRIPTION = '주소가 잘못되었거나 삭제된 페이지입니다.'
+
 export const metadata: Metadata = {
-  title: '페이지를 찾을 수 없습니다',
+  title: TITLE,
+  description: DESCRIPTION,
 }
 
 function NotFoundPage() {
   return (
-    <StatusView code="404" title="페이지를 찾을 수 없습니다" description="주소가 잘못되었거나 삭제된 페이지입니다.">
+    <StatusView code="404" title={TITLE} description={DESCRIPTION}>
       {/* 이전 페이지로 = 방문 기록에서 뒤로 가는 '동작' → Button을 쓰는 BackButton (보조 행동이라 secondary)
           서버 컴포넌트 안에 클라이언트 컴포넌트를 넣는 것은 괜찮다. (반대 방향은 안 됨) */}
       <BackButton />
