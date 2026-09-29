@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import StatusView, { statusPrimaryAction } from '@/components/StatusView'
+import StatusView from '@/components/StatusView'
+import { ButtonLink } from '@/components/ui/Button'
 
 // 404 페이지 — 어떤 페이지에도 맞지 않는 주소 (Step 3-1)
 //
@@ -22,9 +22,8 @@ export const metadata: Metadata = {
 function NotFoundPage() {
   return (
     <StatusView code="404" title="페이지를 찾을 수 없습니다" description="주소가 잘못되었거나 삭제된 페이지입니다.">
-      <Link href="/" className={statusPrimaryAction}>
-        홈으로 가기
-      </Link>
+      {/* 모양은 버튼이지만 '페이지 이동'이므로 <a>를 그리는 ButtonLink를 쓴다 */}
+      <ButtonLink href="/">홈으로 가기</ButtonLink>
     </StatusView>
   )
 }

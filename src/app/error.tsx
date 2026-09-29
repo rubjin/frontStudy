@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
-import Link from 'next/link'
-import StatusView, { statusPrimaryAction, statusSecondaryAction } from '@/components/StatusView'
+import StatusView from '@/components/StatusView'
+import { Button, ButtonLink } from '@/components/ui/Button'
 
 // 에러 페이지 — 페이지를 그리다가 예상하지 못한 에러가 났을 때 (Step 3-1)
 //
@@ -40,12 +40,12 @@ export default function ErrorPage({ error, retry }: ErrorPageProps) {
           이 방식은 레이아웃의 title.template이 적용되지 않으므로 '| Shoppr'까지 직접 적는다. */}
       <title>문제가 발생했습니다 | Shoppr</title>
       <StatusView code="500" title="문제가 발생했습니다" description="일시적인 오류일 수 있습니다. 잠시 후 다시 시도해 주세요.">
-        <button type="button" onClick={() => retry()} className={statusPrimaryAction}>
-          다시 시도
-        </button>
-        <Link href="/" className={statusSecondaryAction}>
+        {/* 다시 시도 = 현재 화면에서 동작 실행 → Button (가장 중요한 행동이라 primary) */}
+        <Button onClick={() => retry()}>다시 시도</Button>
+        {/* 홈으로 = 페이지 이동 → ButtonLink (보조 행동이라 secondary) */}
+        <ButtonLink href="/" variant="secondary">
           홈으로 가기
-        </Link>
+        </ButtonLink>
       </StatusView>
     </>
   )

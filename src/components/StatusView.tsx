@@ -17,20 +17,13 @@ import type { ReactNode } from 'react'
 // - title:       제목. 페이지의 주제이므로 h1으로 그린다
 // - description: 설명 문구. 선택
 // - children:    버튼·링크 자리. 에러 종류마다 필요한 행동(홈으로, 다시 시도...)이 달라서 밖에서 받는다
+//                보통 ui/Button의 Button(동작)·ButtonLink(이동)를 넣는다.
 interface StatusViewProps {
   code?: string
   title: string
   description?: string
   children?: ReactNode
 }
-
-// 버튼·링크 공통 스타일
-// <Link>와 <button>에 같은 모양을 입히려고 클래스 문자열을 상수로 내보낸다.
-// Step 3-2에서 SCSS Module로 바꾸면 이 상수는 .module.scss의 클래스로 대체된다.
-export const statusPrimaryAction =
-  'inline-block rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700'
-export const statusSecondaryAction =
-  'inline-block rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'
 
 function StatusView({ code, title, description, children }: StatusViewProps) {
   return (

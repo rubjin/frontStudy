@@ -20,10 +20,12 @@
   - 컴포넌트 문서화: Storybook (Step 3-3 예정)
 - 구조
   - `src/app/` — 파일 기반 라우팅. `layout.tsx`(공통 틀·Header), `page.tsx`("/"), `products/[id]/page.tsx`(상세), `not-found.tsx`(404), `error.tsx`(실행 에러), `global-error.tsx`(레이아웃 에러), `globals.css`
+  - `src/components/ui/` — 기능과 무관한 기본 부품. Button(`Button`=`<button>` / `ButtonLink`=`<a>`, `variant`·`size`)
   - `src/components/` — Header, ProductCatalog(목록 화면·상태, `'use client'`), StatusView(404·에러 공통 화면), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
   - `src/lib/` — format, filterProducts, sortProducts (순수 함수) / `src/data/products.ts` (목 데이터) / `src/types/` (공통 타입)
   - import는 `@/` 별칭(= `src/`) 사용
 - 원칙: `page.tsx`·`layout.tsx`는 서버 컴포넌트로 두고, 상태·이벤트가 필요한 부분만 작은 `'use client'` 컴포넌트로 뺀다.
+- 원칙: 버튼 모양이 필요하면 직접 클래스를 쓰지 말고 `ui/Button`을 쓴다. 페이지 이동은 `ButtonLink`, 화면 안 동작은 `Button`.
 - 원칙: 404·에러처럼 모양이 같은 안내 화면은 `StatusView`를 재사용하고, 각 파일은 문구와 버튼만 정한다.
 - 원칙: 페이지를 만들면 metadata도 함께 정한다. 레이아웃에 `title.template: '%s | Shoppr'`가 있으므로 페이지는 `title`만 적는다. 고정 제목은 `metadata` 객체, 주소에 따라 다르면 `generateMetadata`, `'use client'` 파일은 `<title>` 태그.
 - Next.js 16 주의: `error.tsx`의 복구 함수는 `retry`(예전 `reset`). API가 헷갈리면 `node_modules/next/dist/docs/`의 설치 버전 문서를 확인한다.
@@ -67,5 +69,6 @@
 - 2026-09-29: 실무형 구성으로 전환 결정 (Next.js + TypeScript + SCSS Module + Storybook). 로드맵 재정리.
   - Step 3-1 완료: Vite → Next.js 16 + React 19 + TypeScript. react-router 제거, App Router로 페이지 이전. 스타일은 아직 Tailwind.
   - 3-1 보강: 에러 화면 공통화 — `StatusView` + `not-found.tsx` / `error.tsx` / `global-error.tsx`.
+  - 3-1 보강: 공통 버튼 `ui/Button`(Button/ButtonLink) — 에러 화면·헤더 다크 모드 버튼에 적용.
   - 3-1 보강: 페이지별 metadata — 레이아웃 title template·description·Open Graph, not-found·상세(`generateMetadata`)·error 제목.
   - 다음은 3-2 SCSS Module 전환.

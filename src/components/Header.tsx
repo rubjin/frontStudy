@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Moon, Sun } from './icons'
+import { Button } from './ui/Button'
 
 // 상단 헤더 — 모든 페이지에 공통으로 보인다
 //
@@ -42,15 +43,17 @@ function Header() {
             </div>
             <span className="text-xl font-bold tracking-tight">Shoppr</span>
           </Link>
-          <button
-            type="button"
+          {/* 아이콘만 있는 버튼: variant="ghost"(배경 없음) + size="icon"(정사각형 여백)
+              글자가 없으므로 aria-label로 스크린리더가 읽을 이름을 꼭 준다 */}
+          <Button
+            variant="ghost"
+            size="icon"
             // setDark((d) => !d): 이전 값을 받아 뒤집는 함수형 업데이트
             onClick={() => setDark((d) => !d)}
             aria-label="Toggle dark mode"
-            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors duration-200"
           >
             {dark ? <Sun /> : <Moon />}
-          </button>
+          </Button>
         </div>
       </div>
     </header>

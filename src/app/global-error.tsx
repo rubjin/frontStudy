@@ -1,6 +1,7 @@
 'use client'
 
-import StatusView, { statusPrimaryAction } from '@/components/StatusView'
+import StatusView from '@/components/StatusView'
+import { Button } from '@/components/ui/Button'
 import './globals.css'
 
 // 최후의 에러 화면 — 루트 레이아웃(layout.tsx) 자체에서 에러가 났을 때 (Step 3-1)
@@ -26,9 +27,7 @@ export default function GlobalError({ retry }: GlobalErrorProps) {
         <title>문제가 발생했습니다 | Shoppr</title>
         <main className="mx-auto max-w-7xl px-4">
           <StatusView code="500" title="문제가 발생했습니다" description="페이지를 불러오지 못했습니다. 다시 시도해 주세요.">
-            <button type="button" onClick={() => retry()} className={statusPrimaryAction}>
-              다시 시도
-            </button>
+            <Button onClick={() => retry()}>다시 시도</Button>
           </StatusView>
         </main>
       </body>

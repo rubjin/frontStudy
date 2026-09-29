@@ -75,6 +75,7 @@ src/index.css                        →    src/app/globals.css
 | `src/app/products/[id]/page.tsx` | `params`를 `await`로 꺼내는 async 서버 컴포넌트. `generateMetadata`로 id별 제목 |
 | `src/app/not-found.tsx` | 약속된 파일 이름이라 자동으로 404에 쓰임. 화면은 `StatusView`에 맡기고 문구·버튼만 정함 |
 | `src/components/StatusView.tsx` (새 파일) | 404·에러 화면의 공통 모양(코드 · 제목 · 설명 · 버튼 자리) |
+| `src/components/ui/Button.tsx` (새 파일) | 공통 버튼. `Button`(`<button>`, 동작) / `ButtonLink`(`<a>`, 이동). `variant`·`size`로 모양 선택 |
 | `src/app/error.tsx` (새 파일) | 페이지를 그리다 에러가 나면 그 자리만 바꿔 끼우는 화면. 다시 시도 / 홈으로 |
 | `src/app/global-error.tsx` (새 파일) | 레이아웃 자체가 망가졌을 때 쓰는 최후의 화면. `<html>`부터 직접 그림 |
 | `src/components/*.tsx`, `src/lib/*.ts` | props·함수에 타입 추가, `react-router`의 `Link to` → `next/link`의 `Link href` |
@@ -217,6 +218,22 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 - **`error.tsx`는 예외**: `'use client'` 파일은 metadata를 내보낼 수 없다. React 19부터는 컴포넌트 안에 `<title>`을 쓰면 React가 `<head>`로 옮겨 주므로 이 방법을 쓴다. template이 적용되지 않아 `| Shoppr`까지 직접 적는다.
 - **404와 검색엔진**: 404 응답에는 Next.js가 `<meta name="robots" content="noindex">`를 자동으로 넣는다. 따로 설정할 필요가 없다.
 - **미리보기 이미지(og:image)** 는 절대 주소가 필요해서 배포 주소가 생기는 Step 11에서 `metadataBase`와 함께 추가한다.
+
+**9. 공통 버튼 컴포넌트 — 모양은 공유, 태그는 역할대로**
+```tsx
+<Button onClick={() => retry()}>다시 시도</Button>                  // → <button type="button">
+<ButtonLink href="/" variant="secondary">홈으로 가기</ButtonLink>   // → <a href="/">
+<Button variant="ghost" size="icon" aria-label="Toggle dark mode">  // 아이콘 버튼
+```
+- **왜 두 개로 나누나?** 모양이 같아도 **페이지 이동은 `<a>`, 화면 안 동작은 `<button>`** 이어야 한다.
+  `<button onClick={() => router.push('/')}>`로 이동을 흉내 내면 새 탭 열기·링크 복사가 안 되고, 스크린리더도 '버튼'으로 잘못 읽는다.
+- **variant = 역할(중요도)**: `primary`(화면에서 가장 중요한 행동 하나), `secondary`(보조), `ghost`(배경 없음, 아이콘·툴바). 퍼블리셔의 `.btn-primary`, `.btn-sm` 가이드를 props로 옮긴 것이다.
+- **`ComponentProps<'button'>`**: `<button>`이 받는 모든 속성(`onClick`, `disabled`, `aria-*`…)의 타입. 여기에 `variant`·`size`를 더해서, 일반 button처럼 쓰면서 모양만 고를 수 있다.
+- **`...rest`로 나머지 props 전달**: `variant`·`size`·`className`만 꺼내고 나머지는 `{...rest}`로 태그에 그대로 넘긴다. 공통 컴포넌트를 만들 때 가장 흔한 패턴이다.
+- **`type="button"` 기본값**: `<button>`의 원래 기본값은 `submit`이라 form 안에서 실수로 제출된다. 공통 컴포넌트에서 한 번 막아 두면 모든 곳이 안전해진다.
+- **`components/ui/`**: 기능과 상관없는 기본 부품(버튼 등)을 모아 두는 곳. 쇼핑몰 전용 부품(Card, CategoryFilter…)과 구분한다.
+- **아직 Button을 쓰지 않은 곳**: 카테고리 버튼은 선택/해제되는 토글(칩)이라 역할이 달라서 그대로 두었다. 카드 링크(늘린 링크), 로고, "← 목록으로" 텍스트 링크도 버튼 모양이 아니라서 제외.
+- 3-2에서 `Button.module.scss`로, 3-3에서 **Storybook 첫 스토리**로 만든다.
 
 ### 확인 방법
 1. `npm run dev` 후 http://localhost:3000 에서 목록 · 검색 · 카테고리 · 정렬 · 품절 숨기기가 전과 똑같이 동작하는지
