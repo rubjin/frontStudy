@@ -1,0 +1,44 @@
+@use 'styles' as *;
+
+// 상품 목록 그리드 + 빈 상태 스타일 (Step 3-2)
+
+.empty {
+  padding-block: space(20);
+  text-align: center;
+}
+
+.emptyTitle {
+  @include text(lg);
+  font-weight: $font-weight-semibold;
+}
+
+.emptyHint {
+  margin-top: space(2);
+  @include text(sm);
+  color: var(--color-text-muted);
+}
+
+.count {
+  margin-bottom: space(4);
+  @include text(sm);
+  color: var(--color-text-muted);
+}
+
+// 반응형 그리드: 모바일 1열 → 640px 2열 → 1024px 3열 → 1280px 4열 (모바일 우선)
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: space(6);
+
+  @include mq(sm) {
+    grid-template-columns: repeat(2, 1fr); // 1fr을 2번 = 같은 너비 2칸
+  }
+
+  @include mq(lg) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @include mq(xl) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

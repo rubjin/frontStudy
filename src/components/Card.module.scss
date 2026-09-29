@@ -1,0 +1,108 @@
+@use 'styles' as *;
+
+// 상품 카드 스타일 (Step 3-2)
+
+.card {
+  position: relative; // 늘린 링크(::after)와 품절 오버레이의 기준점
+  height: 100%;
+  padding: space(6);
+  border: 1px solid var(--color-border);
+  border-radius: $radius-xl;
+  background-color: var(--color-surface);
+  box-shadow: $shadow-sm;
+  transition:
+    box-shadow $duration-base,
+    transform $duration-base,
+    background-color $duration-base,
+    border-color $duration-base;
+
+  &:hover {
+    box-shadow: $shadow-lg;
+    transform: translateY(space(-1)); // 살짝 떠오르는 효과 (space(-1) = -0.25rem)
+  }
+
+  // 안쪽 링크에 키보드 포커스가 오면 카드 전체에 테두리를 그린다
+  // :has() — '이런 자식을 가진 부모'를 고르는 선택자. JS 없이 부모 스타일을 바꿀 수 있다.
+  &:has(:focus-visible) {
+    @include focus-ring;
+  }
+
+  // 모션 줄이기 설정을 켠 사용자(어지럼증 등)에게는 떠오르는 움직임을 끈다 (접근성)
+  @media (prefers-reduced-motion: reduce) {
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+// 이미지 대신 쓰는 자리 표시 영역
+.thumb {
+  @include flex-center;
+  position: relative; // 품절 오버레이의 기준점
+  aspect-ratio: 1; // 가로:세로 = 1:1 정사각형
+  margin-bottom: space(4);
+  border-radius: $radius-lg;
+  background: linear-gradient(to bottom right, var(--color-thumb-from), var(--color-thumb-to));
+}
+
+.initial {
+  @include text(4xl);
+  font-weight: $font-weight-bold;
+  color: var(--color-thumb-text);
+  opacity: 0.5;
+}
+
+.soldOut {
+  @include flex-center;
+  position: absolute;
+  inset: 0; // top·right·bottom·left: 0 → 부모를 꽉 채운다
+  border-radius: $radius-lg;
+  background-color: var(--color-overlay);
+  @include text(sm);
+  font-weight: $font-weight-semibold;
+  color: #fff;
+}
+
+.category {
+  margin-bottom: space(1);
+  @include text(xs);
+  font-weight: $font-weight-medium;
+  color: var(--color-text-muted);
+}
+
+.name {
+  margin-bottom: space(2);
+  @include text(base);
+  font-weight: $font-weight-semibold;
+}
+
+// 늘린 링크(stretched link): 링크의 가상 요소를 카드 크기만큼 늘려 카드 전체를 클릭 영역으로 만든다
+.link {
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0; // 가장 가까운 position: relative 조상(.card)을 꽉 채운다
+  }
+
+  // 링크 자체의 포커스 선은 숨기고, 위의 .card:has(:focus-visible) 테두리로 대신 보여 준다
+  &:focus {
+    outline: none;
+  }
+}
+
+.meta {
+  display: flex;
+  align-items: baseline; // 크기가 다른 글자(가격, 평점)의 밑줄을 맞춘다
+  justify-content: space-between;
+}
+
+.price {
+  @include text(lg);
+  font-weight: $font-weight-bold;
+  color: var(--color-primary-text);
+}
+
+.rating {
+  @include text(sm);
+  color: var(--color-text-muted);
+}

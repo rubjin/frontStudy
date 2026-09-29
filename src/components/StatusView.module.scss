@@ -1,0 +1,35 @@
+@use 'styles' as *;
+
+// 404·에러 안내 화면 스타일 (Step 3-2)
+
+.root {
+  padding-block: space(20);
+  text-align: center;
+}
+
+.code {
+  @include text(6xl);
+  font-weight: $font-weight-bold;
+  color: var(--color-status-code);
+}
+
+.title {
+  margin-top: space(4);
+  @include text(2xl);
+  font-weight: $font-weight-bold;
+}
+
+.description {
+  margin-top: space(2);
+  @include text(sm);
+  color: var(--color-text-muted);
+}
+
+// 버튼이 여러 개일 수 있으므로 가로로 나열하고, 좁은 화면에서는 줄바꿈
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: space(3);
+  margin-top: space(6);
+}

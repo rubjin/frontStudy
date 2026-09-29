@@ -1,7 +1,9 @@
 import type { ComponentProps } from 'react'
 import Link from 'next/link'
+import clsx from 'clsx'
+import styles from './Button.module.scss'
 
-// 공통 버튼 컴포넌트 — Button(<button>)과 ButtonLink(<a>) (Step 3-1)
+// 공통 버튼 컴포넌트 — Button(<button>)과 ButtonLink(<a>) (Step 3-1, 3-2에서 SCSS Module로 전환)
 //
 // 왜 컴포넌트로 만드나?
 // - 버튼 모양(색·여백·둥글기·포커스 표시)을 화면마다 클래스로 복사하면, 디자인이 바뀔 때 전부 찾아 고쳐야 한다.
@@ -32,29 +34,16 @@ interface ButtonStyleProps {
   size?: ButtonSize
 }
 
-// variant·size별 클래스 표
-// 객체로 만들어 두면 variant를 추가할 때 여기 한 줄만 늘리면 된다. (sortProducts의 COMPARATORS와 같은 방식)
-// Record<ButtonVariant, string>: 모든 variant에 대한 값이 꼭 있어야 한다 → 하나를 빼먹으면 타입 에러
-// Step 3-2에서 Button.module.scss로 옮긴다.
-const BASE =
-  'inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-50'
-
-const VARIANTS: Record<ButtonVariant, string> = {
-  primary: 'bg-primary-600 text-white hover:bg-primary-700',
-  secondary:
-    'border border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800',
-  ghost: 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800',
-}
-
-const SIZES: Record<ButtonSize, string> = {
-  md: 'px-4 py-2',
-  icon: 'p-2',
-}
-
-// 클래스 문자열을 조립한다. className: 쓰는 쪽에서 여백 등을 조금 더 붙이고 싶을 때
-// filter(Boolean): className이 undefined이면 빼고 합친다
+// 클래스 이름 조립 (Step 3-2)
+// styles: Button.module.scss의 클래스들. styles.button → 'Button-module-scss-module__OoW-YW__button' 같은 고유한 이름
+// styles[variant]: variant 값('primary')과 같은 이름의 클래스(.primary)를 꺼낸다
+//   → variant를 추가할 때 SCSS에 같은 이름의 클래스만 만들면 된다
+// clsx(...): 여러 클래스 이름을 공백으로 이어 준다. undefined·false는 자동으로 빠진다.
+//   clsx('a', undefined, 'b') → 'a b'
+//   클래스를 조건에 따라 붙였다 뗄 때 실무에서 가장 많이 쓰는 작은 도구다.
+// className: 쓰는 쪽에서 여백 등을 조금 더 붙이고 싶을 때
 function buttonClassName({ variant = 'primary', size = 'md' }: ButtonStyleProps, className?: string) {
-  return [BASE, VARIANTS[variant], SIZES[size], className].filter(Boolean).join(' ')
+  return clsx(styles.button, styles[variant], styles[size], className)
 }
 
 // ComponentProps<'button'>: <button>이 받을 수 있는 모든 속성(onClick, disabled, aria-label...)의 타입

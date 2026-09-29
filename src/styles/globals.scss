@@ -1,0 +1,92 @@
+@use 'themes';
+@use 'index' as *;
+
+// 전역 스타일 — 모든 페이지에 한 번만 적용되는 기본 스타일 (Step 3-2에서 Tailwind → SCSS)
+//
+// layout.tsx에서 한 번만 import 한다. 컴포넌트별 스타일은 각자의 .module.scss에 둔다.
+// 여기에는 ① 테마 변수 ② 리셋 ③ html/body 기본값 ④ 전역 유틸리티(sr-only)만 둔다.
+
+// ─── 리셋 ────────────────────────────────────────────────
+// 브라우저마다 다른 기본 스타일(여백, 글꼴 등)을 맞춘다. Tailwind의 preflight가 해 주던 일이다.
+
+// box-sizing: border-box — width에 padding과 border를 포함해서 계산한다. (크기 계산이 직관적)
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0 solid;
+}
+
+html {
+  // Pretendard를 못 불러오면 운영체제 기본 한글 글꼴로 대체한다 (폰트 스택)
+  font-family:
+    'Pretendard Variable',
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    'Apple SD Gothic Neo',
+    'Malgun Gothic',
+    sans-serif;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%; // 모바일에서 가로로 돌렸을 때 글자가 멋대로 커지지 않게
+}
+
+body {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  // 테마를 바꿀 때 색이 부드럽게 바뀐다
+  transition:
+    background-color $duration-base ease,
+    color $duration-base ease;
+}
+
+// 제목·문단의 브라우저 기본 크기를 없애고 부모 값을 따르게 한다 (크기는 컴포넌트에서 정함)
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+img,
+svg {
+  display: block;
+}
+
+// 폼 요소는 브라우저 기본 글꼴 대신 페이지 글꼴을 쓰게 한다
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  background-color: transparent;
+}
+
+button {
+  cursor: pointer;
+}
+
+// ─── 전역 유틸리티 ───────────────────────────────────────
+// 화면에서는 숨기고 스크린리더에는 읽히게. 여러 컴포넌트에서 쓰므로 전역 클래스로 둔다.
+// (CSS Module 안에서는 @include sr-only; 로도 쓸 수 있다)
+.sr-only {
+  @include sr-only;
+}

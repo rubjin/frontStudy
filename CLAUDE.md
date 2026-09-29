@@ -16,12 +16,18 @@
 ## 프로젝트
 - 이름: **Shoppr** (상품 목록 쇼핑몰 UI)
 - 스택: **Next.js 16 (App Router) + React 19 + TypeScript**
-  - 스타일: 현재 Tailwind CSS 3 (다크 모드는 `<html>`의 `dark` 클래스) → **Step 3-2에서 SCSS Module로 전환 예정** (Tailwind 제거)
+  - 스타일: **SCSS Module** (`*.module.scss`) + 디자인 토큰. Tailwind는 3-2에서 제거
+    - `src/styles/`: `_tokens.scss`(색상표·`space()`·글자·둥글기·브레이크포인트), `_mixins.scss`(`mq`·`text`·`focus-ring`·`sr-only`·`container`), `_themes.scss`(라이트/다크 CSS 변수), `globals.scss`
+    - 컴포넌트 SCSS 첫 줄은 `@use 'styles' as *;` (`next.config.ts`의 `sassOptions.loadPaths`에 `src` 등록. `'@/styles'`는 Sass에서 안 됨)
+    - 색은 반드시 테마 변수 `var(--color-...)`만 쓴다. 팔레트(`$gray` 등)는 `_themes.scss`에서만 사용
+    - 여러 클래스 조합은 `clsx`. 상태 스타일은 가능하면 aria 속성 선택자(`[aria-pressed='true']`)
+  - 다크 모드: `<html data-theme="dark">` + localStorage(`lib/theme.ts`). `<head>`의 `themeInitScript`로 깜빡임 방지. 아이콘·버튼 이름은 CSS로 전환(ThemeToggle)
+  - 폰트: Pretendard dynamic subset (`pretendard` 패키지 CSS를 layout에서 import)
   - 컴포넌트 문서화: Storybook (Step 3-3 예정)
 - 구조
   - `src/app/` — 파일 기반 라우팅. `layout.tsx`(공통 틀·Header), `page.tsx`("/"), `products/[id]/page.tsx`(상세), `not-found.tsx`(404), `error.tsx`(실행 에러), `global-error.tsx`(레이아웃 에러), `globals.css`
   - `src/components/ui/` — 기능과 무관한 기본 부품. Button(`Button`=`<button>` / `ButtonLink`=`<a>`, `variant`·`size`)
-  - `src/components/` — Header, ProductCatalog(목록 화면·상태, `'use client'`), StatusView(404·에러 공통 화면), BackButton(이전 페이지로), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
+  - `src/components/` — Header(서버 컴포넌트), ThemeToggle(`'use client'`), ProductCatalog(목록 화면·상태, `'use client'`), StatusView(404·에러 공통 화면), BackButton(이전 페이지로), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
   - `src/lib/` — format, filterProducts, sortProducts (순수 함수), site(`SITE_NAME`, `formatTitle`) / `src/data/products.ts` (목 데이터) / `src/types/` (공통 타입)
   - import는 `@/` 별칭(= `src/`) 사용
 - 원칙: `page.tsx`·`layout.tsx`는 서버 컴포넌트로 두고, 상태·이벤트가 필요한 부분만 작은 `'use client'` 컴포넌트로 뺀다.
@@ -32,6 +38,7 @@
 - Next.js 16 주의: `error.tsx`의 복구 함수는 `retry`(예전 `reset`). API가 헷갈리면 `node_modules/next/dist/docs/`의 설치 버전 문서를 확인한다.
 - 스텝별 설명: `docs/steps/`
 - 실행: `npm run dev` / 빌드: `npm run build` / 린트: `npm run lint` / 타입 검사: `npx tsc --noEmit`
+- 참고: 사용자가 `npm run dev`(localhost:3000)를 켜 두는 경우가 많다. Next.js 16은 같은 폴더에서 dev 서버를 두 개 못 띄우므로, 검증은 `npm run build` 후 `next start -p <다른 포트>`로 하거나 켜진 3000 서버를 읽기 전용으로 쓴다. 파일을 임시로 바꾸면 사용자 화면에도 반영된다.
 - 참고: Windows(`core.autocrlf=true`)에서 작업하면 작업 폴더 파일이 CRLF다. 스크립트로 문자열 치환할 때 줄바꿈 주의 (Step 3-4에서 `.gitattributes`로 정리 예정)
 
 ## 로드맵
@@ -43,7 +50,7 @@
 - [x] **Step 2** 카테고리 필터 + 정렬(가격·평점) + 품절 숨기기. 파생 상태, `useMemo`, 컴포넌트 분리
 - [ ] **Step 3** 실무 환경 전환
   - [x] 3-1 Vite → Next.js(App Router) + TypeScript. 서버/클라이언트 컴포넌트 구분, 파일 기반 라우팅
-  - [ ] 3-2 SCSS Module 전환: 디자인 토큰(`_tokens.scss`), mixin(반응형·포커스), CSS 변수 테마(`data-theme`) + 다크 모드 localStorage 저장·깜빡임 방지, `next/font`. Tailwind 제거
+  - [x] 3-2 SCSS Module 전환: 디자인 토큰(`_tokens.scss`), mixin(반응형·포커스), CSS 변수 테마(`data-theme`) + 다크 모드 localStorage 저장·깜빡임 방지, `next/font`. Tailwind 제거
   - [ ] 3-3 Storybook: 컴포넌트별 `*.stories.tsx`, Controls/Docs 자동 문서, a11y addon, 다크 모드 전환 툴바
   - [ ] 3-4 코드 품질 도구: Prettier, Stylelint(SCSS), husky + lint-staged(커밋 전 자동 검사), `.editorconfig`·`.gitattributes`
 - [ ] **Step 4** 라우팅 심화: 상품 상세 완성(`notFound()`, `generateMetadata`로 페이지별 SEO), 검색·필터·정렬을 `searchParams`(URL 쿼리)로 관리, `loading.tsx`·`error.tsx`
@@ -73,4 +80,5 @@
   - 3-1 보강: 404에 '이전 페이지로'(`BackButton`, 기록 없으면 홈) 추가.
   - 3-1 보강: 공통 버튼 `ui/Button`(Button/ButtonLink) — 에러 화면·헤더 다크 모드 버튼에 적용.
   - 3-1 보강: 페이지별 metadata — 레이아웃 title template·description·Open Graph, not-found·상세(`generateMetadata`)·error 제목.
-  - 다음은 3-2 SCSS Module 전환.
+  - Step 3-2 완료: Tailwind → SCSS Module. 디자인 토큰·mixin·CSS 변수 테마, 다크 모드 localStorage 유지 + 깜빡임 방지, Header 서버 컴포넌트화(ThemeToggle 분리), Pretendard, 검색창 aria-label.
+  - 다음은 3-3 Storybook.

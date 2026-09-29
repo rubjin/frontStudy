@@ -9,6 +9,7 @@ import CardGrid from './CardGrid'
 import { products } from '@/data/products'
 import { ALL_CATEGORIES, filterProducts, getCategories } from '@/lib/filterProducts'
 import { SORT_OPTIONS, sortProducts, type SortValue } from '@/lib/sortProducts'
+import styles from './ProductCatalog.module.scss'
 
 // 상품 목록 화면 — 검색·필터·정렬 상태를 가진 클라이언트 컴포넌트 (Step 3-1)
 //
@@ -53,11 +54,10 @@ function ProductCatalog() {
       <SearchBar value={query} onChange={setQuery} />
 
       {/* 툴바: 카테고리 필터(왼쪽)와 보기 옵션(오른쪽: 품절 숨기기 + 정렬)
-          모바일에서는 세로로 쌓고(flex-col), sm 이상에서 한 줄로 양끝 정렬 */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          모바일에서는 세로로 쌓고, 640px 이상에서 한 줄로 양끝 정렬 */}
+      <div className={styles.toolbar}>
         <CategoryFilter categories={categories} value={category} onChange={setCategory} />
-        {/* shrink-0: 공간이 좁아도 이 묶음은 줄어들지 않게 해서 글자가 줄바꿈되지 않도록 한다 */}
-        <div className="flex shrink-0 items-center gap-4">
+        <div className={styles.options}>
           <SoldOutToggle checked={hideSoldOut} onChange={setHideSoldOut} />
           <SortSelect options={SORT_OPTIONS} value={sort} onChange={setSort} />
         </div>

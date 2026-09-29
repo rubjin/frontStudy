@@ -1,0 +1,25 @@
+@use 'styles' as *;
+
+// 목록 화면 툴바 스타일 (Step 3-2)
+
+// 툴바: 카테고리 필터(왼쪽)와 보기 옵션(오른쪽)
+// 모바일에서는 세로로 쌓고, 640px 이상에서 한 줄로 양끝 정렬
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: space(4);
+  margin-bottom: space(6);
+
+  @include mq(sm) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.options {
+  display: flex;
+  flex-shrink: 0; // 공간이 좁아도 이 묶음은 줄어들지 않게 → 글자가 줄바꿈되지 않는다
+  align-items: center;
+  gap: space(4);
+}

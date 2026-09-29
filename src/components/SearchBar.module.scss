@@ -1,0 +1,41 @@
+@use 'styles' as *;
+
+// 검색창 스타일 (Step 3-2)
+
+.wrap {
+  position: relative; // 돋보기 아이콘의 기준점
+  max-width: 36rem;
+  margin: 0 auto space(10); // 가운데 정렬 + 아래 여백
+}
+
+.icon {
+  position: absolute;
+  top: 50%;
+  left: space(4);
+  transform: translateY(-50%); // 세로 가운데 정렬
+  color: var(--color-placeholder);
+  pointer-events: none; // 아이콘을 클릭해도 입력창이 눌리도록 클릭을 통과시킨다
+}
+
+.input {
+  width: 100%;
+  padding: space(3) space(4) space(3) space(12); // 왼쪽은 아이콘 자리만큼 넓게
+  border: 1px solid var(--color-border);
+  border-radius: $radius-lg;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: $shadow-sm;
+  transition:
+    border-color $duration-fast,
+    box-shadow $duration-fast;
+
+  &::placeholder {
+    color: var(--color-placeholder);
+  }
+
+  // 입력창은 마우스로 클릭해도 포커스 표시를 보여 주는 게 일반적이라 :focus를 쓴다
+  &:focus {
+    border-color: transparent;
+    @include focus-ring;
+  }
+}

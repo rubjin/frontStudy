@@ -1,5 +1,6 @@
 import Card from './Card'
 import type { Product } from '@/types/product'
+import styles from './CardGrid.module.scss'
 
 // 상품 카드 목록 (Step 1에서 만들고 Step 2에서 역할을 줄임)
 //
@@ -21,13 +22,13 @@ function CardGrid({ products, query }: CardGridProps) {
   if (products.length === 0) {
     const keyword = query.trim()
     return (
-      <div className="py-20 text-center">
-        <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+      <div className={styles.empty}>
+        <p className={styles.emptyTitle}>
           {/* 검색어가 있으면 검색어를 보여 주고, 없으면(카테고리만 고른 경우) 일반 문구 */}
           {/* <>...</>는 Fragment: 불필요한 태그 없이 여러 요소를 묶을 때 쓴다 */}
           {keyword ? <>&lsquo;{keyword}&rsquo;에 대한 검색 결과가 없습니다</> : '조건에 맞는 상품이 없습니다'}
         </p>
-        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+        <p className={styles.emptyHint}>
           다른 키워드로 검색하거나 카테고리를 바꿔 보세요.
         </p>
       </div>
@@ -37,11 +38,11 @@ function CardGrid({ products, query }: CardGridProps) {
   return (
     <>
       {/* aria-live="polite": 개수가 바뀌면 스크린리더가 하던 말을 끝낸 뒤 읽어 준다 */}
-      <p aria-live="polite" className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+      <p aria-live="polite" className={styles.count}>
         총 {products.length}개의 상품
       </p>
       {/* 목록이므로 div 대신 ul/li를 쓴다 (시맨틱 마크업) */}
-      <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <ul className={styles.grid}>
         {products.map((product) => (
           // key는 index 대신 고유한 id를 쓴다.
           // index를 쓰면 필터로 순서가 바뀔 때 React가 항목을 헷갈릴 수 있다.

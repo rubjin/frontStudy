@@ -1,0 +1,9 @@
+@use 'styles' as *;
+
+// 루트 레이아웃 스타일 (Step 3-2)
+// global-error.tsx도 같은 본문 폭을 쓰려고 이 파일을 함께 import 한다.
+
+.main {
+  @include container; // 헤더(.inner)와 같은 폭·좌우 여백
+  padding-block: space(8); // 위아래 여백 (padding-top + padding-bottom)
+}

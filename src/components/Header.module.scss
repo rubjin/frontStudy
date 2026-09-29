@@ -1,0 +1,51 @@
+@use 'styles' as *;
+
+// 헤더 스타일 (Step 3-2)
+
+.header {
+  position: sticky; // 스크롤해도 화면 위에 붙어 있다
+  top: 0;
+  z-index: $z-header;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-header-bg); // 반투명 배경
+  backdrop-filter: blur(12px); // 헤더 뒤로 지나가는 내용을 흐리게 (유리 효과)
+  transition:
+    background-color $duration-base,
+    border-color $duration-base;
+}
+
+.inner {
+  @include container; // 본문(main)과 같은 최대 너비·좌우 여백 → 로고와 콘텐츠의 왼쪽 선이 맞는다
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: $header-height;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: space(2);
+  border-radius: $radius-md;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.logoMark {
+  @include flex-center;
+  width: space(9);
+  height: space(9);
+  border-radius: $radius-md;
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  @include text(lg);
+  font-weight: $font-weight-bold;
+}
+
+.logoText {
+  @include text(xl);
+  font-weight: $font-weight-bold;
+  letter-spacing: -0.025em; // 제목용 글자는 자간을 살짝 좁히면 단단해 보인다
+}

@@ -4,7 +4,7 @@
 
 ## 기술 스택
 - **Next.js 16** (App Router) · **React 19** · **TypeScript**
-- 스타일: Tailwind CSS 3 → SCSS Module로 전환 중
+- 스타일: SCSS Module + 디자인 토큰 (CSS 변수 기반 라이트·다크 테마)
 - (예정) Storybook, TanStack Query, Vitest · Playwright
 
 ## 실행
@@ -19,7 +19,8 @@ npm run lint    # ESLint
 ```
 src/
 ├─ app/          # 파일 기반 라우팅 (layout, page, products/[id], not-found)
-├─ components/   # UI 컴포넌트
+├─ components/   # UI 컴포넌트 (컴포넌트마다 .module.scss)
+├─ styles/       # 디자인 토큰, mixin, 테마 변수, 전역 스타일
 ├─ lib/          # 순수 함수 (포맷, 필터, 정렬)
 ├─ data/         # 목 데이터
 └─ types/        # 공통 타입

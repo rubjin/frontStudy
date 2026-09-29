@@ -1,3 +1,5 @@
+import styles from './CategoryFilter.module.scss'
+
 // 카테고리 버튼 목록 (Step 2)
 //
 // 이 컴포넌트는 '어떤 카테고리가 선택됐는지'를 스스로 기억하지 않는다.
@@ -24,7 +26,7 @@ interface CategoryFilterProps {
 function CategoryFilter({ categories, value, onChange }: CategoryFilterProps) {
   return (
     // role="group" + aria-label: 스크린리더가 "카테고리 필터 그룹"이라고 읽어 준다
-    <div role="group" aria-label="카테고리 필터" className="flex flex-wrap gap-2">
+    <div role="group" aria-label="카테고리 필터" className={styles.group}>
       {categories.map((category) => {
         const selected = category === value
         return (
@@ -36,12 +38,9 @@ function CategoryFilter({ categories, value, onChange }: CategoryFilterProps) {
             // aria-pressed: 토글 버튼이 눌린 상태인지 스크린리더에 알려 준다 (접근성)
             aria-pressed={selected}
             onClick={() => onChange(category)}
-            // 선택 여부에 따라 클래스를 바꾼다 (템플릿 문자열 + 삼항 연산자)
-            className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors duration-200 ${
-              selected
-                ? 'border-primary-600 bg-primary-600 text-white'
-                : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800'
-            }`}
+            // Step 3-2: 선택 여부에 따라 클래스를 바꾸지 않는다.
+            // CSS가 aria-pressed="true"를 보고 선택된 모양을 입힌다 (CategoryFilter.module.scss)
+            className={styles.chip}
           >
             {category}
           </button>

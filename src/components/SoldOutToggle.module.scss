@@ -1,0 +1,19 @@
+@use 'styles' as *;
+
+// 품절 숨기기 체크박스 스타일 (Step 3-2)
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: space(2);
+  cursor: pointer;
+  @include text(sm);
+  color: var(--color-text-secondary);
+}
+
+.checkbox {
+  width: space(4);
+  height: space(4);
+  // accent-color: 브라우저 기본 체크박스의 색만 바꾼다. 기본 체크박스라 키보드·스크린리더 지원이 그대로 유지된다
+  accent-color: var(--color-primary);
+}

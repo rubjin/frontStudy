@@ -1,60 +1,30 @@
-'use client'
-
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Moon, Sun } from './icons'
-import { Button } from './ui/Button'
+import ThemeToggle from './ThemeToggle'
+import { SITE_NAME } from '@/lib/site'
+import styles from './Header.module.scss'
 
 // 상단 헤더 — 모든 페이지에 공통으로 보인다
 //
 // Step 3-1: 로고를 홈("/")으로 가는 Link로 바꿨다.
 // 쇼핑몰에서 로고를 누르면 홈으로 가는 것은 사용자가 기대하는 기본 동작이다.
 //
-// Step 3-1 (Next.js 전환): 다크 모드 상태를 App.jsx에서 이 컴포넌트로 옮겼다.
-// - Next.js의 layout.tsx는 기본이 '서버 컴포넌트'라 useState를 쓸 수 없다.
-// - 그래서 상태가 필요한 부분(다크 모드 버튼)만 'use client' 컴포넌트로 만든다.
-//   → 클라이언트 컴포넌트를 '필요한 곳에만 작게' 두는 것이 Next.js의 기본 설계 방식이다.
-// - 'dark' 클래스는 예전처럼 감싸는 div가 아니라 <html> 태그에 직접 붙인다.
-//
-// 'use client'란?
-// 파일 맨 위에 적으면 "이 컴포넌트는 브라우저에서도 실행된다"는 표시가 된다.
-// useState, useEffect, onClick 같은 상호작용은 브라우저에서만 동작하므로 이 표시가 필요하다.
-//
-// ⚠️ 알려진 한계 (Step 3-2에서 개선)
-// 새로고침하면 다크 모드가 풀린다. 3-2에서 CSS 변수 테마로 바꾸면서 localStorage 저장까지 다룬다.
+// Step 3-2: 다시 '서버 컴포넌트'가 되었다.
+// - 3-1에서는 다크 모드 state 때문에 헤더 전체가 'use client'였다.
+// - 다크 모드 버튼을 ThemeToggle로 분리하고, 테마 값은 <html data-theme>에 두도록 바꾸면서
+//   헤더 자체에는 상호작용이 없어졌다. → 헤더는 서버에서 HTML로만 그리고, 브라우저로 JS를 보내지 않는다.
+// - 원칙 그대로: 'use client'는 상호작용이 필요한 가장 작은 부분(ThemeToggle)에만.
 function Header() {
-  const [dark, setDark] = useState(false)
-
-  // useEffect: 렌더링이 끝난 뒤 'React 바깥'의 것(여기서는 <html> 태그)을 바꿀 때 쓴다.
-  // [dark]: dark 값이 바뀔 때마다 다시 실행한다.
-  // classList.toggle('dark', dark): dark가 true면 클래스를 붙이고, false면 뗀다.
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark)
-  }, [dark])
-
   return (
-    <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/80 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
-            {/* 'S' 로고는 옆의 'Shoppr' 글자와 중복이라 스크린리더가 읽지 않게 한다 */}
-            <div aria-hidden="true" className="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold text-lg">
-              S
-            </div>
-            <span className="text-xl font-bold tracking-tight">Shoppr</span>
-          </Link>
-          {/* 아이콘만 있는 버튼: variant="ghost"(배경 없음) + size="icon"(정사각형 여백)
-              글자가 없으므로 aria-label로 스크린리더가 읽을 이름을 꼭 준다 */}
-          <Button
-            variant="ghost"
-            size="icon"
-            // setDark((d) => !d): 이전 값을 받아 뒤집는 함수형 업데이트
-            onClick={() => setDark((d) => !d)}
-            aria-label="Toggle dark mode"
-          >
-            {dark ? <Sun /> : <Moon />}
-          </Button>
-        </div>
+    <header className={styles.header}>
+      <div className={styles.inner}>
+        <Link href="/" className={styles.logo}>
+          {/* 'S' 로고는 옆의 'Shoppr' 글자와 중복이라 스크린리더가 읽지 않게 한다 */}
+          <span aria-hidden="true" className={styles.logoMark}>
+            S
+          </span>
+          <span className={styles.logoText}>{SITE_NAME}</span>
+        </Link>
+        <ThemeToggle />
       </div>
     </header>
   )

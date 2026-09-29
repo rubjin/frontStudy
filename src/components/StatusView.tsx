@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import styles from './StatusView.module.scss'
 
 // 상태 안내 화면 공통 컴포넌트 (Step 3-1)
 //
@@ -27,17 +28,17 @@ interface StatusViewProps {
 
 function StatusView({ code, title, description, children }: StatusViewProps) {
   return (
-    <div className="py-20 text-center">
+    <div className={styles.root}>
       {/* 상태 코드는 장식용 큰 글씨. 제목이 뜻을 전달하므로 스크린리더에는 숨긴다 */}
       {code && (
-        <p aria-hidden="true" className="text-6xl font-bold text-primary-200 dark:text-gray-700">
+        <p aria-hidden="true" className={styles.code}>
           {code}
         </p>
       )}
-      <h1 className="mt-4 text-2xl font-bold">{title}</h1>
-      {description && <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{description}</p>}
+      <h1 className={styles.title}>{title}</h1>
+      {description && <p className={styles.description}>{description}</p>}
       {/* 버튼이 여러 개일 수 있으므로 가로로 나열하고, 좁은 화면에서는 줄바꿈(flex-wrap) */}
-      {children && <div className="mt-6 flex flex-wrap justify-center gap-3">{children}</div>}
+      {children && <div className={styles.actions}>{children}</div>}
     </div>
   )
 }

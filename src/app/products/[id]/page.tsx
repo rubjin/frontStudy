@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import styles from './page.module.scss'
 
 // 상품 상세 페이지 — 주소 "/products/:id" (Step 3-1: 뼈대만)
 //
@@ -32,11 +33,11 @@ export default async function ProductDetailPage({ params }: PageProps<'/products
   const { id } = await params
 
   return (
-    <div className="py-20 text-center">
-      <h1 className="text-lg font-semibold">상품 #{id} 상세 페이지</h1>
-      <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Step 4에서 완성할 예정입니다.</p>
+    <div className={styles.root}>
+      <h1 className={styles.title}>상품 #{id} 상세 페이지</h1>
+      <p className={styles.note}>Step 4에서 완성할 예정입니다.</p>
       {/* next/link의 Link: <a href>처럼 보이지만, 페이지를 새로 불러오지 않고 화면만 바꾼다 */}
-      <Link href="/" className="mt-6 inline-block text-sm font-medium text-primary-600 hover:underline dark:text-primary-400">
+      <Link href="/" className={styles.back}>
         ← 목록으로
       </Link>
     </div>

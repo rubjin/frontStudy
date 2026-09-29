@@ -1,0 +1,27 @@
+@use 'styles' as *;
+
+// 정렬 선택 상자 스타일 (Step 3-2)
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: space(2);
+}
+
+.label {
+  @include text(sm);
+  color: var(--color-text-muted);
+}
+
+.select {
+  padding: space(1.5) space(3);
+  border: 1px solid var(--color-border);
+  border-radius: $radius-md;
+  background-color: var(--color-surface);
+  @include text(sm);
+  color: var(--color-text-secondary);
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}

@@ -1,0 +1,74 @@
+@use 'styles' as *;
+
+// Button / ButtonLink 스타일 (Step 3-2)
+//
+// CSS Module(.module.scss)이란?
+// - 여기서 만든 클래스 이름(.button)은 빌드할 때 'Button-module-scss-module__OoW-YW__button'처럼 고유한 이름으로 바뀐다.
+// - 그래서 다른 파일에 .button이 또 있어도 절대 충돌하지 않는다. (BEM 같은 긴 이름 규칙이 필요 없다)
+// - TSX에서는 import styles from './Button.module.scss' 후 styles.button 으로 쓴다.
+//
+// 구조: 공통(.button) + 모양(.primary 등) + 크기(.md 등) 클래스를 조합한다.
+//   <button class="button primary md">  ← 퍼블리셔에게 익숙한 .btn .btn-primary .btn-md 와 같은 구조
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: space(2);
+  border-radius: $radius-md;
+  @include text(sm);
+  font-weight: $font-weight-medium;
+  transition:
+    background-color $duration-fast,
+    color $duration-fast,
+    border-color $duration-fast;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+
+  // 비활성 버튼. <a>에는 disabled 속성이 없으므로 aria-disabled도 함께 처리한다
+  &:disabled,
+  &[aria-disabled='true'] {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+// ─── variant (역할) ──────────────────────────────────────
+// 색은 모두 테마 변수(--color-...)를 쓴다. → 다크 모드용 코드를 여기에 따로 쓸 필요가 없다.
+.primary {
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+
+  // :not(:disabled): 비활성 버튼은 hover해도 색이 바뀌지 않게
+  &:hover:not(:disabled) {
+    background-color: var(--color-primary-hover);
+  }
+}
+
+.secondary {
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-text-secondary);
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-surface-hover);
+  }
+}
+
+.ghost {
+  color: var(--color-text-secondary);
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-surface-hover);
+  }
+}
+
+// ─── size (크기) ─────────────────────────────────────────
+.md {
+  padding: space(2) space(4);
+}
+
+.icon {
+  padding: space(2);
+}

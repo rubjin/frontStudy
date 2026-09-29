@@ -1,4 +1,5 @@
 import { Search } from './icons'
+import styles from './SearchBar.module.scss'
 
 // 검색 입력창 (Step 1)
 //
@@ -16,9 +17,9 @@ interface SearchBarProps {
 
 function SearchBar({ value, onChange }: SearchBarProps) {
   return (
-    <div className="relative max-w-xl mx-auto mb-10">
+    <div className={styles.wrap}>
       {/* 돋보기 아이콘: absolute로 입력창 왼쪽 안에 겹쳐 놓는다 */}
-      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+      <span className={styles.icon}>
         <Search />
       </span>
       <input
@@ -27,7 +28,10 @@ function SearchBar({ value, onChange }: SearchBarProps) {
         // e.target.value: 이벤트가 일어난 input의 현재 입력값
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search products..."
-        className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 transition-all duration-200"
+        // aria-label: 눈에 보이는 <label>이 없는 입력창에 스크린리더용 이름을 준다 (Step 3-2에서 추가)
+        // placeholder는 입력을 시작하면 사라지고, 스크린리더가 이름으로 읽지 않을 수 있어서 이름 대신 쓰면 안 된다
+        aria-label="상품 검색"
+        className={styles.input}
       />
     </div>
   )

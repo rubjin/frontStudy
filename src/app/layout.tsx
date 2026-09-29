@@ -2,7 +2,14 @@ import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import Header from '@/components/Header'
 import { SITE_NAME, formatTitle } from '@/lib/site'
-import './globals.css'
+import { themeInitScript } from '@/lib/theme'
+// 한글 웹폰트 Pretendard (Step 3-2)
+// dynamic subset: 폰트 파일(2MB)을 약 90조각으로 나눠 두고, CSS의 unicode-range로
+// '화면에 실제로 나온 글자가 들어 있는 조각'만 브라우저가 내려받는다. → 한글 폰트를 가볍게 쓰는 실무 표준 방법
+import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css'
+// 전역 스타일: 테마 색상 변수, 리셋, body 기본값 (Step 3-2에서 globals.css → styles/globals.scss)
+import '@/styles/globals.scss'
+import styles from './layout.module.scss'
 
 // 루트 레이아웃 — 모든 페이지를 감싸는 공통 틀 (Step 3-1, Vite의 App.jsx + index.html 역할)
 //
@@ -16,7 +23,7 @@ import './globals.css'
 //
 // 이 컴포넌트는 '서버 컴포넌트'다 ('use client'가 없음)
 // - 서버에서 HTML로 미리 그려서 보내므로 첫 화면이 빠르고, 검색엔진이 내용을 읽을 수 있다.
-// - 대신 useState, onClick 같은 브라우저 기능은 못 쓴다. 그런 부분은 Header처럼 따로 뺀다.
+// - 대신 useState, onClick 같은 브라우저 기능은 못 쓴다. 그런 부분은 ThemeToggle(다크 모드 버튼)처럼 작은 'use client' 컴포넌트로 따로 뺀다.
 
 // metadata: <title>, <meta name="description"> 등 <head> 안의 태그를 만들어 준다. (예전 index.html의 <head>)
 //
@@ -60,11 +67,20 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     //   · 브라우저 확장 프로그램(다크 리더, 번역기 등)이 속성을 추가할 때
     //   · Step 3-2: 새로고침 때 다크 모드 깜빡임을 막으려고, React보다 먼저 실행되는 스크립트가 data-theme을 붙일 때
     // - 자식 태그의 차이는 여전히 경고하므로 진짜 버그를 가리지 않는다. 경고를 끄는 도구라 이 태그에만 쓴다.
-    // ※ 지금 Header는 useEffect(하이드레이션 이후 실행)로 클래스를 붙이므로 이 속성 때문에 동작하는 것은 아니다.
+    // ※ Step 3-2부터 실제로 필요하다: 아래 <script>가 서버 HTML에 없던 data-theme="dark"를 <html>에 붙이기 때문.
+    //   이 속성을 지우고 다크 모드로 새로고침하면 콘솔에 하이드레이션 경고가 뜬다.
     <html lang="ko" suppressHydrationWarning>
-      <body className="min-h-screen transition-colors duration-300">
+      <head>
+        {/* 다크 모드 깜빡임 방지 스크립트 (Step 3-2, lib/theme.ts)
+            <head>에 넣어서 화면(body)이 그려지기 전에 실행되게 한다.
+            dangerouslySetInnerHTML: 문자열을 태그 안에 그대로 넣는 React 문법.
+            이름이 무서운 이유는 사용자가 입력한 값을 넣으면 XSS 공격에 뚫리기 때문이다.
+            여기는 우리가 직접 쓴 고정 문자열이라 안전하다. */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body>
         <Header />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</main>
+        <main className={styles.main}>{children}</main>
       </body>
     </html>
   )

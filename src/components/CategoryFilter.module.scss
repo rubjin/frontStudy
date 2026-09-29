@@ -1,0 +1,41 @@
+@use 'styles' as *;
+
+// 카테고리 버튼(칩) 스타일 (Step 3-2)
+
+.group {
+  display: flex;
+  flex-wrap: wrap; // 버튼이 많으면 다음 줄로
+  gap: space(2);
+}
+
+.chip {
+  padding: space(1.5) space(4);
+  border: 1px solid var(--color-border);
+  border-radius: $radius-full; // 알약 모양
+  background-color: var(--color-surface);
+  @include text(sm);
+  font-weight: $font-weight-medium;
+  color: var(--color-text-secondary);
+  transition:
+    background-color $duration-fast,
+    border-color $duration-fast,
+    color $duration-fast;
+
+  &:hover {
+    background-color: var(--color-surface-hover);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+
+  // 선택된 칩: 클래스를 따로 붙이지 않고 aria-pressed 속성을 선택자로 쓴다
+  // → 스크린리더에 알리는 '상태'와 눈에 보이는 '모양'이 항상 같이 움직인다.
+  //   (클래스로 하면 aria-pressed는 빼먹고 색만 바꾸는 실수를 할 수 있다)
+  // :hover보다 아래에 써서, 선택된 칩은 hover해도 색이 유지되게 한다 (같은 우선순위면 나중 규칙이 이김)
+  &[aria-pressed='true'] {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+}
