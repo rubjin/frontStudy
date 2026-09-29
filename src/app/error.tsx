@@ -33,13 +33,20 @@ export default function ErrorPage({ error, retry }: ErrorPageProps) {
   }, [error])
 
   return (
-    <StatusView code="500" title="문제가 발생했습니다" description="일시적인 오류일 수 있습니다. 잠시 후 다시 시도해 주세요.">
-      <button type="button" onClick={() => retry()} className={statusPrimaryAction}>
-        다시 시도
-      </button>
-      <Link href="/" className={statusSecondaryAction}>
-        홈으로 가기
-      </Link>
-    </StatusView>
+    // Fragment(<>): <title>과 StatusView를 함께 돌려주려고 감싼다
+    <>
+      {/* error.tsx는 'use client'라서 metadata를 내보낼 수 없다.
+          대신 React 19부터는 컴포넌트 어디에서든 <title>을 쓰면 React가 <head>로 옮겨 준다.
+          이 방식은 레이아웃의 title.template이 적용되지 않으므로 '| Shoppr'까지 직접 적는다. */}
+      <title>문제가 발생했습니다 | Shoppr</title>
+      <StatusView code="500" title="문제가 발생했습니다" description="일시적인 오류일 수 있습니다. 잠시 후 다시 시도해 주세요.">
+        <button type="button" onClick={() => retry()} className={statusPrimaryAction}>
+          다시 시도
+        </button>
+        <Link href="/" className={statusSecondaryAction}>
+          홈으로 가기
+        </Link>
+      </StatusView>
+    </>
   )
 }

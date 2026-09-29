@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 
 // 상품 상세 페이지 — 주소 "/products/:id" (Step 3-1: 뼈대만)
@@ -12,6 +13,18 @@ import Link from 'next/link'
 // - Next.js 15부터 params는 Promise라서 await로 꺼낸다. 그래서 함수에 async를 붙였다.
 //   (서버 컴포넌트는 async 함수가 될 수 있다. 나중에 여기서 바로 DB·API 데이터를 가져올 수 있다.)
 // ⚠️ 주소에서 온 값은 항상 '문자열'이다. 숫자 id와 비교하려면 Number()로 바꿔야 한다. (Step 4에서 사용)
+
+// generateMetadata: 주소마다 다른 <title>을 만들 때 쓴다.
+// - 고정된 제목이면 not-found.tsx처럼 'export const metadata = {...}'로 충분하다.
+// - 상세 페이지는 id에 따라 제목이 달라야 하므로 '함수'로 만들고, Next.js가 요청마다 호출한다.
+// - 결과 제목은 레이아웃의 title.template에 들어가서 '상품 #3 | Shoppr'가 된다.
+// ※ Step 4에서 실제 상품명·설명으로 바꾸고, 없는 id면 notFound()로 404 처리한다.
+export async function generateMetadata({ params }: PageProps<'/products/[id]'>): Promise<Metadata> {
+  const { id } = await params
+  return {
+    title: `상품 #${id}`,
+  }
+}
 
 // PageProps<'/products/[id]'>: Next.js가 폴더 구조를 보고 자동으로 만들어 주는 타입.
 // params 안에 id가 있다는 것까지 알고 있어서, 오타를 내면 에러가 난다.

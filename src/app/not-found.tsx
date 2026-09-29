@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import StatusView, { statusPrimaryAction } from '@/components/StatusView'
 
@@ -10,6 +11,14 @@ import StatusView, { statusPrimaryAction } from '@/components/StatusView'
 //
 // 화면 모양은 StatusView가 맡고, 이 파일은 404에 맞는 문구와 버튼만 정한다.
 // 나중에 Step 4에서 없는 상품 id(/products/999)용 not-found.tsx를 따로 만들 때도 StatusView를 재사용한다.
+//
+// metadata: 레이아웃의 title.template('%s | Shoppr')에 들어가서 '페이지를 찾을 수 없습니다 | Shoppr'가 된다.
+// 404 응답에는 Next.js가 <meta name="robots" content="noindex">를 자동으로 넣어 준다.
+// → 없는 페이지가 검색 결과에 나오지 않도록 따로 설정할 필요가 없다.
+export const metadata: Metadata = {
+  title: '페이지를 찾을 수 없습니다',
+}
+
 function NotFoundPage() {
   return (
     <StatusView code="404" title="페이지를 찾을 수 없습니다" description="주소가 잘못되었거나 삭제된 페이지입니다.">

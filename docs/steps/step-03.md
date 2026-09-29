@@ -68,11 +68,11 @@ src/index.css                        →    src/app/globals.css
 | `tailwind.config.ts`, `postcss.config.mjs` | 확장자만 변경, `content` 경로 수정. **3-2에서 삭제 예정** |
 | `.gitignore` | `.next`(빌드 결과), `next-env.d.ts`, `*.tsbuildinfo` 추가 |
 | `src/types/product.ts` (새 파일) | 상품 데이터 모양(`Product` 인터페이스) |
-| `src/app/layout.tsx` | `<html lang="ko">`, `<body>`, Header, `<main>`. `metadata`로 `<title>` 설정 |
+| `src/app/layout.tsx` | `<html lang="ko">`, `<body>`, Header, `<main>`. `metadata`로 제목 틀(`title.template`)·설명·Open Graph 설정 |
 | `src/app/page.tsx` (새 파일) | "/" 페이지. 스크린리더용 `h1` + `ProductCatalog` |
 | `src/components/ProductCatalog.tsx` | 예전 목록 페이지. `'use client'` + 상태 타입(`useState<SortValue>`) |
 | `src/components/Header.tsx` | 다크 모드 상태를 직접 가짐. `<html>`에 `dark` 클래스를 붙임 |
-| `src/app/products/[id]/page.tsx` | `params`를 `await`로 꺼내는 async 서버 컴포넌트 |
+| `src/app/products/[id]/page.tsx` | `params`를 `await`로 꺼내는 async 서버 컴포넌트. `generateMetadata`로 id별 제목 |
 | `src/app/not-found.tsx` | 약속된 파일 이름이라 자동으로 404에 쓰임. 화면은 `StatusView`에 맡기고 문구·버튼만 정함 |
 | `src/components/StatusView.tsx` (새 파일) | 404·에러 화면의 공통 모양(코드 · 제목 · 설명 · 버튼 자리) |
 | `src/app/error.tsx` (새 파일) | 페이지를 그리다 에러가 나면 그 자리만 바꿔 끼우는 화면. 다시 시도 / 홈으로 |
@@ -187,6 +187,37 @@ Next.js의 에러 관련 파일 규칙
 - `retry()`: 에러 난 부분을 다시 불러와서 그려 본다. 일시적인 네트워크 문제라면 복구된다. (예전 문서·블로그에는 `reset`으로 나오지만 Next.js 16에서는 `retry`를 권장)
 - 운영 환경에서 서버 에러의 `error.message`는 보안상 일반 문구로 바뀐다. 에러 원인을 화면에 그대로 보여 주지 않는다.
 
+**8. 페이지별 metadata — 제목 틀은 레이아웃에, 제목은 페이지에**
+```tsx
+// layout.tsx — 사이트 전체 기본값
+export const metadata: Metadata = {
+  title: { template: '%s | Shoppr', default: 'Shoppr — 상품 목록 쇼핑몰' },
+  description: '...',
+  openGraph: { siteName: 'Shoppr', locale: 'ko_KR', type: 'website' },
+}
+
+// not-found.tsx — 제목이 고정이면 객체로
+export const metadata: Metadata = { title: '페이지를 찾을 수 없습니다' }
+
+// products/[id]/page.tsx — 주소에 따라 달라지면 함수로
+export async function generateMetadata({ params }): Promise<Metadata> {
+  const { id } = await params
+  return { title: `상품 #${id}` }
+}
+```
+| 주소 | 결과 `<title>` | 어디서 정했나 |
+| --- | --- | --- |
+| `/` | Shoppr — 상품 목록 쇼핑몰 | 레이아웃 `default` (홈은 title을 안 적음) |
+| `/products/3` | 상품 #3 | Shoppr | `generateMetadata` + `template` |
+| `/abc` | 페이지를 찾을 수 없습니다 | Shoppr | `not-found.tsx`의 metadata + `template` |
+| 에러 발생 | 문제가 발생했습니다 | Shoppr | `error.tsx` 안의 `<title>` 태그 |
+
+- **왜 페이지마다 제목을 다르게?** 브라우저 탭·북마크에서 구분되고, 스크린리더는 페이지를 옮길 때 `<title>`을 먼저 읽는다(WCAG 2.4.2). 검색 결과에 보이는 제목도 이것이다.
+- **덮어쓰기 규칙**: 페이지의 metadata는 레이아웃 값 위에 덮어쓰고, 적지 않은 항목(description, openGraph 등)은 레이아웃 값을 물려받는다.
+- **`error.tsx`는 예외**: `'use client'` 파일은 metadata를 내보낼 수 없다. React 19부터는 컴포넌트 안에 `<title>`을 쓰면 React가 `<head>`로 옮겨 주므로 이 방법을 쓴다. template이 적용되지 않아 `| Shoppr`까지 직접 적는다.
+- **404와 검색엔진**: 404 응답에는 Next.js가 `<meta name="robots" content="noindex">`를 자동으로 넣는다. 따로 설정할 필요가 없다.
+- **미리보기 이미지(og:image)** 는 절대 주소가 필요해서 배포 주소가 생기는 Step 11에서 `metadataBase`와 함께 추가한다.
+
 ### 확인 방법
 1. `npm run dev` 후 http://localhost:3000 에서 목록 · 검색 · 카테고리 · 정렬 · 품절 숨기기가 전과 똑같이 동작하는지
 2. 카드를 누르면 `/products/번호`로 이동하는지, 로고를 누르면 목록으로 오는지
@@ -195,7 +226,8 @@ Next.js의 에러 관련 파일 규칙
 5. **페이지 소스 보기(Ctrl+U)** 에서 상품 이름이 HTML에 들어 있는지 — 서버 렌더링의 증거. (Vite 때는 `<div id="root"></div>`뿐이었다)
 6. `src/data/products.ts`에서 아무 상품의 `price`를 `'abc'`로 바꿔 보기 → 에디터에 빨간 줄이 생기고 `npx tsc --noEmit`이 에러를 내는지 (확인 후 되돌리기)
 7. `npm run build`, `npm run lint`가 에러 없이 끝나는지
-8. 에러 화면 확인: `src/app/boom/page.tsx`를 아래처럼 임시로 만들고 `/boom`에 접속 → **헤더는 남고** 본문만 "문제가 발생했습니다"로 바뀌는지. 확인 후 폴더째 삭제
+9. 브라우저 탭 제목이 위 표처럼 페이지마다 다르게 바뀌는지. 페이지 소스 보기에서 `/abc`에만 `noindex`가 있는지
+10. 에러 화면 확인: `src/app/boom/page.tsx`를 아래처럼 임시로 만들고 `/boom`에 접속 → **헤더는 남고** 본문만 "문제가 발생했습니다"로 바뀌는지. 확인 후 폴더째 삭제
    ```tsx
    export default function Boom(): never {
      throw new Error('test')
