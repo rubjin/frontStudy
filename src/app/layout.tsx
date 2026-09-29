@@ -52,7 +52,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     // lang="ko": 스크린리더가 한국어 발음으로 읽게 한다 (예전 index.html은 "en"이었다)
-    // suppressHydrationWarning: Header가 브라우저에서 class="dark"를 붙여도 경고를 내지 않게 한다
+    // suppressHydrationWarning: <html> 태그 '한 단계'의 속성이 서버 HTML과 달라도 경고를 내지 않게 한다
+    // - 하이드레이션: 서버가 보낸 HTML에 브라우저의 React가 이벤트를 연결하는 과정. 이때 두 결과가 다르면 경고한다.
+    // - <html>은 React보다 먼저 바뀌는 경우가 있다.
+    //   · 브라우저 확장 프로그램(다크 리더, 번역기 등)이 속성을 추가할 때
+    //   · Step 3-2: 새로고침 때 다크 모드 깜빡임을 막으려고, React보다 먼저 실행되는 스크립트가 data-theme을 붙일 때
+    // - 자식 태그의 차이는 여전히 경고하므로 진짜 버그를 가리지 않는다. 경고를 끄는 도구라 이 태그에만 쓴다.
+    // ※ 지금 Header는 useEffect(하이드레이션 이후 실행)로 클래스를 붙이므로 이 속성 때문에 동작하는 것은 아니다.
     <html lang="ko" suppressHydrationWarning>
       <body className="min-h-screen transition-colors duration-300">
         <Header />
