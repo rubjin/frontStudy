@@ -1,5 +1,6 @@
-import { Link } from 'react-router'
-import { formatPrice } from '../lib/format'
+import Link from 'next/link'
+import { formatPrice } from '@/lib/format'
+import type { Product } from '@/types/product'
 
 // 상품 카드 한 장 (Step 1)
 //
@@ -15,7 +16,18 @@ import { formatPrice } from '../lib/format'
 // 왜 카드 전체를 <a>로 감싸지 않나?
 // - 스크린리더가 카드 안의 모든 글자(카테고리, 가격, 평점...)를 링크 이름으로 한꺼번에 읽어서 듣기 힘들다.
 // - 이 방식이면 링크 이름은 '상품명'만 되고, 클릭 영역은 카드 전체가 된다.
-function Card({ product }) {
+//
+// Step 3-1 (Next.js 전환)
+// - react-router의 <Link to>가 아니라 next/link의 <Link href>를 쓴다. 역할은 같다.
+// - props 타입(CardProps)을 정의했다. product에 Product 모양이 아닌 값을 넘기면 에디터가 에러를 낸다.
+//
+// props
+// - product: 보여 줄 상품 객체
+interface CardProps {
+  product: Product
+}
+
+function Card({ product }: CardProps) {
   // 구조 분해 할당: product.name, product.price ... 를 짧은 변수로 꺼낸다
   const { name, price, category, rating, stock } = product
   // 재고 0 → 품절. 조건을 이름 있는 변수로 만들어 두면 JSX가 읽기 쉬워진다
@@ -45,7 +57,7 @@ function Card({ product }) {
       </p>
       <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">
         {/* focus:outline-none: 링크 자체의 기본 포커스 선은 숨기고, 위의 카드 ring으로 대신 보여 준다 */}
-        <Link to={`/products/${product.id}`} className="after:absolute after:inset-0 focus:outline-none">
+        <Link href={`/products/${product.id}`} className="after:absolute after:inset-0 focus:outline-none">
           {name}
         </Link>
       </h3>

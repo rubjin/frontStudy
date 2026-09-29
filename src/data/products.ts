@@ -1,8 +1,10 @@
+import type { Product } from '@/types/product'
+
 // 상품 목 데이터 (Step 1)
 //
 // 목(mock) 데이터: 실제 서버 대신 쓰는 가짜 데이터.
 // Step 1에서 컴포넌트 안에 있던 데이터를 이 파일로 분리했다.
-// → 화면(컴포넌트)과 데이터를 나눠 두면, Step 5에서 API로 바꿀 때 이 파일만 교체하면 된다.
+// → 화면(컴포넌트)과 데이터를 나눠 두면, Step 6에서 API로 바꿀 때 이 파일만 교체하면 된다.
 //
 // 필드 설명
 // - id:       상품 고유 번호 (목록 렌더링의 key로 사용)
@@ -11,7 +13,9 @@
 // - category: 카테고리 (필터에 사용)
 // - rating:   평점 (0~5)
 // - stock:    재고 수량. 0이면 품절로 표시한다
-export const products = [
+//
+// Step 3-1: Product[] 타입을 붙였다. 필드를 빠뜨리거나 price에 문자열을 넣으면 에디터가 바로 알려 준다.
+export const products: Product[] = [
   { id: 1,  name: '무선 노이즈캔슬링 헤드폰', price: 189000, category: '오디오',   rating: 4.6, stock: 12 },
   { id: 2,  name: '스마트워치 5세대',         price: 329000, category: '웨어러블', rating: 4.3, stock: 5  },
   { id: 3,  name: '휴대용 블루투스 스피커',   price: 79000,  category: '오디오',   rating: 4.1, stock: 0  },

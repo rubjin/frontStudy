@@ -1,4 +1,5 @@
 import Card from './Card'
+import type { Product } from '@/types/product'
 
 // 상품 카드 목록 (Step 1에서 만들고 Step 2에서 역할을 줄임)
 //
@@ -9,7 +10,12 @@ import Card from './Card'
 // props
 // - products: 이미 걸러진 상품 배열
 // - query:    검색어 (결과가 없을 때 안내 문구에 쓰려고 받는다)
-function CardGrid({ products, query }) {
+interface CardGridProps {
+  products: Product[]
+  query: string
+}
+
+function CardGrid({ products, query }: CardGridProps) {
   // 빈 상태 화면: 결과가 0개일 때 빈 화면 대신 이유와 다음 행동을 알려 준다.
   // 포트폴리오에서 '빈 상태/로딩/에러'까지 챙긴 UI는 좋은 인상을 준다.
   if (products.length === 0) {

@@ -1,107 +1,184 @@
-# Step 3. 라우팅 — 상세 페이지 · URL로 상태 관리
+# Step 3. 실무 환경 전환 — Next.js · TypeScript · SCSS Module · Storybook
 
 > 상태: 진행 중 (3-1 완료)
 
 ## 목표
-지금까지는 화면이 하나뿐이었다. 실제 서비스에는 **주소(URL)마다 다른 페이지**가 있다.
-react-router로 목록 · 상세 · 404 페이지를 나누고, 마지막에는 검색·필터 상태를 URL에 담아 **새로고침해도 유지되고 링크로 공유할 수 있게** 만든다.
+지금까지는 Vite + JavaScript + Tailwind로 "React가 어떻게 동작하는지"를 익혔다.
+실무 프론트엔드 채용 공고에서 가장 많이 보이는 조합은 **Next.js + TypeScript**이고, 퍼블리셔 출신의 강점은 **CSS 설계(SCSS)와 컴포넌트 문서화(Storybook)** 로 보여 줄 수 있다.
+Step 3에서는 **화면은 그대로 두고, 그 아래의 개발 환경을 실무형으로 바꾼다.**
 
 ## 세부 단계
-- [x] **3-1** 라우터 설치, 페이지 나누기(목록 / 상세 뼈대 / 404), 카드를 링크로
-- [ ] **3-2** 상품 상세 페이지 완성
-- [ ] **3-3** 검색·필터·정렬 상태를 URL 쿼리로 옮기기
+- [x] **3-1** Vite → Next.js(App Router) + TypeScript
+- [ ] **3-2** Tailwind → SCSS Module (디자인 토큰, mixin, CSS 변수 다크 모드)
+- [ ] **3-3** Storybook (컴포넌트 스토리, 자동 문서, 접근성 검사)
+- [ ] **3-4** 코드 품질 도구 (Prettier, Stylelint, husky + lint-staged)
+
+> 한 번에 다 바꾸지 않고, **각 단계가 끝날 때마다 화면이 정상 동작하는 상태**를 유지한다.
+> 그래서 3-1에서는 스타일(Tailwind)을 건드리지 않고 프레임워크와 언어만 바꿨다.
 
 ---
 
-## 3-1. 라우터 설치와 페이지 나누기
+## 3-1. Vite → Next.js + TypeScript
 
-### 설치
+### 왜 바꾸나?
+| | Vite + React (이전) | Next.js (지금) |
+| --- | --- | --- |
+| 화면을 그리는 곳 | 브라우저에서만 (빈 `index.html` → JS가 전부 그림) | **서버에서 HTML을 미리 그려서** 보냄 |
+| 첫 화면 / 검색엔진 | JS가 실행돼야 내용이 보임 | HTML에 내용이 이미 있음 → 빠르고 SEO 유리 |
+| 라우팅 | react-router 설치 후 `<Route>` 직접 작성 | **폴더 구조 = 주소** (파일 기반) |
+| 404 | 없는 주소도 200 OK 응답 | 진짜 404 상태 코드 응답 |
+| 백엔드 | 별도 서버 필요 | `app/api`에 API도 만들 수 있음 (Step 6) |
+
+TypeScript는 원래 Step 9 계획이었지만, 어차피 모든 파일을 옮겨야 하므로 **지금 같이 바꾸는 게 비용이 가장 적다.**
+
+### 설치 · 제거한 것
 ```bash
-npm install react-router@7
+# 제거: Vite, react-router, Vite용 ESLint 플러그인
+npm uninstall vite @vitejs/plugin-react react-router eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-react-refresh globals @eslint/js
+# 추가: Next.js + React 19
+npm install next@16 react@19 react-dom@19
+# 추가: TypeScript와 타입 정의, Next.js용 ESLint 설정
+npm install -D typescript @types/node @types/react@19 @types/react-dom@19 eslint-config-next@16
 ```
-> 최신 react-router(v8)는 React 19가 필요하다. 이 프로젝트는 React 18이라 v7을 설치했다.
-> 라이브러리를 설치할 때는 **내 프로젝트의 React 버전과 맞는지(peerDependencies)** 확인하는 습관을 들이자.
-> 확인 명령: `npm view react-router peerDependencies`
+> 예전에 react-router v8이 React 19를 요구해서 v7을 썼는데, 이제 React 19로 올렸으므로 그 제약도 사라졌다. (react-router 자체도 더 이상 쓰지 않음)
 
 ### 바뀐 구조
 ```
-main.jsx
- └─ BrowserRouter          ← 주소 정보를 앱 전체에 제공
-     └─ App (상태: dark)    ← 모든 페이지 공통 레이아웃
-         ├─ Header          ← 로고 = 홈 링크
-         └─ Routes          ← 주소에 맞는 페이지 하나만 보여 줌
-             ├─ "/"              → ProductListPage   (Step 2의 목록 화면 + 상태 전부)
-             ├─ "/products/:id"  → ProductDetailPage (지금은 뼈대)
-             └─ "*"              → NotFoundPage
+[이전: Vite]                              [지금: Next.js]
+index.html                                (없음 — layout.tsx가 <html>을 그림)
+src/main.jsx  (BrowserRouter)             (없음 — Next.js가 알아서 처리)
+src/App.jsx   (다크 모드 + Routes)   →    src/app/layout.tsx        공통 틀 (서버 컴포넌트)
+                                          src/components/Header.tsx  다크 모드 상태 ('use client')
+src/pages/ProductListPage.jsx        →    src/app/page.tsx           "/" (서버 컴포넌트)
+                                          src/components/ProductCatalog.tsx  목록 상태 ('use client')
+src/pages/ProductDetailPage.jsx      →    src/app/products/[id]/page.tsx     "/products/3"
+src/pages/NotFoundPage.jsx           →    src/app/not-found.tsx              404
+src/index.css                        →    src/app/globals.css
+*.js / *.jsx                         →    *.ts / *.tsx
+(없음)                               →    src/types/product.ts       Product 타입
 ```
 
 ### 파일별 설명
 | 파일 | 역할 |
 | --- | --- |
-| `src/main.jsx` | 앱을 `BrowserRouter`로 감쌈 |
-| `src/App.jsx` | 레이아웃 + `Routes`만 담당. 목록 관련 상태는 목록 페이지로 이동 |
-| `src/pages/ProductListPage.jsx` (새 파일) | Step 2까지 App에 있던 목록 화면을 그대로 옮김 |
-| `src/pages/ProductDetailPage.jsx` (새 파일) | `useParams`로 id를 꺼내 보여 주는 뼈대 |
-| `src/pages/NotFoundPage.jsx` (새 파일) | 없는 주소일 때 보여 줄 404 화면 |
-| `src/components/Card.jsx` | 상품명에 `Link`를 걸고 '늘린 링크' 패턴으로 카드 전체를 클릭 영역으로 |
-| `src/components/Header.jsx` | 로고를 홈으로 가는 `Link`로 변경 |
+| `package.json` | 스크립트를 `next dev / build / start`로 변경. `"type": "module"` 제거 |
+| `tsconfig.json` (새 파일) | TypeScript 설정. `strict: true`(엄격 모드), `@/*` → `src/*` 경로 별칭 |
+| `next.config.ts` (새 파일) | Next.js 설정. 지금은 비어 있음 |
+| `eslint.config.mjs` | Next.js 권장 규칙(`core-web-vitals`) + TypeScript 규칙으로 교체 |
+| `tailwind.config.ts`, `postcss.config.mjs` | 확장자만 변경, `content` 경로 수정. **3-2에서 삭제 예정** |
+| `.gitignore` | `.next`(빌드 결과), `next-env.d.ts`, `*.tsbuildinfo` 추가 |
+| `src/types/product.ts` (새 파일) | 상품 데이터 모양(`Product` 인터페이스) |
+| `src/app/layout.tsx` | `<html lang="ko">`, `<body>`, Header, `<main>`. `metadata`로 `<title>` 설정 |
+| `src/app/page.tsx` (새 파일) | "/" 페이지. 스크린리더용 `h1` + `ProductCatalog` |
+| `src/components/ProductCatalog.tsx` | 예전 목록 페이지. `'use client'` + 상태 타입(`useState<SortValue>`) |
+| `src/components/Header.tsx` | 다크 모드 상태를 직접 가짐. `<html>`에 `dark` 클래스를 붙임 |
+| `src/app/products/[id]/page.tsx` | `params`를 `await`로 꺼내는 async 서버 컴포넌트 |
+| `src/app/not-found.tsx` | 약속된 파일 이름이라 자동으로 404에 쓰임 |
+| `src/components/*.tsx`, `src/lib/*.ts` | props·함수에 타입 추가, `react-router`의 `Link to` → `next/link`의 `Link href` |
 
 ### 핵심 개념
 
-**1. SPA와 클라이언트 라우팅**
-실제 HTML 파일은 `index.html` 하나뿐이다. 주소가 바뀌면 서버에서 새 페이지를 받지 않고 **React가 화면만 바꿔 끼운다.**
-그래서 페이지를 옮겨도 다크 모드 상태가 유지되고, 화면 전환이 빠르다.
-
-**2. `<Link>` vs `<a href>`**
-```jsx
-<a href="/products/3">   // 페이지 전체를 새로 불러옴 → 상태가 전부 초기화됨
-<Link to="/products/3">  // 주소만 바꾸고 React가 화면을 교체 → 상태 유지
+**1. 파일 기반 라우팅 (App Router)**
 ```
-앱 안에서 이동할 때는 `Link`, 외부 사이트로 갈 때는 `a`를 쓴다.
-`Link`도 실제로는 `<a>` 태그로 그려지므로 가운데 클릭(새 탭 열기)이나 접근성은 그대로 유지된다.
-
-**3. 동적 경로와 `useParams`**
-```jsx
-<Route path="/products/:id" element={<ProductDetailPage />} />
-
-const { id } = useParams() // /products/3 → id = '3' (문자열!)
+src/app/page.tsx                 → /
+src/app/products/[id]/page.tsx   → /products/1, /products/2 ...
+src/app/not-found.tsx            → 없는 주소
+src/app/layout.tsx               → 위 모든 페이지를 감싸는 공통 틀
 ```
-상품이 100개여도 Route는 하나면 된다. 주소에서 온 값은 **항상 문자열**이라 숫자와 비교할 때 `Number(id)`로 바꿔야 한다.
+`page.tsx`, `layout.tsx`, `not-found.tsx`처럼 **정해진 파일 이름**이 역할을 결정한다.
+`[id]`처럼 대괄호로 감싼 폴더는 react-router의 `:id`와 같다.
 
-**4. `pages/`와 `components/` 나누기**
-- `pages/`: 주소 하나에 대응하는 페이지
-- `components/`: 여러 곳에서 재사용하는 부품
-폴더만 봐도 "이 앱에 어떤 화면이 있는지" 알 수 있다.
+**2. 서버 컴포넌트 vs 클라이언트 컴포넌트** ← Next.js에서 가장 중요한 개념
+| | 서버 컴포넌트 (기본값) | 클라이언트 컴포넌트 (`'use client'`) |
+| --- | --- | --- |
+| 실행 위치 | 서버 | 서버(첫 HTML) + 브라우저 |
+| `useState`, `useEffect`, `onClick` | ❌ | ✅ |
+| `async`/`await`로 데이터 가져오기 | ✅ | ❌ (Step 7에서 TanStack Query로) |
+| 브라우저로 보내는 JS | 없음 | 있음 |
 
-**5. 늘린 링크(stretched link) 패턴 — 퍼블리셔 강점**
-```jsx
-<article className="relative ...">
-  <h3>
-    <Link to="/products/1" className="after:absolute after:inset-0">상품명</Link>
-  </h3>
-</article>
+그래서 이 프로젝트는 이렇게 나눴다.
 ```
-- 카드 전체를 `<a>`로 감싸면 스크린리더가 카드 안의 모든 글자를 링크 이름으로 한꺼번에 읽는다.
-- 링크는 상품명에만 걸고, `::after` 가상 요소를 카드 크기만큼 늘려서 **클릭 영역만 카드 전체로** 만든다.
-- 키보드 포커스는 `has-[:focus-visible]:ring-2`로 카드 전체에 테두리를 그려 보여 준다. CSS `:has()` 선택자를 사용한 것이다.
+layout.tsx (서버)
+ ├─ Header ('use client')         ← 다크 모드 버튼 = 상호작용 필요
+ └─ page.tsx (서버)
+     └─ ProductCatalog ('use client')  ← 검색·필터 상태 필요
+         └─ SearchBar, Card ...       ← 클라이언트 컴포넌트 안에서 import되면 자동으로 클라이언트
+```
+원칙: **`'use client'`는 필요한 곳에만, 최대한 아래쪽(잎사귀)에 작게 둔다.**
 
-**6. 404 페이지**
-SPA에서는 React가 주소를 해석하므로 **없는 주소 처리도 직접** 해야 한다. `path="*"`는 위의 어떤 Route와도 맞지 않을 때 쓰인다.
+**3. 다크 모드 상태가 Header로 이동한 이유**
+예전 `App.jsx`는 다크 모드 state를 갖고 `<div className="dark">`로 감쌌다.
+`layout.tsx`는 서버 컴포넌트라 state를 못 가지므로, 버튼이 있는 Header가 state를 갖고 `useEffect`로 `<html>`에 클래스를 붙인다.
+```tsx
+useEffect(() => {
+  document.documentElement.classList.toggle('dark', dark)
+}, [dark])
+```
+`useEffect`는 **React 바깥의 것(DOM, localStorage, 타이머 등)을 건드릴 때** 쓴다.
 
-### 알려진 문제 (의도적으로 남겨 둠 → 3-3에서 해결)
-1. 카테고리를 "오디오"로 바꾼다
-2. 카드를 눌러 상세 페이지로 간다
-3. "목록으로"를 누르거나 뒤로 가기를 한다
-4. → **필터가 "전체"로 초기화된다**
+**4. TypeScript 기초 — 이번에 쓴 문법**
+```ts
+// 객체 모양 정의
+interface Product { id: number; name: string; price: number }
 
-목록 페이지가 사라졌다가 새로 만들어지면서 `useState` 값도 처음으로 돌아가기 때문이다.
-3-3에서 이 상태를 URL(`/?category=오디오`)에 저장해서 해결한다.
+// props 타입
+interface CardProps { product: Product }
+function Card({ product }: CardProps) { ... }
+
+// 함수 타입: 문자열을 받고 아무것도 돌려주지 않는 함수
+onChange: (value: string) => void
+
+// 유니온 타입: 이 중 하나만 허용
+type SortValue = 'default' | 'price-asc' | 'price-desc' | 'rating'
+
+// 선택 필드
+hideSoldOut?: boolean
+
+// 제네릭: useState에 들어갈 값의 타입 지정
+useState<SortValue>('default')
+
+// 타입 단언: "내가 확실히 아니까 이 타입으로 봐 줘" (남용 금지)
+e.target.value as SortValue
+```
+퍼블리셔 관점으로 비유하면, TypeScript는 **HTML 유효성 검사기(validator)를 JS에 붙인 것**이다. 잘못된 속성·값을 실행 전에 잡아 준다.
+
+**5. 동적 라우트의 `params`는 Promise**
+```tsx
+export default async function ProductDetailPage({ params }: PageProps<'/products/[id]'>) {
+  const { id } = await params // '3' (여전히 문자열!)
+}
+```
+Next.js 15부터 `params`, `searchParams`는 Promise라서 `await`가 필요하다. `PageProps<'/products/[id]'>`는 Next.js가 폴더 구조를 보고 만들어 주는 타입이다.
+
+**6. 경로 별칭 `@/`**
+```ts
+import { formatPrice } from '../../lib/format' // 이전: 폴더 깊이마다 ../ 개수가 달라짐
+import { formatPrice } from '@/lib/format'     // 지금: 어디서든 같은 모양
+```
 
 ### 확인 방법
-1. 카드 아무 곳(이미지, 가격 등)을 눌러도 상세 페이지로 이동하는지. 주소가 `/products/번호`로 바뀌는지
-2. 브라우저 뒤로 가기가 동작하는지
-3. 헤더 로고를 누르면 목록으로 돌아오는지
-4. 주소창에 `/abc`를 입력하면 404 페이지가 나오는지
-5. 다크 모드를 켜고 페이지를 이동해도 다크 모드가 유지되는지
-6. Tab 키로 카드를 이동할 때 카드 전체에 파란 테두리가 생기는지
-7. 위의 "알려진 문제"를 직접 재현해 보기
+1. `npm run dev` 후 http://localhost:3000 에서 목록 · 검색 · 카테고리 · 정렬 · 품절 숨기기가 전과 똑같이 동작하는지
+2. 카드를 누르면 `/products/번호`로 이동하는지, 로고를 누르면 목록으로 오는지
+3. `/abc`로 들어가면 404 화면이 나오는지. 개발자 도구 Network 탭에서 **상태 코드가 404**인지 (Vite 때는 200이었다)
+4. 다크 모드 버튼이 동작하는지. 개발자 도구 Elements에서 `<html class="dark">`가 붙는지
+5. **페이지 소스 보기(Ctrl+U)** 에서 상품 이름이 HTML에 들어 있는지 — 서버 렌더링의 증거. (Vite 때는 `<div id="root"></div>`뿐이었다)
+6. `src/data/products.ts`에서 아무 상품의 `price`를 `'abc'`로 바꿔 보기 → 에디터에 빨간 줄이 생기고 `npx tsc --noEmit`이 에러를 내는지 (확인 후 되돌리기)
+7. `npm run build`, `npm run lint`가 에러 없이 끝나는지
+
+### 알려진 한계 (다음 단계에서 해결)
+- 새로고침하면 다크 모드가 풀린다 → 3-2
+- 상세 페이지 갔다가 돌아오면 필터가 초기화된다 → Step 4 (URL 쿼리)
+
+---
+
+## 참고: 전환 전 기록 — react-router로 했던 (구) 3-1
+> 커밋 `cbd77f1`. Vite + react-router 7로 목록 · 상세 뼈대 · 404 페이지를 나눴던 단계. 개념은 Next.js에서도 그대로 쓰이므로 요약해 남긴다.
+
+- **SPA와 클라이언트 라우팅**: HTML은 `index.html` 하나. 주소가 바뀌면 React가 화면만 교체한다. Next.js의 `Link`도 같은 방식으로 이동한다.
+- **`<Link>` vs `<a href>`**: 앱 안 이동은 `Link`(상태 유지), 외부 사이트는 `a`. `Link`도 실제로는 `<a>`로 그려져 접근성·새 탭 열기가 유지된다.
+- **동적 경로**: react-router `path="/products/:id"` + `useParams()` → Next.js `app/products/[id]/page.tsx` + `params`.
+- **늘린 링크(stretched link) 패턴** — 퍼블리셔 강점
+  - 카드 전체를 `<a>`로 감싸면 스크린리더가 카드 안의 모든 글자를 링크 이름으로 읽는다.
+  - 링크는 상품명에만 걸고, `::after`를 카드 크기만큼 늘려 **클릭 영역만 카드 전체로** 만든다.
+  - 키보드 포커스는 `:has(:focus-visible)`로 카드 전체에 테두리를 그린다. (3-2에서 SCSS로 옮김)
+- **404 페이지**: react-router에서는 `path="*"`로 직접 연결 → Next.js는 `not-found.tsx`.

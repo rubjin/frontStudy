@@ -9,7 +9,12 @@ import { Search } from './icons'
 // props
 // - value:    현재 검색어
 // - onChange: 검색어가 바뀔 때 호출할 함수 (새 문자열을 넘겨준다)
-function SearchBar({ value, onChange }) {
+interface SearchBarProps {
+  value: string
+  onChange: (value: string) => void
+}
+
+function SearchBar({ value, onChange }: SearchBarProps) {
   return (
     <div className="relative max-w-xl mx-auto mb-10">
       {/* 돋보기 아이콘: absolute로 입력창 왼쪽 안에 겹쳐 놓는다 */}

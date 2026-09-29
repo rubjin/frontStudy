@@ -1,10 +1,12 @@
+import type { Product } from '@/types/product'
+
 // 상품 목록을 걸러내는 로직만 모아 둔 파일 (Step 2)
 //
 // 왜 컴포넌트 밖으로 뺐나?
 // - 이 함수들은 JSX를 쓰지 않는 '순수 함수'다.
 //   순수 함수란: 같은 입력을 넣으면 항상 같은 결과가 나오고, 바깥 값을 바꾸지 않는 함수.
-// - 화면과 분리해 두면 어디서든 재사용할 수 있고, 테스트(Step 9)도 쉽다.
-// - 나중에 데이터를 API에서 받아와도(Step 5) 이 함수는 그대로 쓸 수 있다.
+// - 화면과 분리해 두면 어디서든 재사용할 수 있고, 테스트(Step 10)도 쉽다.
+// - 나중에 데이터를 API에서 받아와도(Step 6) 이 함수는 그대로 쓸 수 있다.
 
 // '전체' 문자열을 여러 파일에서 쓰기 때문에 상수로 만들어 둔다.
 // 오타로 '젼체'처럼 써서 생기는 버그를 막을 수 있다.
@@ -12,7 +14,7 @@ export const ALL_CATEGORIES = '전체'
 
 // 상품 데이터에서 카테고리 목록을 뽑아낸다.
 // 예) ['전체', '오디오', '웨어러블', '주변기기', ...]
-export function getCategories(products) {
+export function getCategories(products: Product[]): string[] {
   // products.map(...)      → 모든 상품의 카테고리만 모은 배열 (중복 있음)
   // new Set(...)           → Set은 중복을 허용하지 않는 자료구조라 중복이 자동으로 제거된다
   // [...new Set(...)]      → 전개 연산자(...)로 Set을 다시 배열로 펼친다
@@ -26,7 +28,18 @@ export function getCategories(products) {
 //
 // hideSoldOut = false: 기본값 매개변수.
 // 호출하는 쪽에서 hideSoldOut을 안 넘기면 false로 취급한다. → 기존 호출 코드가 깨지지 않는다.
-export function filterProducts(products, { query, category, hideSoldOut = false }) {
+// 필터 조건의 모양 (Step 3-1)
+// hideSoldOut?: 물음표는 '넘겨도 되고 안 넘겨도 되는(선택) 필드'라는 뜻
+export interface ProductFilter {
+  query: string
+  category: string
+  hideSoldOut?: boolean
+}
+
+export function filterProducts(
+  products: Product[],
+  { query, category, hideSoldOut = false }: ProductFilter,
+): Product[] {
   // 앞뒤 공백을 지우고(trim) 소문자로 바꿔서(toLowerCase) 대소문자 구분 없이 비교한다.
   const keyword = query.trim().toLowerCase()
 

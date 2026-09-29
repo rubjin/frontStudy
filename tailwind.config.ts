@@ -1,7 +1,11 @@
-/** @type {import('tailwindcss').Config} */
-export default {
+import type { Config } from 'tailwindcss'
+
+// Tailwind 설정 (Step 3-1에서 TS로 바꾸고 content 경로만 수정)
+// Step 3-2에서 SCSS Module로 전환하면서 삭제한다.
+// 여기 있는 primary/accent 색상표는 3-2에서 SCSS 디자인 토큰으로 옮긴다.
+const config: Config = {
   darkMode: 'class',
-  content: ['./index.html', './src/**/*.{js,jsx}'],
+  content: ['./src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
@@ -27,3 +31,5 @@ export default {
   },
   plugins: [],
 }
+
+export default config

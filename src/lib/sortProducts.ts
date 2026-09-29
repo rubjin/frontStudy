@@ -1,3 +1,5 @@
+import type { Product } from '@/types/product'
+
 // 상품 목록을 정렬하는 로직 (Step 2-2)
 //
 // filterProducts.js와 마찬가지로 JSX를 쓰지 않는 순수 함수만 모아 둔다.
@@ -8,7 +10,17 @@
 // - label: 화면에 보여 줄 이름
 // 옵션을 배열로 만들어 두면 <select>의 <option>을 map으로 그릴 수 있고,
 // 옵션을 추가할 때 이 배열과 아래 COMPARATORS만 고치면 된다.
-export const SORT_OPTIONS = [
+// 정렬 기준 값의 타입 (Step 3-1)
+// 'default' | 'price-asc' ... : 유니온 타입. 이 네 문자열 중 하나만 허용한다.
+// → setSort('price_asc')처럼 오타를 내면 에디터가 바로 에러를 표시한다.
+export type SortValue = 'default' | 'price-asc' | 'price-desc' | 'rating'
+
+export interface SortOption {
+  value: SortValue
+  label: string
+}
+
+export const SORT_OPTIONS: SortOption[] = [
   { value: 'default', label: '기본순' },
   { value: 'price-asc', label: '가격 낮은순' },
   { value: 'price-desc', label: '가격 높은순' },
@@ -22,14 +34,17 @@ export const SORT_OPTIONS = [
 // - 0          → 순서 유지
 // 그래서 a.price - b.price는 오름차순(작은 값이 앞), b.price - a.price는 내림차순이 된다.
 // ※ price가 문자열('₩189,000')이었다면 이런 빼기 계산이 불가능하다. Step 1에서 숫자로 바꾼 이유!
-const COMPARATORS = {
+// Partial<Record<SortValue, 비교함수>>
+// - Record<키, 값>: '키가 SortValue이고 값이 비교 함수인 객체'라는 뜻
+// - Partial<...>:  모든 키가 꼭 있을 필요는 없다는 뜻 ('default'는 비교 함수가 없으므로)
+const COMPARATORS: Partial<Record<SortValue, (a: Product, b: Product) => number>> = {
   'price-asc': (a, b) => a.price - b.price,
   'price-desc': (a, b) => b.price - a.price,
   'rating': (a, b) => b.rating - a.rating,
 }
 
 // 선택한 정렬 기준(sort)으로 정렬한 '새 배열'을 돌려준다.
-export function sortProducts(products, sort) {
+export function sortProducts(products: Product[], sort: SortValue): Product[] {
   const compare = COMPARATORS[sort]
 
   // 'default'처럼 비교 함수가 없는 기준이면 데이터 순서 그대로 돌려준다

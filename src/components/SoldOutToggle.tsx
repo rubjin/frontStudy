@@ -6,7 +6,12 @@
 // props
 // - checked:  체크 여부 (true / false)
 // - onChange: 체크가 바뀔 때 호출할 함수 (새 true / false를 넘겨준다)
-function SoldOutToggle({ checked, onChange }) {
+interface SoldOutToggleProps {
+  checked: boolean
+  onChange: (checked: boolean) => void
+}
+
+function SoldOutToggle({ checked, onChange }: SoldOutToggleProps) {
   return (
     // input을 label 안에 넣으면 htmlFor/id 없이도 둘이 연결된다. (암묵적 연결)
     // → 글자 부분을 눌러도 체크되므로 클릭 영역이 넓어진다. (모바일에서 특히 중요)

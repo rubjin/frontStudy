@@ -54,7 +54,7 @@ const visible = filterProducts(products, { query, category })
 
 **3. 순수 함수로 로직 분리**
 `filterProducts`는 JSX를 쓰지 않고, 같은 입력이면 항상 같은 결과를 낸다.
-→ 재사용하기 쉽고, Step 9에서 테스트를 붙이기 쉽다.
+→ 재사용하기 쉽고, Step 10에서 테스트를 붙이기 쉽다.
 
 **4. `new Set`으로 중복 제거**
 ```js

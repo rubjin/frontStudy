@@ -1,3 +1,6 @@
+// 아이콘 모음 (Step 1)
+// SVG를 컴포넌트로 만들어 두면 <Moon />처럼 태그로 쓸 수 있고, stroke="currentColor"라서 부모의 글자색을 따라간다.
+
 function Moon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

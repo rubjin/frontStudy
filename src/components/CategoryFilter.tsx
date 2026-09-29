@@ -12,7 +12,16 @@
 //
 // ※ Step 2-2: 정렬 드롭다운과 한 줄에 놓기 위해 바깥 여백(mb-6)은 App의 툴바가 맡도록 뺐다.
 //   컴포넌트 자체에는 바깥 여백을 두지 않고, 배치하는 쪽(부모)이 간격을 정하는 게 재사용에 유리하다.
-function CategoryFilter({ categories, value, onChange }) {
+// Step 3-1: props 타입 추가
+// onChange: (category: string) => void
+// → '문자열 하나를 받고, 아무것도 돌려주지 않는 함수'라는 뜻. 이벤트 핸들러 props의 흔한 모양이다.
+interface CategoryFilterProps {
+  categories: string[]
+  value: string
+  onChange: (category: string) => void
+}
+
+function CategoryFilter({ categories, value, onChange }: CategoryFilterProps) {
   return (
     // role="group" + aria-label: 스크린리더가 "카테고리 필터 그룹"이라고 읽어 준다
     <div role="group" aria-label="카테고리 필터" className="flex flex-wrap gap-2">
