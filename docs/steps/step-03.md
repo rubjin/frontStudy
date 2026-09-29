@@ -75,6 +75,7 @@ src/index.css                        →    src/app/globals.css
 | `src/app/products/[id]/page.tsx` | `params`를 `await`로 꺼내는 async 서버 컴포넌트. `generateMetadata`로 id별 제목 |
 | `src/app/not-found.tsx` | 약속된 파일 이름이라 자동으로 404에 쓰임. 화면은 `StatusView`에 맡기고 문구·버튼만 정함 |
 | `src/components/StatusView.tsx` (새 파일) | 404·에러 화면의 공통 모양(코드 · 제목 · 설명 · 버튼 자리) |
+| `src/components/BackButton.tsx` (새 파일) | '이전 페이지로' 버튼. `router.back()`, 돌아갈 기록이 없으면 홈으로. 404 화면에서 사용 |
 | `src/components/ui/Button.tsx` (새 파일) | 공통 버튼. `Button`(`<button>`, 동작) / `ButtonLink`(`<a>`, 이동). `variant`·`size`로 모양 선택 |
 | `src/app/error.tsx` (새 파일) | 페이지를 그리다 에러가 나면 그 자리만 바꿔 끼우는 화면. 다시 시도 / 홈으로 |
 | `src/app/global-error.tsx` (새 파일) | 레이아웃 자체가 망가졌을 때 쓰는 최후의 화면. `<html>`부터 직접 그림 |
@@ -235,6 +236,20 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 - **아직 Button을 쓰지 않은 곳**: 카테고리 버튼은 선택/해제되는 토글(칩)이라 역할이 달라서 그대로 두었다. 카드 링크(늘린 링크), 로고, "← 목록으로" 텍스트 링크도 버튼 모양이 아니라서 제외.
 - 3-2에서 `Button.module.scss`로, 3-3에서 **Storybook 첫 스토리**로 만든다.
 
+**10. '이전 페이지로'는 링크가 아니라 버튼 — `BackButton`**
+```tsx
+const router = useRouter() // next/navigation (App Router용. next/router 아님)
+
+function handleClick() {
+  if (window.history.length > 1) router.back() // 방문 기록에서 한 칸 뒤로
+  else router.push('/')                        // 돌아갈 기록이 없으면 홈으로
+}
+```
+- **왜 버튼?** 링크는 '정해진 주소'로 가는 것인데, 이전 페이지는 사용자마다 달라서 `href`로 정할 수 없다. 브라우저 뒤로 가기와 같은 **동작**이다.
+- **돌아갈 기록이 없는 경우**: 주소를 직접 입력했거나 새 탭에서 처음 열었으면 `history.length`가 1이다. 이때 `back()`은 아무 일도 안 하므로 홈으로 보낸다. (다른 사이트에서 링크로 들어온 경우까지 구분하지는 못한다)
+- **서버 컴포넌트 안의 클라이언트 컴포넌트**: `not-found.tsx`는 서버 컴포넌트(metadata를 내보내야 함)로 두고, 클릭이 필요한 버튼만 `'use client'`로 뺐다. 서버 → 클라이언트 방향으로 넣는 것은 자유롭다.
+- **버튼 배치**: `[← 이전 페이지로(secondary)] [홈으로 가기(primary)]`. 가장 중요한 행동 하나만 primary.
+
 ### 확인 방법
 1. `npm run dev` 후 http://localhost:3000 에서 목록 · 검색 · 카테고리 · 정렬 · 품절 숨기기가 전과 똑같이 동작하는지
 2. 카드를 누르면 `/products/번호`로 이동하는지, 로고를 누르면 목록으로 오는지
@@ -243,6 +258,7 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 5. **페이지 소스 보기(Ctrl+U)** 에서 상품 이름이 HTML에 들어 있는지 — 서버 렌더링의 증거. (Vite 때는 `<div id="root"></div>`뿐이었다)
 6. `src/data/products.ts`에서 아무 상품의 `price`를 `'abc'`로 바꿔 보기 → 에디터에 빨간 줄이 생기고 `npx tsc --noEmit`이 에러를 내는지 (확인 후 되돌리기)
 7. `npm run build`, `npm run lint`가 에러 없이 끝나는지
+8. 404 화면의 '이전 페이지로': 목록에서 `/abc`로 이동한 뒤 누르면 목록으로 돌아오는지 / 새 탭에 `/abc`를 바로 열고 누르면 홈으로 가는지
 9. 브라우저 탭 제목이 위 표처럼 페이지마다 다르게 바뀌는지. 페이지 소스 보기에서 `/abc`에만 `noindex`가 있는지
 10. 에러 화면 확인: `src/app/boom/page.tsx`를 아래처럼 임시로 만들고 `/boom`에 접속 → **헤더는 남고** 본문만 "문제가 발생했습니다"로 바뀌는지. 확인 후 폴더째 삭제
    ```tsx

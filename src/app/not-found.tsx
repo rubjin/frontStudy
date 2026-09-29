@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import BackButton from '@/components/BackButton'
 import StatusView from '@/components/StatusView'
 import { ButtonLink } from '@/components/ui/Button'
 
@@ -22,7 +23,10 @@ export const metadata: Metadata = {
 function NotFoundPage() {
   return (
     <StatusView code="404" title="페이지를 찾을 수 없습니다" description="주소가 잘못되었거나 삭제된 페이지입니다.">
-      {/* 모양은 버튼이지만 '페이지 이동'이므로 <a>를 그리는 ButtonLink를 쓴다 */}
+      {/* 이전 페이지로 = 방문 기록에서 뒤로 가는 '동작' → Button을 쓰는 BackButton (보조 행동이라 secondary)
+          서버 컴포넌트 안에 클라이언트 컴포넌트를 넣는 것은 괜찮다. (반대 방향은 안 됨) */}
+      <BackButton />
+      {/* 홈으로 = 정해진 주소로 '이동' → <a>를 그리는 ButtonLink (주요 행동이라 primary) */}
       <ButtonLink href="/">홈으로 가기</ButtonLink>
     </StatusView>
   )

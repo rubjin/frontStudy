@@ -21,7 +21,7 @@
 - 구조
   - `src/app/` — 파일 기반 라우팅. `layout.tsx`(공통 틀·Header), `page.tsx`("/"), `products/[id]/page.tsx`(상세), `not-found.tsx`(404), `error.tsx`(실행 에러), `global-error.tsx`(레이아웃 에러), `globals.css`
   - `src/components/ui/` — 기능과 무관한 기본 부품. Button(`Button`=`<button>` / `ButtonLink`=`<a>`, `variant`·`size`)
-  - `src/components/` — Header, ProductCatalog(목록 화면·상태, `'use client'`), StatusView(404·에러 공통 화면), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
+  - `src/components/` — Header, ProductCatalog(목록 화면·상태, `'use client'`), StatusView(404·에러 공통 화면), BackButton(이전 페이지로), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
   - `src/lib/` — format, filterProducts, sortProducts (순수 함수) / `src/data/products.ts` (목 데이터) / `src/types/` (공통 타입)
   - import는 `@/` 별칭(= `src/`) 사용
 - 원칙: `page.tsx`·`layout.tsx`는 서버 컴포넌트로 두고, 상태·이벤트가 필요한 부분만 작은 `'use client'` 컴포넌트로 뺀다.
@@ -69,6 +69,7 @@
 - 2026-09-29: 실무형 구성으로 전환 결정 (Next.js + TypeScript + SCSS Module + Storybook). 로드맵 재정리.
   - Step 3-1 완료: Vite → Next.js 16 + React 19 + TypeScript. react-router 제거, App Router로 페이지 이전. 스타일은 아직 Tailwind.
   - 3-1 보강: 에러 화면 공통화 — `StatusView` + `not-found.tsx` / `error.tsx` / `global-error.tsx`.
+  - 3-1 보강: 404에 '이전 페이지로'(`BackButton`, 기록 없으면 홈) 추가.
   - 3-1 보강: 공통 버튼 `ui/Button`(Button/ButtonLink) — 에러 화면·헤더 다크 모드 버튼에 적용.
   - 3-1 보강: 페이지별 metadata — 레이아웃 title template·description·Open Graph, not-found·상세(`generateMetadata`)·error 제목.
   - 다음은 3-2 SCSS Module 전환.
