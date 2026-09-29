@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import StatusView, { statusPrimaryAction } from '@/components/StatusView'
 
 // 404 페이지 — 어떤 페이지에도 맞지 않는 주소 (Step 3-1)
 //
@@ -7,19 +8,15 @@ import Link from 'next/link'
 // 서버가 HTTP 상태 코드도 404로 보내 주므로, 검색엔진이 '없는 페이지'로 제대로 인식한다.
 // (SPA에서는 없는 주소도 200 OK로 응답하는 문제가 있었다)
 //
-// 나중에 Step 4에서 없는 상품 id(/products/999)일 때 notFound()를 호출하면 이 화면이 나온다.
+// 화면 모양은 StatusView가 맡고, 이 파일은 404에 맞는 문구와 버튼만 정한다.
+// 나중에 Step 4에서 없는 상품 id(/products/999)용 not-found.tsx를 따로 만들 때도 StatusView를 재사용한다.
 function NotFoundPage() {
   return (
-    <div className="py-20 text-center">
-      {/* 페이지의 주제를 알려 주는 제목이므로 h1을 쓴다 */}
-      <h1 className="text-2xl font-bold">페이지를 찾을 수 없습니다</h1>
-      <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-        주소가 잘못되었거나 삭제된 페이지입니다.
-      </p>
-      <Link href="/" className="mt-6 inline-block rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700">
+    <StatusView code="404" title="페이지를 찾을 수 없습니다" description="주소가 잘못되었거나 삭제된 페이지입니다.">
+      <Link href="/" className={statusPrimaryAction}>
         홈으로 가기
       </Link>
-    </div>
+    </StatusView>
   )
 }
 

@@ -19,11 +19,13 @@
   - 스타일: 현재 Tailwind CSS 3 (다크 모드는 `<html>`의 `dark` 클래스) → **Step 3-2에서 SCSS Module로 전환 예정** (Tailwind 제거)
   - 컴포넌트 문서화: Storybook (Step 3-3 예정)
 - 구조
-  - `src/app/` — 파일 기반 라우팅. `layout.tsx`(공통 틀·Header), `page.tsx`("/"), `products/[id]/page.tsx`(상세), `not-found.tsx`(404), `globals.css`
-  - `src/components/` — Header, ProductCatalog(목록 화면·상태, `'use client'`), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
+  - `src/app/` — 파일 기반 라우팅. `layout.tsx`(공통 틀·Header), `page.tsx`("/"), `products/[id]/page.tsx`(상세), `not-found.tsx`(404), `error.tsx`(실행 에러), `global-error.tsx`(레이아웃 에러), `globals.css`
+  - `src/components/` — Header, ProductCatalog(목록 화면·상태, `'use client'`), StatusView(404·에러 공통 화면), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
   - `src/lib/` — format, filterProducts, sortProducts (순수 함수) / `src/data/products.ts` (목 데이터) / `src/types/` (공통 타입)
   - import는 `@/` 별칭(= `src/`) 사용
 - 원칙: `page.tsx`·`layout.tsx`는 서버 컴포넌트로 두고, 상태·이벤트가 필요한 부분만 작은 `'use client'` 컴포넌트로 뺀다.
+- 원칙: 404·에러처럼 모양이 같은 안내 화면은 `StatusView`를 재사용하고, 각 파일은 문구와 버튼만 정한다.
+- Next.js 16 주의: `error.tsx`의 복구 함수는 `retry`(예전 `reset`). API가 헷갈리면 `node_modules/next/dist/docs/`의 설치 버전 문서를 확인한다.
 - 스텝별 설명: `docs/steps/`
 - 실행: `npm run dev` / 빌드: `npm run build` / 린트: `npm run lint` / 타입 검사: `npx tsc --noEmit`
 - 참고: Windows(`core.autocrlf=true`)에서 작업하면 작업 폴더 파일이 CRLF다. 스크립트로 문자열 치환할 때 줄바꿈 주의 (Step 3-4에서 `.gitattributes`로 정리 예정)
@@ -63,4 +65,5 @@
   - 이 로드맵은 원래 계획이 사라진 뒤 대화와 코드 기준으로 다시 정리한 것이다. 사용자가 기억하는 원래 계획과 다르면 이 파일을 수정한다.
 - 2026-09-29: 실무형 구성으로 전환 결정 (Next.js + TypeScript + SCSS Module + Storybook). 로드맵 재정리.
   - Step 3-1 완료: Vite → Next.js 16 + React 19 + TypeScript. react-router 제거, App Router로 페이지 이전. 스타일은 아직 Tailwind.
+  - 3-1 보강: 에러 화면 공통화 — `StatusView` + `not-found.tsx` / `error.tsx` / `global-error.tsx`.
   - 다음은 3-2 SCSS Module 전환.

@@ -73,7 +73,10 @@ src/index.css                        →    src/app/globals.css
 | `src/components/ProductCatalog.tsx` | 예전 목록 페이지. `'use client'` + 상태 타입(`useState<SortValue>`) |
 | `src/components/Header.tsx` | 다크 모드 상태를 직접 가짐. `<html>`에 `dark` 클래스를 붙임 |
 | `src/app/products/[id]/page.tsx` | `params`를 `await`로 꺼내는 async 서버 컴포넌트 |
-| `src/app/not-found.tsx` | 약속된 파일 이름이라 자동으로 404에 쓰임 |
+| `src/app/not-found.tsx` | 약속된 파일 이름이라 자동으로 404에 쓰임. 화면은 `StatusView`에 맡기고 문구·버튼만 정함 |
+| `src/components/StatusView.tsx` (새 파일) | 404·에러 화면의 공통 모양(코드 · 제목 · 설명 · 버튼 자리) |
+| `src/app/error.tsx` (새 파일) | 페이지를 그리다 에러가 나면 그 자리만 바꿔 끼우는 화면. 다시 시도 / 홈으로 |
+| `src/app/global-error.tsx` (새 파일) | 레이아웃 자체가 망가졌을 때 쓰는 최후의 화면. `<html>`부터 직접 그림 |
 | `src/components/*.tsx`, `src/lib/*.ts` | props·함수에 타입 추가, `react-router`의 `Link to` → `next/link`의 `Link href` |
 
 ### 핵심 개념
@@ -156,6 +159,34 @@ import { formatPrice } from '../../lib/format' // 이전: 폴더 깊이마다 ..
 import { formatPrice } from '@/lib/format'     // 지금: 어디서든 같은 모양
 ```
 
+**7. 에러 화면 공통화 — 모양은 하나, 내용만 다르게**
+404, 서버 에러, (Step 4의) 없는 상품 화면은 **모양이 같고 문구·버튼만 다르다.** 파일마다 마크업을 복사하면 디자인을 바꿀 때 전부 고쳐야 하므로, 모양은 `StatusView` 하나에 두고 각 파일은 내용만 넘긴다.
+```tsx
+// not-found.tsx
+<StatusView code="404" title="페이지를 찾을 수 없습니다" description="...">
+  <Link href="/">홈으로 가기</Link>        {/* children = 버튼 자리 */}
+</StatusView>
+
+// error.tsx
+<StatusView code="500" title="문제가 발생했습니다" description="...">
+  <button onClick={() => retry()}>다시 시도</button>
+  <Link href="/">홈으로 가기</Link>
+</StatusView>
+```
+버튼을 props가 아닌 **children**으로 받는 이유: 화면마다 버튼 개수와 종류(링크/버튼)가 달라서, 모양 컴포넌트가 그것까지 알 필요가 없게 하려는 것이다. (컴포지션 패턴)
+
+Next.js의 에러 관련 파일 규칙
+| 파일 | 언제 보이나 | 레이아웃(헤더) | 서버/클라이언트 |
+| --- | --- | --- | --- |
+| `not-found.tsx` | 없는 주소, 또는 코드에서 `notFound()` 호출 | 유지 | 서버 가능 |
+| `error.tsx` | 페이지를 그리다 에러 | 유지 (그 자리만 교체) | **반드시 `'use client'`** |
+| `global-error.tsx` | `layout.tsx` 자체의 에러 | **없음** (`<html>`부터 직접 그림) | **반드시 `'use client'`** |
+
+- 폴더 안에 두면 그 폴더 범위에만 적용된다. 예) `app/products/[id]/not-found.tsx`를 만들면 상품 상세에서만 "상품을 찾을 수 없습니다"가 나온다. (Step 4)
+- `error.tsx`가 `'use client'`인 이유: React의 에러 경계는 브라우저에서 동작하고, '다시 시도' 버튼에 onClick이 필요하기 때문이다.
+- `retry()`: 에러 난 부분을 다시 불러와서 그려 본다. 일시적인 네트워크 문제라면 복구된다. (예전 문서·블로그에는 `reset`으로 나오지만 Next.js 16에서는 `retry`를 권장)
+- 운영 환경에서 서버 에러의 `error.message`는 보안상 일반 문구로 바뀐다. 에러 원인을 화면에 그대로 보여 주지 않는다.
+
 ### 확인 방법
 1. `npm run dev` 후 http://localhost:3000 에서 목록 · 검색 · 카테고리 · 정렬 · 품절 숨기기가 전과 똑같이 동작하는지
 2. 카드를 누르면 `/products/번호`로 이동하는지, 로고를 누르면 목록으로 오는지
@@ -164,6 +195,13 @@ import { formatPrice } from '@/lib/format'     // 지금: 어디서든 같은 �
 5. **페이지 소스 보기(Ctrl+U)** 에서 상품 이름이 HTML에 들어 있는지 — 서버 렌더링의 증거. (Vite 때는 `<div id="root"></div>`뿐이었다)
 6. `src/data/products.ts`에서 아무 상품의 `price`를 `'abc'`로 바꿔 보기 → 에디터에 빨간 줄이 생기고 `npx tsc --noEmit`이 에러를 내는지 (확인 후 되돌리기)
 7. `npm run build`, `npm run lint`가 에러 없이 끝나는지
+8. 에러 화면 확인: `src/app/boom/page.tsx`를 아래처럼 임시로 만들고 `/boom`에 접속 → **헤더는 남고** 본문만 "문제가 발생했습니다"로 바뀌는지. 확인 후 폴더째 삭제
+   ```tsx
+   export default function Boom(): never {
+     throw new Error('test')
+   }
+   ```
+   > 개발 모드(`npm run dev`)에서는 Next.js 에러 안내창이 먼저 뜬다. 닫으면 뒤에 우리가 만든 화면이 보인다.
 
 ### 알려진 한계 (다음 단계에서 해결)
 - 새로고침하면 다크 모드가 풀린다 → 3-2
