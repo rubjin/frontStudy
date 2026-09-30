@@ -1,6 +1,6 @@
 # AI 연동 1. Jev 연결 준비 (cloude 브랜치)
 
-> 상태: 코드 준비 완료 · 실제 API 호출은 Codespaces 등 외부 네트워크에서 확인 필요
+> 상태: 완료 · 2026-09-30 같은 PC에서 네트워크가 열려 실제 Jev 응답 확인 (다음 문서: 02-multi-model.md)
 > 아키텍처 그림: https://claude.ai/code/artifact/a726702d-e2f3-4c58-8dcc-a55ae3fafce3
 
 ## 목표
@@ -64,7 +64,7 @@ OpenRouter 키 하나로 Jev·Gemini·Qwen을 모두 부를 수 있다. SDK는 �
 | 개발 서버 `/dev/jev` | 200, "가짜 응답 · 키 없음" 표시 |
 | 타입 검사 · lint · 빌드 | 통과 |
 
-**실제 Jev 응답은 아직 확인하지 못했다.** 이 PC에서는 회사 보안 장비 때문에 모든 AI API가 `SELF_SIGNED_CERT_IN_CHAIN`으로 막힌다.
+처음에는 이 PC에서 모든 AI API가 `SELF_SIGNED_CERT_IN_CHAIN`으로 막혔다. 이후 같은 PC에서 OpenRouter 연결이 열려 실제 키로 확인했다: Jev가 "결제가 두 번 됐어요. 오늘 안에 꼭 환불해 주세요"를 급한 요청일 확률 0.94로 판단 (0.7초).
 
 ## 직접 해 보기
 1. `cp .env.example .env.local` 후 `OPENROUTER_API_KEY=` 뒤에 키 붙여 넣기 (채팅에 붙여 넣지 않기)

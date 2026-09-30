@@ -1,12 +1,17 @@
 // AI 연결 확인 스크립트 (cloude 브랜치 · AI 연동)
 // 실행: npm run check:ai
 //
-// .env.local의 OPENROUTER_API_KEY로 Jev(typesafe/jev-1.13)에 질문 하나를 보내 보고,
+// .env.local(또는 Codespaces Secret)의 OPENROUTER_API_KEY로
+// ① Jev에 질문 하나, ② models.ts에 등록한 LLM들에 짧은 요청 하나씩을 보내 보고,
 // 실패하면 원인을 사람이 이해할 수 있는 말로 알려 준다.
+//
+// 모델 목록은 src/lib/ai/models.ts 하나에서 가져온다. (Node 22.18+/24는 .ts 파일을 바로 import 할 수 있다)
+// 옵션: --jev-only  LLM 확인은 건너뛴다
 // 키 값 자체는 절대 출력하지 않는다.
 
 import { existsSync } from 'node:fs'
 import { TypeSafeClient, noul } from '@typesafe-ai/sdk'
+import { FALLBACK_MODELS, JUDGE_MODEL, OPTIONAL_REVIEW_MODELS, REVIEW_MODELS } from '../src/lib/ai/models.ts'
 
 // .env.local 읽기 (Node 20.12+ 내장 기능. 별도 패키지 불필요)
 if (existsSync('.env.local')) process.loadEnvFile('.env.local')
@@ -38,40 +43,85 @@ if (!key) {
 }
 console.log(`• 키 확인: ${key.slice(0, 6)}… (${key.length}자)`)
 
+// 실패 원인을 사람이 읽을 수 있는 문장으로 (status: HTTP 상태 코드, detail: 에러 메시지·코드)
+function explain(status, detail = '') {
+  if (/CERT|SELF_SIGNED|UNABLE_TO_VERIFY/.test(detail)) {
+    return '네트워크가 HTTPS 인증서를 바꿔치기하고 있습니다(회사 보안 장비 등). GitHub Codespaces에서 실행하세요. 이 PC에서는 가짜 응답으로 개발할 수 있습니다.'
+  }
+  if (status === 400) return `요청 형식 오류: ${detail.slice(0, 160)}`
+  if (status === 401 || status === 403) return 'API 키가 틀렸거나 권한이 없습니다. OpenRouter에서 키를 확인하세요.'
+  if (status === 402) return 'OpenRouter 잔액(크레딧)이 부족합니다.'
+  if (status === 404) return '모델 ID를 찾지 못했습니다. src/lib/ai/models.ts의 ID를 OpenRouter 모델 페이지와 비교하세요.'
+  if (status === 429) return '요청이 너무 많습니다. 잠시 후 다시 시도하세요.'
+  return `${status ?? ''} ${detail}`.trim()
+}
+
+// ─── ① Jev ───────────────────────────────────────────────
 const client = new TypeSafeClient({
   apiKey: key,
   baseURL: 'https://openrouter.ai/api',
-  defaultModel: 'typesafe/jev-1.13',
+  defaultModel: JUDGE_MODEL.id,
   timeout: 15000,
   retry: { maxRetries: 0 },
 })
 
+let networkBlocked = false
+// Jev가 실패하면 LLM이 모두 성공해도 전체 결과는 실패(종료 코드 1)여야 한다 (AI 교차 리뷰 GLM 지적)
+let jevFailed = false
 try {
   const started = Date.now()
   const result = await client.systemOne({
     state: '결제가 두 번 됐어요. 오늘 안에 꼭 환불해 주세요.',
     questions: { urgent: noul('이 메시지는 급한 요청인가?') },
   })
-  console.log(`✓ Jev 연결 성공 (${Date.now() - started}ms, 모델 ${result.model})`)
+  console.log(`✓ ${JUDGE_MODEL.label} 연결 성공 (${Date.now() - started}ms, 모델 ${result.model})`)
   console.log(`  질문: 이 메시지는 급한 요청인가? → 예일 확률 ${result.answers.urgent.noul}`)
   console.log(`  토큰: 입력 ${result.usage.input_tokens} / 출력 ${result.usage.output_tokens}`)
 } catch (error) {
-  const cause = error?.cause?.code ?? error?.cause?.cause?.code ?? ''
-  const status = error?.status
-  console.log('✗ Jev 연결 실패')
-  if (/CERT|SELF_SIGNED|UNABLE_TO_VERIFY/.test(String(cause) + String(error?.message))) {
-    console.log('  원인: 네트워크가 HTTPS 인증서를 바꿔치기하고 있습니다. (회사 보안 장비 등)')
-    console.log('  해결: GitHub Codespaces처럼 외부 네트워크에서 실행하세요. 이 PC에서는 가짜 응답으로 개발할 수 있습니다.')
-  } else if (status === 401 || status === 403) {
-    console.log('  원인: API 키가 틀렸거나 권한이 없습니다. OpenRouter에서 키를 다시 확인하세요.')
-  } else if (status === 402) {
-    console.log('  원인: OpenRouter 잔액(크레딧)이 부족합니다.')
-  } else if (status === 404) {
-    console.log('  원인: 모델 ID(typesafe/jev-1.13) 또는 주소를 찾지 못했습니다.')
-  } else if (status === 429) {
-    console.log('  원인: 요청이 너무 많습니다. 잠시 후 다시 시도하세요.')
-  } else {
-    console.log(`  원인: ${error?.name ?? 'Error'} ${status ?? ''} ${cause} ${error?.message ?? ''}`.trim())
+  const detail = `${error?.cause?.code ?? ''} ${error?.cause?.cause?.code ?? ''} ${error?.message ?? ''}`
+  jevFailed = true
+  networkBlocked = /CERT|SELF_SIGNED|UNABLE_TO_VERIFY/.test(detail)
+  console.log(`✗ ${JUDGE_MODEL.label} 연결 실패`)
+  console.log(`  원인: ${explain(error?.status, detail)}`)
+}
+
+// ─── ② LLM들 ─────────────────────────────────────────────
+// 대체 호출(models 배열) 대신 모델마다 따로 부른다 → 틀린 ID가 다음 모델에 가려지지 않는다
+//
+// 종료 코드: process.exit()로 강제 종료하지 않고 process.exitCode만 정한다.
+// Windows에서 네트워크 연결을 정리하는 도중 process.exit()를 부르면 Node가 충돌해 종료 코드 127이 나왔다. (실측)
+// exitCode만 정해 두면 남은 정리 작업이 끝난 뒤 자연스럽게 그 코드로 끝난다.
+process.exitCode = jevFailed ? 1 : 0
+
+if (networkBlocked) {
+  console.log('• LLM 확인은 건너뜁니다 (같은 네트워크 문제로 모두 실패합니다)')
+} else if (!process.argv.includes('--jev-only')) {
+  const targets = [
+    ...FALLBACK_MODELS.map((model) => ({ ...model, role: '대체 해석' })),
+    ...REVIEW_MODELS.map((model) => ({ ...model, role: '코드 리뷰' })),
+    ...OPTIONAL_REVIEW_MODELS.map((model) => ({ ...model, role: '리뷰(선택)' })),
+  ]
+
+  console.log('\n• LLM 모델 확인 (모델당 짧은 요청 1회)')
+  for (const model of targets) {
+    const started = Date.now()
+    try {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', 'X-Title': 'Shoppr check:ai' },
+        body: JSON.stringify({ model: model.id, messages: [{ role: 'user', content: 'OK라고만 답해' }], max_tokens: 16 }),
+        signal: AbortSignal.timeout(60000), // 추론 모델(GLM 등)은 느릴 수 있다
+      })
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        process.exitCode = 1
+        console.log(`  ✗ ${model.label.padEnd(18)} ${model.role.padEnd(8)} ${explain(response.status, body?.error?.message ?? '')}`)
+        continue
+      }
+      console.log(`  ✓ ${model.label.padEnd(18)} ${model.role.padEnd(8)} ${Date.now() - started}ms · 실제 모델 ${body.model}`)
+    } catch (error) {
+      process.exitCode = 1
+      console.log(`  ✗ ${model.label.padEnd(18)} ${model.role.padEnd(8)} ${explain(undefined, `${error?.cause?.code ?? ''} ${error?.message ?? ''}`)}`)
+    }
   }
-  process.exit(1)
 }

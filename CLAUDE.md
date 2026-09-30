@@ -22,7 +22,12 @@
 - `src/lib/ai/jev.ts`: `askJev()` 서버 전용(`import 'server-only'`). OpenRouter 경유(baseURL `https://openrouter.ai/api`, 모델 `typesafe/jev-1.13`). 확신도 문턱 `CONFIDENCE.AUTO=0.85`, `CONFIRM=0.6`
 - 키 없음·`AI_MOCK=1`·연결 실패 시 예외 대신 **확신도 0인 가짜 응답**(`source: 'mock'`, `reason`) → 항상 fallback. 가짜 답이 실제 판단처럼 쓰이면 안 된다
 - 키: `OPENROUTER_API_KEY`는 `.env.local`(gitignore)에만. 채팅·코드·커밋에 키를 적지 않는다. 사용자는 OpenRouter 키 보유(2026-09-30)
-- 확인: `npm run check:ai`(원인 구분), 개발 페이지 `/dev/jev`(production 404). 회사 PC는 SSL 검사로 모든 AI API 차단 → 실제 호출 확인은 Codespaces(Secrets에 키 등록). 사용자는 회사 네트워크 설정을 확인하기 어렵다고 함
+- 확인: `npm run check:ai`(Jev + 모델 6개, 원인 구분), 개발 페이지 `/dev/jev`(production 404). 네트워크가 막히면 Codespaces(Secrets에 키 등록)에서 확인. 사용자는 회사 네트워크 설정을 확인하기 어렵다고 함
+- 모델 목록은 `src/lib/ai/models.ts` 한 곳(앱·스크립트 공용). 판단 Jev / 대체 해석 DeepSeek V4 Flash → Gemini 3.8 Flash → GPT-6 Luna / 교차 리뷰 GLM 5.3 + Kimi K3 / 선택 Qwen3.8 Max. 모델 ID를 추측하지 말고 `npm run check:ai`로 확인
+- `src/lib/ai/llm.ts` `askLlmJson()`: OpenRouter `models` 자동 대체 + JSON 스키마 강제 + `validate` 재검사. **LLM 결과는 자동 적용하지 않고 사용자 확인만**. 추론 모델은 대체 목록에 넣지 않음(max_tokens 300). 제한 시간 8초(6초는 실측 실패)
+- `npm run review:ai`: Jev 위험도 + GLM·Kimi 교차 리뷰(비용 출력, 직접 실행만). AI 리뷰 지적은 코드와 대조한 뒤 반영
+- 스크립트에서 네트워크 사용 후 `process.exit()` 금지(Windows 충돌, 종료 코드 127) → `process.exitCode`
+- 2026-09-30 이후 이 PC에서 OpenRouter 연결됨(처음엔 SSL 차단). 사용자 `.env.local`에 키 있음
 - 서버 전용 TS 파일 단독 실행 확인: `npx -y tsx --conditions=react-server <파일.mts>` (최상위 await 대신 async 함수)
 
 ## 프로젝트

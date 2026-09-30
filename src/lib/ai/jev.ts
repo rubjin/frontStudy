@@ -7,6 +7,7 @@ import {
   type SystemOneRequest,
   type SystemOneResult,
 } from '@typesafe-ai/sdk'
+import { JUDGE_MODEL } from './models'
 
 // Jev(TypeSafe) 서버 전용 클라이언트 (cloude 브랜치 · AI 연동 2단계)
 //
@@ -29,8 +30,8 @@ import {
 // - 가짜 응답은 모든 답의 확신도가 0이다 → 부르는 쪽의 확신도 규칙(0.6 미만은 자동 처리 안 함)에 걸려
 //   '판단 불가'로 안전하게 처리된다. 가짜 응답이 실제 판단처럼 쓰이는 일이 없다.
 
-/** OpenRouter에서 쓰는 Jev 모델 ID (고정 버전. 최신 별칭은 '~typesafe/jev-latest') */
-export const JEV_MODEL = 'typesafe/jev-1.13'
+/** OpenRouter에서 쓰는 Jev 모델 ID (models.ts에서 관리. 최신 별칭은 '~typesafe/jev-latest') */
+export const JEV_MODEL = JUDGE_MODEL.id
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api'
 
 /**

@@ -9,7 +9,8 @@
     "lint": "eslint",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "check:ai": "node scripts/check-ai.mjs"
+    "check:ai": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-ai.mjs",
+    "review:ai": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/review-ai.mjs"
   },
   "dependencies": {
     "@typesafe-ai/sdk": "^0.6.0",
@@ -35,5 +36,8 @@
     "storybook": "^10.6.1",
     "typescript": "^6.0.3",
     "vite": "^8.3.1"
+  },
+  "engines": {
+    "node": ">=22.18"
   }
 }

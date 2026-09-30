@@ -82,6 +82,10 @@
   font-variant-numeric: tabular-nums;
 }
 
+.sub {
+  color: var(--color-text-muted);
+}
+
 .action {
   font-weight: $font-weight-semibold;
 

@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import clsx from 'clsx'
 import { getJevMode, JEV_MODEL } from '@/lib/ai/jev'
-import { classifySearchIntent, type SearchAction } from '@/lib/ai/searchIntent'
+import { FALLBACK_MODELS } from '@/lib/ai/models'
+import { classifySearchIntent, type DecidedBy, type SearchAction } from '@/lib/ai/searchIntent'
 import styles from './page.module.scss'
 
 // 개발용 Jev 확인 페이지 — 주소 "/dev/jev" (cloude 브랜치 · AI 연동)
@@ -33,6 +34,12 @@ const ACTION_LABEL: Record<SearchAction, string> = {
   apply: '바로 적용',
   confirm: '사용자 확인',
   fallback: '대체 처리',
+}
+
+const DECIDED_LABEL: Record<DecidedBy, string> = {
+  jev: 'Jev',
+  llm: 'LLM 대체',
+  none: '판단 못 함',
 }
 
 const REASON_LABEL = {
@@ -66,6 +73,10 @@ export default async function JevDevPage() {
           확신도 85% 이상은 바로 적용, 60~85%는 사용자 확인, 60% 미만은 대체 처리합니다. 가짜 응답은 확신도가 0%라서 항상 대체 처리로
           나옵니다. 연결 상태는 터미널에서 <code>npm run check:ai</code>로 확인합니다.
         </p>
+        <p className={styles.hint}>
+          Jev가 확신하지 못하면 LLM이 다시 해석합니다: {FALLBACK_MODELS.map((model) => model.label).join(' → ')}. LLM 해석은 자동 적용하지
+          않고 항상 사용자 확인으로 보냅니다.
+        </p>
       </header>
 
       <div className={styles.tableWrap}>
@@ -78,6 +89,7 @@ export default async function JevDevPage() {
               <th scope="col">가격대</th>
               <th scope="col">선물용</th>
               <th scope="col">행동</th>
+              <th scope="col">결정</th>
               <th scope="col">출처</th>
             </tr>
           </thead>
@@ -86,7 +98,8 @@ export default async function JevDevPage() {
               <tr key={intent.query}>
                 <td>{intent.query}</td>
                 <td>{intent.category}</td>
-                <td className={styles.num}>{percent(intent.categoryConfidence)}</td>
+                {/* LLM이 정한 카테고리 옆에 Jev의 낮은 확신도를 붙이면 모순이라 보여 주지 않는다 */}
+                <td className={styles.num}>{intent.decidedBy === 'llm' ? '— (LLM)' : percent(intent.categoryConfidence)}</td>
                 <td>{intent.priceLabel}</td>
                 <td className={styles.num}>{percent(intent.giftProbability)}</td>
                 <td>
@@ -94,6 +107,11 @@ export default async function JevDevPage() {
                   <span className={styles.action} data-action={intent.action}>
                     {ACTION_LABEL[intent.action]}
                   </span>
+                </td>
+                <td>
+                  {DECIDED_LABEL[intent.decidedBy]}
+                  {/* LLM이 답했으면 실제 모델, 실패했으면 이유 */}
+                  {intent.llm && <span className={styles.sub}> · {intent.llm.model ?? intent.llm.reason}</span>}
                 </td>
                 <td>{intent.source === 'jev' ? 'Jev' : `가짜 (${intent.reason})`}</td>
               </tr>
