@@ -1,0 +1,29 @@
+@use 'styles' as *;
+
+// 개발용 미리보기 조작 패널 (Step 3-2 보강)
+// 실제 화면과 구분되도록 점선 테두리로 '개발 도구' 느낌을 준다.
+
+.panel {
+  margin-bottom: space(8);
+  padding: space(4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: $radius-lg;
+}
+
+.title {
+  @include text(base);
+  font-weight: $font-weight-semibold;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: space(2);
+  margin-top: space(3);
+}
+
+.hint {
+  margin-top: space(3);
+  @include text(sm);
+  color: var(--color-text-muted);
+}

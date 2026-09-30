@@ -391,6 +391,8 @@ clsx(styles.button, styles[variant], styles[size], className)
 | `src/components/CardSkeleton.tsx` (새 파일) | 카드 스켈레톤. **Card.module.scss 클래스를 그대로 써서** 크기가 같음 |
 | `src/components/CatalogSkeleton.tsx` (새 파일) | 목록 화면 전체 스켈레톤(검색창·툴바·개수·카드 8개). `role="status"` |
 | `src/app/page.tsx` | `<Suspense fallback={<CatalogSkeleton />}>`로 ProductCatalog를 감쌈 |
+| `src/app/dev/skeleton/page.tsx` (새 파일) | **개발용 미리보기** `/dev/skeleton`. 배포 환경(`production`)에서는 `notFound()`로 404 |
+| `src/app/dev/skeleton/SkeletonPreview.tsx` (새 파일) | 스켈레톤 / 실제 화면 / 로딩 재현(2초) 전환 버튼 |
 | `src/components/SortSelect.module.scss` | `<select>` 높이 명시 (브라우저가 line-height를 무시해서 스켈레톤과 2px 어긋났음) |
 | `src/components/SearchBar.tsx` | `aria-label="상품 검색"` 추가 (placeholder만 있고 이름이 없던 접근성 문제) |
 | `src/components/CategoryFilter.tsx` | 선택 모양을 클래스 대신 `[aria-pressed='true']` 선택자로 |
@@ -549,6 +551,16 @@ font-family: 'Pretendard Variable', Pretendard, 'Pretendard Fallback', ...;
   | 390px | 같음 | 같음 (처음엔 2px 차이) | 같음 | 같음 | 같음 | 같음 |
 
   모바일 툴바가 처음에 2px 달랐다. **`<select>`는 브라우저가 line-height를 무시**해서 계산(34px)과 달리 32px로 그려졌기 때문이다. 스켈레톤을 줄이지 않고 **실제 select에 높이를 명시**해서 해결했다. (브라우저마다 다른 select 높이도 통일되고, 옆 칩과 높이도 맞는다)
+- **확인용 개발 페이지 `/dev/skeleton`**: 지금은 대기 시간이 없어 스켈레톤이 안 보이므로 따로 볼 수 있게 했다.
+  ```tsx
+  if (process.env.NODE_ENV === 'production') notFound() // 배포 환경에서는 404
+  ```
+  - `NODE_ENV`: `npm run dev`에서는 `'development'`, `next build`·`next start`에서는 `'production'`.
+  - `notFound()`: 호출한 자리에서 렌더링을 멈추고 404 화면을 보여 준다. (Step 4의 '없는 상품'에서도 쓴다)
+  - **로딩 재현**: 스켈레톤을 2초 보여 준 뒤 실제 화면으로 바꾼다. `setTimeout`은 `useEffect`의 정리 함수에서 `clearTimeout`으로 취소한다. (도중에 다른 버튼을 누르면 2초 뒤 멋대로 바뀌는 버그 방지)
+  - 이 페이지에서만 쓰는 컴포넌트는 `page.tsx` 옆에 둔다(코로케이션). `page.tsx`가 아닌 파일은 주소가 되지 않는다.
+  - 확인 결과: 로딩 재현 전후로 검색창·툴바·개수·첫 카드의 위치와 높이가 같았다. 배포 빌드에서는 404.
+  - 3-3 Storybook이 생기면 컴포넌트 단위 확인은 Storybook이 맡고, 이 페이지는 '실제 레이아웃 안에서 교체 과정'을 보는 용도로 남긴다.
 - **접근성**: 회색 조각은 `aria-hidden`, 전체는 `role="status"` + sr-only 문장 "상품 목록을 불러오는 중입니다." 하나로 알린다. 조각마다 "로딩 중"을 읽으면 스크린리더 사용자는 수십 번 같은 말을 듣게 된다.
 - **모션 줄이기**: `prefers-reduced-motion: reduce`면 반짝이는 애니메이션 없이 회색 면만 보여 준다.
 - 스켈레톤이 '로딩 중'이라는 뜻이 되려면 **내용이 아니라 모양만** 흉내 낸다. 그래서 `<article>`·`<h3>`·`<a>` 대신 `<div>`·`<p>`를 쓴다. (아직 없는 제목·링크가 읽히면 안 된다)
@@ -568,7 +580,7 @@ font-family: 'Pretendard Variable', Pretendard, 'Pretendard Fallback', ...;
 5-1. 개발자 도구 Network 탭에서 **Disable cache**를 켜고 새로고침 → 칩·정렬 옵션이 움찔하지 않는지. `_fonts.scss`의 `'Pretendard Fallback'`을 폰트 스택에서 잠깐 빼면 움찔하는 것과 비교해 보기
 6. `layout.tsx`에서 `suppressHydrationWarning`을 잠깐 지우고, 다크 모드로 새로고침 → 콘솔에 하이드레이션 경고가 뜨는지 확인 후 되돌리기
 7. 스크린리더(Windows 내레이터: Ctrl+Win+Enter) 또는 개발자 도구 Accessibility 탭에서 다크 모드 버튼 이름이 테마에 따라 "다크 모드로 전환" / "라이트 모드로 전환"으로 바뀌는지
-7-1. 스켈레톤 보기: 지금은 대기 시간이 없어 안 보인다. React DevTools의 Suspense 토글(컴포넌트 탭에서 Suspense 선택 → 시계 아이콘)로 강제로 켜 보거나, 3-3 Storybook에서 확인한다
+7-1. 스켈레톤 보기: `npm run dev` 후 http://localhost:3000/dev/skeleton → '로딩 재현'을 눌러 스켈레톤이 실제 화면으로 바뀔 때 아무것도 움직이지 않는지 확인. 다크 모드·좁은 화면에서도 해 보기. (`npm run build && npm run start`로 띄우면 이 주소는 404여야 정상)
 8. `_tokens.scss`에서 `$radius-xl`을 `0`으로 바꿔 보기 → 모든 카드 모서리가 한 번에 바뀌는지 (확인 후 되돌리기)
 9. `npm run build`, `npm run lint`, `npx tsc --noEmit`이 에러 없이 끝나는지
 
