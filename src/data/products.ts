@@ -19,6 +19,8 @@ import type { Product } from '@/types/product'
 //             실제 사진이 생기면 같은 파일 이름으로 바꾸고 width/height만 맞추면 된다.
 //
 // Step 3-1: Product[] 타입을 붙였다. 필드를 빠뜨리거나 price에 문자열을 넣으면 에디터가 바로 알려 준다.
+// 표처럼 열을 맞춰 둔 데이터라 Prettier가 한 줄씩 풀지 않게 한다 (Step 3-4b)
+// prettier-ignore
 export const products: Product[] = [
   { id: 1,  name: '무선 노이즈캔슬링 헤드폰', price: 189000, category: '오디오',   rating: 4.6, stock: 12,
     image: { src: '/images/products/1.jpg', width: 800, height: 600 } },

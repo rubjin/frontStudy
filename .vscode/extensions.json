@@ -1,0 +1,13 @@
+// VS Code 추천 확장 (Step 3-4b)
+// 이 프로젝트를 VS Code로 열면 오른쪽 아래에 "추천 확장을 설치할까요?" 알림이 뜬다.
+// 설정 파일(.editorconfig, prettier.config.mjs, eslint.config.mjs)은 확장이 있어야 에디터에서 바로 적용된다.
+{
+  "recommendations": [
+    // .editorconfig 적용 (저장할 때 LF, 파일 끝 빈 줄 등)
+    "editorconfig.editorconfig",
+    // Prettier — 설정에서 '기본 포맷터: Prettier' + 'Format On Save'를 켜면 저장할 때마다 정리된다
+    "esbenp.prettier-vscode",
+    // ESLint — 코드 실수를 에디터에 빨간 밑줄로 보여 준다
+    "dbaeumer.vscode-eslint"
+  ]
+}

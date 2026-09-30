@@ -1,6 +1,6 @@
 # Step 3. 실무 환경 전환 — Next.js · TypeScript · SCSS Module · Storybook
 
-> 상태: 진행 중 (3-1, 3-2, 3-3, 3-4a 완료)
+> 상태: 진행 중 (3-1, 3-2, 3-3, 3-4a, 3-4b 완료)
 
 ## 목표
 지금까지는 Vite + JavaScript + Tailwind로 "React가 어떻게 동작하는지"를 익혔다.
@@ -13,7 +13,7 @@ Step 3에서는 **화면은 그대로 두고, 그 아래의 개발 환경을 실
 - [x] **3-3** Storybook (컴포넌트 스토리, 자동 문서, 접근성 검사, 다크 모드 전환)
 - [ ] **3-4** 코드 품질 도구
   - [x] 3-4a `.editorconfig` + `.gitattributes` (줄바꿈·들여쓰기 통일)
-  - [ ] 3-4b Prettier (코드 모양 자동 정리, ESLint와 역할 나누기)
+  - [x] 3-4b Prettier (코드 모양 자동 정리, ESLint와 역할 나누기)
   - [ ] 3-4c Stylelint (SCSS 규칙 검사)
   - [ ] 3-4d husky + lint-staged (커밋 전 자동 검사)
 
@@ -811,6 +811,71 @@ rm package.json && git checkout -- package.json   # 작업 폴더 파일을 새 
 1. `git ls-files --eol` → 텍스트 파일은 모두 `i/lf w/lf attr/text=auto eol=lf`, 이미지는 `-text`
 2. VS Code에서 아무 파일을 열어 오른쪽 아래가 `LF`인지
 3. 기존 파일이 새 규칙(파일 끝 빈 줄, 줄 끝 공백, 탭 들여쓰기 없음)을 지키는지 → 검사 결과 위반 0
+
+### 3-4b. Prettier — 코드 모양 자동 정리
+
+#### 설치
+```bash
+npm i -D prettier eslint-config-prettier
+```
+
+#### 파일별 설명
+| 파일 | 역할 |
+|---|---|
+| `prettier.config.mjs` (새 파일) | Prettier 옵션. 세미콜론 없음, 작은따옴표, 한 줄 120자. 옵션마다 "왜"를 주석으로 적으려고 JSON 대신 JS 파일 |
+| `.prettierignore` (새 파일) | 정리하지 않을 파일: `package-lock.json`, `*.md` |
+| `eslint.config.mjs` | 마지막에 `eslint-config-prettier` 추가 → ESLint의 모양 규칙을 끔 |
+| `package.json` | `npm run format`(고치기), `npm run format:check`(검사만) |
+| `.vscode/extensions.json` (새 파일) | 추천 확장: EditorConfig, Prettier, ESLint. 프로젝트를 열면 설치 알림이 뜬다 |
+| `src/data/products.ts`, `src/styles/_tokens.scss` | `// prettier-ignore`로 표처럼 맞춘 부분만 정리에서 제외 |
+| 그 외 `src/` 10개 파일 | Prettier가 모양만 바꿈 (별도 커밋) |
+
+#### 핵심 개념
+**1. ESLint와 Prettier의 역할 나누기**
+| | ESLint | Prettier |
+|---|---|---|
+| 보는 것 | 코드의 **의미** | 코드의 **모양** |
+| 예 | 안 쓰는 변수, `useEffect` 의존성 누락, `<img>` 대신 `next/image` | 따옴표, 줄 길이, 들여쓰기, 줄바꿈 위치 |
+| 결과 | 경고·에러 (일부 자동 수정) | 파일을 통째로 다시 씀 |
+
+둘 다 모양 규칙을 가지면 "ESLint는 A로, Prettier는 B로" 서로 고치며 싸운다.
+`eslint-config-prettier`는 ESLint의 모양 규칙을 **끄기만** 하는 설정이다. 앞 설정의 규칙을 덮어써야 하므로 배열 **맨 끝**에 둔다.
+충돌이 남았는지는 `npx eslint-config-prettier 파일경로`로 확인 → "No rules that are unnecessary or conflict" 확인.
+
+**2. Prettier는 "고민을 없애는" 도구**
+옵션이 일부러 적다. 줄을 어디서 꺾을지 같은 판단을 사람이 하지 않게 하는 것이 목적이다.
+그래서 결과가 100% 취향에 맞지는 않는다. 이번에도 실제로 돌려 보고 **세 곳을 조정**했다.
+
+| 돌려 보니 | 조정 |
+|---|---|
+| `products.ts` — 표처럼 열 맞춘 목 데이터가 세로로 132줄 풀림 | 바로 윗줄에 `// prettier-ignore` |
+| `_tokens.scss` — `(크기, 줄 높이)` 짝이 한 쌍에 4줄씩 풀림 | `// prettier-ignore` |
+| 마크다운 — 한글 표를 공백으로 맞추느라 수백 줄 변경, 코드 예시 앞에 `;` 추가 | `.prettierignore`에 `*.md` |
+| `quoteProps: 'consistent'`도 시도 → Button 스토리의 `variant`, `size`까지 따옴표가 붙음 | 되돌리고 기본값 `as-needed` 유지 |
+
+> `// prettier-ignore`는 **주석 한 줄만 단독으로** 적는다. 뒤에 설명을 붙이면 인식이 안 될 수 있어서 설명은 윗줄에 따로 적었다.
+
+**3. 줄 길이 `printWidth: 120`**
+기본값 80은 신문 칼럼 폭 같은 옛 기준이다. 한글 주석과 긴 `className`·`aria-*`가 많은 JSX는 80자면 거의 모든 줄이 꺾인다.
+120으로 두니 실제로 바뀐 줄은 SVG 속성 나열, 긴 함수 인자처럼 **정말 긴 줄**뿐이었다.
+> `printWidth`는 "최대"가 아니라 "이 길이를 넘으면 꺾는다"는 기준이다. 짧은 태그는 오히려 한 줄로 합친다.
+> 예: `<p className={styles.category}>` / `{category}` / `</p>` 3줄 → `<p className={styles.category}>{category}</p>` 1줄
+
+**4. 정리 결과는 따로 커밋**
+설정 커밋과 "Prettier가 모양만 바꾼" 커밋을 나눴다. 나중에 이력을 볼 때 의미 있는 변경과 모양 변경이 섞이지 않고, 모양 커밋은 통째로 건너뛰고 봐도 된다.
+
+**5. VS Code에서 저장할 때 자동 정리**
+1. 추천 확장 설치 (프로젝트를 열면 알림, 또는 확장 탭에서 `@recommended`)
+2. 설정(`Ctrl + ,`)에서 **Default Formatter** → *Prettier - Code formatter*, **Format On Save** 체크
+→ 저장할 때마다 `prettier.config.mjs` 규칙대로 정리된다. 확장이 없는 사람도 `npm run format`으로 같은 결과를 얻는다.
+
+#### 확인 방법
+1. `npm run format:check` → "All matched files use Prettier code style!"
+2. 아무 `.tsx` 파일에서 따옴표를 큰따옴표로 바꾸고 `npm run format` → 작은따옴표로 돌아오는지
+3. `npm run lint`, `npx tsc --noEmit`, `npm run build` 모두 통과 (모양만 바뀌었으므로 동작은 그대로)
+4. `products.ts`의 표 모양이 그대로인지 (`prettier-ignore` 동작)
+
+> 참고: `npx tsc --noEmit`에서 `.next/types/...dev/jev/page.js`를 못 찾는다는 에러가 나면, 다른 브랜치에서 빌드한 흔적이 `.next`에 남은 것이다. `npm run build`를 한 번 하면 사라진다.
 
 ---
 
