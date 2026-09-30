@@ -46,7 +46,8 @@
 - 실행: `npm run dev` / 빌드: `npm run build` / 린트: `npm run lint` / 타입 검사: `npx tsc --noEmit`
 - 참고: 사용자가 `npm run dev`(localhost:3000)를 켜 두는 경우가 많다. Next.js 16은 같은 폴더에서 dev 서버를 두 개 못 띄우므로, 검증은 `npm run build` 후 `next start -p <다른 포트>`로 하거나 켜진 3000 서버를 읽기 전용으로 쓴다. 파일을 임시로 바꾸면 사용자 화면에도 반영된다.
 - 참고: 회사 네트워크 — npm 저장소는 연결되지만 이미지 사이트(Unsplash·Pexels·Wikimedia·Picsum)는 회사 SSL 검사 인증서 때문에 Node는 `SELF_SIGNED_CERT_IN_CHAIN`, curl은 오류 35로 실패한다. 인증서 검사를 끄지 말 것(`NODE_TLS_REJECT_UNAUTHORIZED=0` 금지). 필요하면 사용자에게 브라우저로 받아 달라고 하거나, 동의를 받아 회사 루트 인증서를 `NODE_EXTRA_CA_CERTS`로 지정한다. (2026-09-30 사용자는 샘플 이미지 유지 선택)
-- 참고: Windows(`core.autocrlf=true`)에서 작업하면 작업 폴더 파일이 CRLF다. 스크립트로 문자열 치환할 때 줄바꿈 주의 (Step 3-4에서 `.gitattributes`로 정리 예정)
+- 줄바꿈: `.gitattributes`(`* text=auto eol=lf`)로 저장소·작업 폴더 모두 LF(Windows `core.autocrlf=true`여도). `.editorconfig`는 UTF-8·LF·스페이스 2칸·파일 끝 빈 줄
+- 참고: 이 PC에는 Python이 없다. 파일 일괄 수정은 Node 스크립트나 편집 도구로 한다.
 
 ## 로드맵
 > 2026-09-29: 실무에서 많이 쓰는 구성으로 방향 전환. Vite → **Next.js**, JS → **TypeScript**(원래 Step 9 → 앞당김), Tailwind → **SCSS Module**, **Storybook** 추가.
@@ -94,4 +95,5 @@
   - 3-2 보강: 상품 샘플 이미지(크기 제각각 12장) + `next/image`. 카드 틀 크기 일정, WebP 3~8KB로 전송 확인.
   - Step 3-3 완료: Storybook 10 + nextjs-vite, 스토리 29개(UI·Product·Feedback·Layout), 다크 모드 툴바, autodocs, a11y. axe 검사에서 StatusView 코드 숫자 대비 부족 발견 → 수정(58/58 통과).
   - 3-3 보강: px→rem 함수 `to-rem()`(SCSS)·`toRem()`(TS) 도입, 토큰·스켈레톤·스토리 적용. 컴파일 결과 CSS 전후 동일 확인.
-  - 다음은 3-4 코드 품질 도구 (Prettier, Stylelint, husky + lint-staged, .gitattributes).
+  - 3-4a 완료: `.editorconfig` + `.gitattributes`. 작업 폴더에 섞여 있던 CRLF 파일 5개를 LF로 통일(저장소 내용 변경 없음).
+  - 다음은 3-4b Prettier → 3-4c Stylelint → 3-4d husky + lint-staged.

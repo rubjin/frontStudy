@@ -1,0 +1,24 @@
+# Git 속성 (Step 3-4a)
+#
+# 역할: Git이 파일을 저장소에 넣고(commit) 꺼낼 때(checkout) 줄바꿈을 어떻게 다룰지 정한다.
+#
+# 왜 필요한가?
+# - Windows의 Git은 기본값(core.autocrlf=true)으로 꺼낼 때 LF → CRLF로 바꾼다.
+#   그래서 같은 프로젝트인데 파일마다 줄바꿈이 섞이고(LF/CRLF),
+#   스크립트로 문자열을 치환하거나 Prettier로 검사할 때 문제가 생긴다.
+# - 이 파일은 저장소에 커밋되므로, 각자 PC의 Git 설정과 상관없이 모두 같은 규칙을 따른다.
+#   (.editorconfig는 에디터 규칙, .gitattributes는 Git 규칙)
+
+# 텍스트 파일은 Git이 자동으로 판단하고, 저장소·작업 폴더 모두 LF로 둔다
+* text=auto eol=lf
+
+# 바이너리 파일: 줄바꿈 변환도, 텍스트 diff도 하지 않는다 (이미지가 깨지는 것 방지)
+*.jpg  binary
+*.jpeg binary
+*.png  binary
+*.gif  binary
+*.webp binary
+*.avif binary
+*.ico  binary
+*.woff binary
+*.woff2 binary

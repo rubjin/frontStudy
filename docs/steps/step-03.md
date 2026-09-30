@@ -1,6 +1,6 @@
 # Step 3. 실무 환경 전환 — Next.js · TypeScript · SCSS Module · Storybook
 
-> 상태: 진행 중 (3-1, 3-2, 3-3 완료)
+> 상태: 진행 중 (3-1, 3-2, 3-3, 3-4a 완료)
 
 ## 목표
 지금까지는 Vite + JavaScript + Tailwind로 "React가 어떻게 동작하는지"를 익혔다.
@@ -11,7 +11,11 @@ Step 3에서는 **화면은 그대로 두고, 그 아래의 개발 환경을 실
 - [x] **3-1** Vite → Next.js(App Router) + TypeScript
 - [x] **3-2** Tailwind → SCSS Module (디자인 토큰, mixin, CSS 변수 다크 모드, 한글 웹폰트)
 - [x] **3-3** Storybook (컴포넌트 스토리, 자동 문서, 접근성 검사, 다크 모드 전환)
-- [ ] **3-4** 코드 품질 도구 (Prettier, Stylelint, husky + lint-staged)
+- [ ] **3-4** 코드 품질 도구
+  - [x] 3-4a `.editorconfig` + `.gitattributes` (줄바꿈·들여쓰기 통일)
+  - [ ] 3-4b Prettier (코드 모양 자동 정리, ESLint와 역할 나누기)
+  - [ ] 3-4c Stylelint (SCSS 규칙 검사)
+  - [ ] 3-4d husky + lint-staged (커밋 전 자동 검사)
 
 > 한 번에 다 바꾸지 않고, **각 단계가 끝날 때마다 화면이 정상 동작하는 상태**를 유지한다.
 > 그래서 3-1에서는 스타일(Tailwind)을 건드리지 않고 프레임워크와 언어만 바꿨다.
@@ -743,6 +747,70 @@ const H = `calc(${toRem(32)} + 2px)`         // 'calc(2rem + 2px)'
 ### 알려진 한계
 - ThemeToggle 스토리에서 버튼을 누르면 localStorage에도 저장된다. Storybook(6006)과 실제 사이트(3000)는 주소가 달라 서로 섞이지 않는다.
 - 스토리 파일 이름: 작은 컨트롤 4개(Filters), 스켈레톤 2개(Skeletons)는 한 파일에 모았다. 컴포넌트가 커지면 컴포넌트마다 파일을 나눈다.
+
+---
+
+## 3-4. 코드 품질 도구
+
+### 왜 필요한가?
+지금까지는 "코드 모양"을 사람이 눈으로 맞췄다. 세미콜론을 뺄지, 따옴표는 뭘 쓸지, 줄바꿈 문자는 뭔지…
+혼자일 때는 괜찮지만 팀에서는 **리뷰가 내용이 아니라 모양 이야기로 채워진다.**
+실무에서는 이런 규칙을 **도구에 맡기고, 커밋할 때 자동으로 검사**한다. 저장소의 설정 파일만 봐도 "팀 작업 방식을 아는 사람"으로 보인다.
+
+| 도구 | 하는 일 | 퍼블리셔에게 익숙한 비유 |
+|---|---|---|
+| `.editorconfig` (3-4a) | 에디터가 저장할 때 들여쓰기·줄바꿈·인코딩을 맞춤 | 작업 전 에디터 환경설정 통일 |
+| `.gitattributes` (3-4a) | Git이 커밋·체크아웃할 때 줄바꿈을 맞춤 | — |
+| Prettier (3-4b) | 코드 **모양**을 자동으로 다시 씀 | 코드 정렬(Beautify) 자동화 |
+| ESLint (이미 있음) | 코드 **실수**를 찾음 (안 쓰는 변수, Hooks 규칙 위반) | — |
+| Stylelint (3-4c) | CSS/SCSS 실수·규칙 위반을 찾음 | CSS 검사기 |
+| husky + lint-staged (3-4d) | 커밋 직전에 위 도구를 자동 실행 | 납품 전 최종 검수 |
+
+### 3-4a. `.editorconfig` + `.gitattributes` — 줄바꿈 통일
+
+**발견한 문제**: 저장소(커밋된 내용)는 모든 파일이 LF인데, 작업 폴더에서는 `.gitignore`, `CLAUDE.md`, `package.json`, `package-lock.json`, `globals.scss` **5개만 CRLF**였다.
+Windows Git의 `core.autocrlf=true` 때문에 Git이 꺼낸 파일은 CRLF, 도구(에디터·npm·스크립트)가 새로 만든 파일은 LF라서 섞인 것이다.
+```bash
+git ls-files --eol   # i/ = 저장소 안, w/ = 작업 폴더
+# i/lf  w/crlf  package.json      ← 섞인 파일
+# i/lf  w/lf    src/app/page.tsx
+```
+줄바꿈이 섞이면: 스크립트로 문자열을 바꿀 때 `\r`이 남아 매칭이 안 되거나, Prettier가 모든 줄을 "틀렸다"고 하거나, 다른 PC에서 받으면 내용은 같은데 파일 전체가 변경됨으로 뜬다.
+
+#### 파일별 설명
+| 파일 | 역할 |
+|---|---|
+| `.editorconfig` | 에디터 규칙: UTF-8, LF, 스페이스 2칸, 파일 끝 빈 줄, 줄 끝 공백 제거(마크다운 제외) |
+| `.gitattributes` | Git 규칙: 텍스트 파일은 `eol=lf`, 이미지·폰트는 `binary` |
+
+#### 핵심 개념
+**1. LF와 CRLF**
+줄바꿈을 나타내는 보이지 않는 문자. LF(`\n`)는 macOS·Linux·서버, CRLF(`\r\n`)는 Windows 기본값이다.
+VS Code 오른쪽 아래 상태 표시줄에 `LF` / `CRLF`로 보인다. 배포 서버(Linux)와 맞추려고 LF로 통일한다.
+
+**2. 왜 두 파일이 다 필요한가?**
+- `.editorconfig`는 **에디터**에게 "이렇게 저장해"라고 알려 준다. (VS Code는 *EditorConfig for VS Code* 확장 필요)
+- `.gitattributes`는 **Git**에게 "커밋·체크아웃할 때 이렇게 바꿔"라고 알려 준다.
+- 에디터 설정을 안 한 사람이 CRLF로 저장해도 Git이 커밋할 때 LF로 바꿔 넣는다. 두 겹의 안전장치.
+- `core.autocrlf`는 **각자 PC 설정**이라 저장소가 강제할 수 없지만, `.gitattributes`는 **저장소에 커밋**되므로 모두에게 적용되고 `autocrlf`보다 우선한다.
+
+**3. `* text=auto eol=lf`**
+- `text=auto`: 텍스트인지 바이너리인지 Git이 내용을 보고 판단한다.
+- `eol=lf`: 텍스트라면 작업 폴더에서도 LF로 꺼낸다.
+- 이미지는 `binary`로 명시해 줄바꿈 변환·텍스트 비교를 하지 않게 한다. (잘못 변환되면 이미지가 깨진다)
+
+**4. 이미 있는 파일 정리하기**
+규칙을 추가해도 **이미 꺼내 둔 파일은 그대로**다. 그래서 두 단계로 정리했다.
+```bash
+git add --renormalize .                           # 저장소 안 파일을 새 규칙으로 다시 넣기 (이번엔 이미 LF라 변경 0)
+rm package.json && git checkout -- package.json   # 작업 폴더 파일을 새 규칙으로 다시 꺼내기
+```
+> 두 번째 명령은 **그 파일에 커밋 안 한 변경이 없을 때만** 안전하다. (`git diff --quiet -- 파일`로 확인 후 실행)
+
+#### 확인 방법
+1. `git ls-files --eol` → 텍스트 파일은 모두 `i/lf w/lf attr/text=auto eol=lf`, 이미지는 `-text`
+2. VS Code에서 아무 파일을 열어 오른쪽 아래가 `LF`인지
+3. 기존 파일이 새 규칙(파일 끝 빈 줄, 줄 끝 공백, 탭 들여쓰기 없음)을 지키는지 → 검사 결과 위반 0
 
 ---
 

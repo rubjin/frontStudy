@@ -1,0 +1,31 @@
+# EditorConfig (Step 3-4a)
+#
+# 역할: 에디터가 "파일을 저장할 때" 지킬 기본 규칙을 정한다.
+# VS Code·WebStorm 등 대부분의 에디터가 이 파일을 읽는다.
+# (VS Code는 'EditorConfig for VS Code' 확장이 있어야 적용된다)
+#
+# 왜 필요한가?
+# - 사람마다 에디터 설정(탭/스페이스, 줄바꿈 문자)이 달라서
+#   내용은 안 바꿨는데 파일 전체가 '변경됨'으로 뜨는 일을 막는다.
+# - Prettier(3-4b)는 코드 모양을 "검사·정리"하고,
+#   EditorConfig는 "입력할 때부터" 같은 규칙으로 쓰게 한다. 둘은 같은 값을 쓴다.
+
+# 이 파일이 프로젝트 최상위 설정이다 (상위 폴더의 .editorconfig를 찾지 않음)
+root = true
+
+# 모든 파일 공통
+[*]
+charset = utf-8
+# 줄바꿈 문자: LF(\n). Windows 기본값 CRLF(\r\n) 대신 macOS·Linux·배포 서버와 같게
+end_of_line = lf
+# 들여쓰기: 스페이스 2칸
+indent_style = space
+indent_size = 2
+# 파일 끝에 빈 줄 하나 (없으면 git diff에 "No newline at end of file"이 뜬다)
+insert_final_newline = true
+# 줄 끝 공백 지우기
+trim_trailing_whitespace = true
+
+# 마크다운은 줄 끝 공백 2칸이 '줄바꿈' 문법이라 지우지 않는다
+[*.md]
+trim_trailing_whitespace = false
