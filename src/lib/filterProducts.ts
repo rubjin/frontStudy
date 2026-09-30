@@ -48,9 +48,7 @@ export function filterProducts(
     // 검색어 조건: 검색어가 비어 있으면(!keyword) 무조건 통과,
     // 아니면 상품명이나 카테고리에 검색어가 포함돼 있으면 통과
     const matchesKeyword =
-      !keyword ||
-      p.name.toLowerCase().includes(keyword) ||
-      p.category.toLowerCase().includes(keyword)
+      !keyword || p.name.toLowerCase().includes(keyword) || p.category.toLowerCase().includes(keyword)
 
     // 카테고리 조건: '전체'를 골랐으면 무조건 통과, 아니면 카테고리가 같아야 통과
     const matchesCategory = category === ALL_CATEGORIES || p.category === category

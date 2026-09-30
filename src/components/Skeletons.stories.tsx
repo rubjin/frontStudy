@@ -38,7 +38,9 @@ export const CardOnly: Story = {
 /** 왼쪽 스켈레톤, 오른쪽 실제 카드 — 높이·여백이 같아야 한다 */
 export const CardSideBySide: Story = {
   render: () => (
-    <div style={{ display: 'grid', gridTemplateColumns: `repeat(2, ${toRem(290)})`, gap: toRem(24), alignItems: 'start' }}>
+    <div
+      style={{ display: 'grid', gridTemplateColumns: `repeat(2, ${toRem(290)})`, gap: toRem(24), alignItems: 'start' }}
+    >
       <CardSkeleton />
       <Card product={products[0]} />
     </div>

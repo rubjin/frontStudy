@@ -31,9 +31,7 @@ function CardGrid({ products, query }: CardGridProps) {
           {/* <>...</>는 Fragment: 불필요한 태그 없이 여러 요소를 묶을 때 쓴다 */}
           {keyword ? <>&lsquo;{keyword}&rsquo;에 대한 검색 결과가 없습니다</> : '조건에 맞는 상품이 없습니다'}
         </p>
-        <p className={styles.emptyHint}>
-          다른 키워드로 검색하거나 카테고리를 바꿔 보세요.
-        </p>
+        <p className={styles.emptyHint}>다른 키워드로 검색하거나 카테고리를 바꿔 보세요.</p>
       </div>
     )
   }

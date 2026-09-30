@@ -52,7 +52,9 @@ export const NoImage: Story = {
 
 /** 상품명이 길 때 줄바꿈되는 모양 확인 */
 export const LongName: Story = {
-  args: { product: withOverrides({ name: '무선 노이즈캔슬링 블루투스 헤드폰 프리미엄 에디션 (그라파이트 블랙, 2026년형)' }) },
+  args: {
+    product: withOverrides({ name: '무선 노이즈캔슬링 블루투스 헤드폰 프리미엄 에디션 (그라파이트 블랙, 2026년형)' }),
+  },
 }
 
 /** 가로로 아주 긴 사진(1200×500) → 좌우가 잘린다 */

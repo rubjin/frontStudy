@@ -80,16 +80,10 @@ function Card({ product, eager = false }: CardProps) {
           </span>
         )}
         {/* 조건부 렌더링: soldOut이 true일 때만 && 뒤의 요소가 그려진다 */}
-        {soldOut && (
-          <span className={styles.soldOut}>
-            품절
-          </span>
-        )}
+        {soldOut && <span className={styles.soldOut}>품절</span>}
       </div>
 
-      <p className={styles.category}>
-        {category}
-      </p>
+      <p className={styles.category}>{category}</p>
       <h3 className={styles.name}>
         {/* .link: ::after를 카드 크기만큼 늘려 카드 전체를 클릭 영역으로 (늘린 링크) */}
         <Link href={`/products/${product.id}`} className={styles.link}>

@@ -16,7 +16,8 @@ const meta = {
     layout: 'fullscreen',
     docs: {
       description: {
-        component: '모든 페이지 상단의 헤더. 서버 컴포넌트이고, 상호작용이 필요한 다크 모드 버튼(ThemeToggle)만 클라이언트 컴포넌트다.',
+        component:
+          '모든 페이지 상단의 헤더. 서버 컴포넌트이고, 상호작용이 필요한 다크 모드 버튼(ThemeToggle)만 클라이언트 컴포넌트다.',
       },
     },
   },

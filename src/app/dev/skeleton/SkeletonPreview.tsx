@@ -47,7 +47,11 @@ function SkeletonPreview() {
           >
             스켈레톤
           </Button>
-          <Button variant={mode === 'real' ? 'primary' : 'secondary'} aria-pressed={mode === 'real'} onClick={() => setMode('real')}>
+          <Button
+            variant={mode === 'real' ? 'primary' : 'secondary'}
+            aria-pressed={mode === 'real'}
+            onClick={() => setMode('real')}
+          >
             실제 화면
           </Button>
           <Button
@@ -59,8 +63,8 @@ function SkeletonPreview() {
           </Button>
         </div>
         <p className={styles.hint}>
-          로딩 재현을 누르고 스켈레톤이 실제 화면으로 바뀌는 순간 검색창·칩·카드가 움직이지 않는지 확인하세요. 개발 서버에서만 열리는
-          페이지입니다.
+          로딩 재현을 누르고 스켈레톤이 실제 화면으로 바뀌는 순간 검색창·칩·카드가 움직이지 않는지 확인하세요. 개발
+          서버에서만 열리는 페이지입니다.
         </p>
       </div>
 

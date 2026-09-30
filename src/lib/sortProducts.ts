@@ -40,7 +40,7 @@ export const SORT_OPTIONS: SortOption[] = [
 const COMPARATORS: Partial<Record<SortValue, (a: Product, b: Product) => number>> = {
   'price-asc': (a, b) => a.price - b.price,
   'price-desc': (a, b) => b.price - a.price,
-  'rating': (a, b) => b.rating - a.rating,
+  rating: (a, b) => b.rating - a.rating,
 }
 
 // 선택한 정렬 기준(sort)으로 정렬한 '새 배열'을 돌려준다.

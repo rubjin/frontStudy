@@ -37,7 +37,12 @@ type BackButtonProps = Omit<ComponentProps<typeof Button>, 'onClick'> & {
 }
 
 // ...rest: fallbackHref, variant, children을 뺀 나머지 props(size, className...)를 Button에 그대로 넘긴다
-function BackButton({ fallbackHref = '/', variant = 'secondary', children = '이전 페이지로', ...rest }: BackButtonProps) {
+function BackButton({
+  fallbackHref = '/',
+  variant = 'secondary',
+  children = '이전 페이지로',
+  ...rest
+}: BackButtonProps) {
   // useRouter: 코드로 페이지를 이동시키는 도구 (next/navigation — App Router용. next/router가 아님에 주의)
   const router = useRouter()
 
