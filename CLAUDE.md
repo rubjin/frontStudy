@@ -13,6 +13,18 @@
 - 스텝이 끝나면 이 파일의 **진행 상황**을 갱신한다.
 - push는 사용자에게 확인받은 뒤에 한다.
 
+## 브랜치
+- `main`: Step 1~3-3 학습 진행분.
+- **`cloude`**: 2026-09-30부터 AI 연동 작업(Jev·Qwen·Gemini)은 이 브랜치에서만 한다. 작업 전 `git branch --show-current`로 확인.
+
+## AI 연동 (cloude 브랜치)
+- 구조: Claude Code·Gemini·Qwen은 코드를 쓰고, **TypeSafe Jev**(판단 전용 모델: choice/score/noul + confidence)는 작업 분배·위험도·검색 의도를 판단한다. 아키텍처: https://claude.ai/code/artifact/a726702d-e2f3-4c58-8dcc-a55ae3fafce3 , 설명 `docs/ai/`
+- `src/lib/ai/jev.ts`: `askJev()` 서버 전용(`import 'server-only'`). OpenRouter 경유(baseURL `https://openrouter.ai/api`, 모델 `typesafe/jev-1.13`). 확신도 문턱 `CONFIDENCE.AUTO=0.85`, `CONFIRM=0.6`
+- 키 없음·`AI_MOCK=1`·연결 실패 시 예외 대신 **확신도 0인 가짜 응답**(`source: 'mock'`, `reason`) → 항상 fallback. 가짜 답이 실제 판단처럼 쓰이면 안 된다
+- 키: `OPENROUTER_API_KEY`는 `.env.local`(gitignore)에만. 채팅·코드·커밋에 키를 적지 않는다. 사용자는 OpenRouter 키 보유(2026-09-30)
+- 확인: `npm run check:ai`(원인 구분), 개발 페이지 `/dev/jev`(production 404). 회사 PC는 SSL 검사로 모든 AI API 차단 → 실제 호출 확인은 Codespaces(Secrets에 키 등록). 사용자는 회사 네트워크 설정을 확인하기 어렵다고 함
+- 서버 전용 TS 파일 단독 실행 확인: `npx -y tsx --conditions=react-server <파일.mts>` (최상위 await 대신 async 함수)
+
 ## 프로젝트
 - 이름: **Shoppr** (상품 목록 쇼핑몰 UI)
 - 스택: **Next.js 16 (App Router) + React 19 + TypeScript**

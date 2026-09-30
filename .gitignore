@@ -32,3 +32,7 @@ next-env.d.ts
 # Storybook
 storybook-static
 *storybook.log
+
+# 환경 변수 (API 키) — 예시 파일만 커밋한다
+.env*
+!.env.example

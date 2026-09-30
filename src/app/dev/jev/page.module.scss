@@ -1,0 +1,99 @@
+@use 'styles' as *;
+
+// 개발용 Jev 확인 페이지 스타일 (cloude 브랜치 · AI 연동)
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: space(6);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: space(2);
+  padding: space(4);
+  border: 1px dashed var(--color-border-strong); // 개발 도구 느낌 (dev/skeleton과 같은 표시)
+  border-radius: $radius-lg;
+}
+
+.title {
+  @include text(lg);
+  font-weight: $font-weight-semibold;
+}
+
+.meta,
+.hint {
+  @include text(sm);
+  color: var(--color-text-muted);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0 space(2);
+  border-radius: $radius-full;
+  @include text(xs);
+  font-weight: $font-weight-semibold;
+}
+
+.live {
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.mock {
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-text-secondary);
+}
+
+// 표가 좁은 화면에서 넘치면 표만 가로 스크롤
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: $radius-lg;
+  background-color: var(--color-surface);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  @include text(sm);
+
+  th,
+  td {
+    padding: space(3) space(4);
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  th {
+    font-weight: $font-weight-semibold;
+    color: var(--color-text-muted);
+  }
+
+  tr:last-child td {
+    border-bottom: 0;
+  }
+}
+
+// 숫자 칸: 자릿수 폭을 같게 해서 세로로 줄이 맞게
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.action {
+  font-weight: $font-weight-semibold;
+
+  &[data-action='apply'] {
+    color: var(--color-primary-text);
+  }
+
+  &[data-action='confirm'] {
+    color: var(--color-text);
+  }
+
+  &[data-action='fallback'] {
+    color: var(--color-text-muted);
+  }
+}
