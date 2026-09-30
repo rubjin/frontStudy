@@ -22,7 +22,7 @@
     - 색은 반드시 테마 변수 `var(--color-...)`만 쓴다. 팔레트(`$gray` 등)는 `_themes.scss`에서만 사용
     - 여러 클래스 조합은 `clsx`. 상태 스타일은 가능하면 aria 속성 선택자(`[aria-pressed='true']`)
   - 다크 모드: `<html data-theme="dark">` + localStorage(`lib/theme.ts`). `<head>`의 `themeInitScript`로 깜빡임 방지. 아이콘·버튼 이름은 CSS로 전환(ThemeToggle)
-  - 폰트: Pretendard dynamic subset (`pretendard` 패키지 CSS를 layout에서 import)
+  - 폰트: Pretendard dynamic subset (`pretendard` 패키지 CSS를 layout에서 import). `_fonts.scss`의 `'Pretendard Fallback'`(맑은 고딕 + `size-adjust`, 실측값)으로 폰트 교체 때 레이아웃 이동 방지. 폰트 스택은 `fonts.$font-family-base`
   - 컴포넌트 문서화: Storybook (Step 3-3 예정)
 - 구조
   - `src/app/` — 파일 기반 라우팅. `layout.tsx`(공통 틀·Header), `page.tsx`("/"), `products/[id]/page.tsx`(상세), `not-found.tsx`(404), `error.tsx`(실행 에러), `global-error.tsx`(레이아웃 에러), `globals.css`
@@ -81,4 +81,5 @@
   - 3-1 보강: 공통 버튼 `ui/Button`(Button/ButtonLink) — 에러 화면·헤더 다크 모드 버튼에 적용.
   - 3-1 보강: 페이지별 metadata — 레이아웃 title template·description·Open Graph, not-found·상세(`generateMetadata`)·error 제목.
   - Step 3-2 완료: Tailwind → SCSS Module. 디자인 토큰·mixin·CSS 변수 테마, 다크 모드 localStorage 유지 + 깜빡임 방지, Header 서버 컴포넌트화(ThemeToggle 분리), Pretendard, 검색창 aria-label.
+  - 3-2 보강(2026-09-30): 새로고침 때 움찔(FOUT) 원인 측정 → 크기 보정 대체 폰트로 CLS 0.00066 → 0.00003.
   - 다음은 3-3 Storybook.

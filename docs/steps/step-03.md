@@ -377,6 +377,7 @@ clsx(styles.button, styles[variant], styles[size], className)
 | `src/styles/_tokens.scss` (새 파일) | 디자인 토큰. 색상 팔레트(원재료), `space()`, `$font-sizes`, `$radius-*`, `$shadow-*`, `$breakpoints` |
 | `src/styles/_mixins.scss` (새 파일) | `mq()`, `text()`, `focus-ring`, `sr-only`, `container`, `flex-center` |
 | `src/styles/_index.scss` (새 파일) | 토큰 + mixin을 묶어 내보내는 입구 |
+| `src/styles/_fonts.scss` (새 파일, 3-2 보강) | 크기를 보정한 대체 폰트 `'Pretendard Fallback'`(맑은 고딕 + `size-adjust`), 폰트 스택 `$font-family-base` |
 | `src/styles/_themes.scss` (새 파일) | `:root`(라이트)와 `[data-theme='dark']`의 CSS 변수 |
 | `src/styles/globals.scss` (← `app/globals.css`) | 리셋, html/body, 폰트 스택, `.sr-only` |
 | `src/lib/theme.ts` (새 파일) | `applyTheme`, `getCurrentTheme`, 깜빡임 방지 스크립트 `themeInitScript` |
@@ -481,7 +482,47 @@ CSS 변수 안에 SCSS 값을 넣을 때는 `#{...}`(보간)로 감싼다. `--co
 - 폰트 스택: Pretendard를 못 불러오면 `Apple SD Gothic Neo`, `Malgun Gothic` 등 운영체제 기본 한글 폰트로 대체한다.
 - ※ Next.js의 `next/font`는 영문 구글 폰트에는 좋지만, 2MB 한 파일을 통째로 preload하게 되어 이 경우에는 쓰지 않았다.
 
-**10. 접근성 보강 (전환하면서 함께 고친 것)**
+**10. 새로고침할 때 글자·요소가 움찔거리는 문제 (FOUT) — 측정하고 줄이기**
+
+원인
+```
+① HTML·CSS 도착 → 대체 폰트(맑은 고딕)로 먼저 그림
+② Pretendard 조각들이 하나씩 도착 → 해당 글자를 바꿔 그림  ← 움찔
+```
+- Pretendard CSS는 `font-display: swap`: 폰트가 올 때까지 글자를 숨기지 않고 대체 폰트로 먼저 보여 준다. (FOUT: Flash Of Unstyled Text)
+- 맑은 고딕이 Pretendard보다 **약 11% 넓어서**, 바뀌는 순간 **글자 길이로 너비가 정해지는 요소**(카테고리 칩, 정렬 옵션)가 줄어든다. 카드처럼 너비가 고정된 요소는 안 움직인다.
+- 조각(92개)마다 도착 시간이 달라 여러 번 나눠 움찔한다.
+- **캐시가 있으면 발생하지 않는다.** 개발자 도구의 "Disable cache"가 켜져 있거나 강력 새로고침(Ctrl+Shift+R)이면 매번 보인다. 실제 사용자는 첫 방문 때만 본다.
+
+해결: 대체 폰트의 크기를 Pretendard에 맞춘다 (`_fonts.scss`)
+```scss
+@font-face {
+  font-family: 'Pretendard Fallback';   // 새 이름
+  src: local('Malgun Gothic');          // 실제 글꼴은 컴퓨터에 설치된 맑은 고딕
+  font-weight: 100 500;
+  size-adjust: 88.85%;                  // 폭을 Pretendard에 맞춤
+  ascent-override: 106.92%;             // 위 높이
+  descent-override: 27.01%;             // 아래 높이
+}
+// 굵게(600~900)는 local('Malgun Gothic Bold')로 따로 (가짜 굵게는 폭이 달라서)
+
+font-family: 'Pretendard Variable', Pretendard, 'Pretendard Fallback', ...;
+```
+- 보정값은 헤드리스 Chrome에서 **이 화면에 실제로 나오는 글자 719자**를 `canvas.measureText`로 재서 구했다. (한글만 0.864, 숫자·영문만 1.068로 차이가 커서 실제 글자 전체로 쟀다)
+- `next/font`가 영문 구글 폰트에 자동으로 해 주는 것과 같은 원리다. 한글 dynamic subset에는 직접 해야 한다.
+
+측정 결과 (배포 빌드, 느린 회선 흉내, 캐시 없음, 각 3회)
+| | 레이아웃 이동 | CLS |
+| --- | --- | --- |
+| 보정 전 | 5번 (칩, 옵션, 평점) | 0.00066 |
+| 보정 후 | 2번 (1px 미만) | **0.00003 (약 95% 감소)** |
+
+- 보정 후 대체 폰트의 폭·높이가 Pretendard와 같아진 것도 확인했다. (400: 41943 / 95 / 24 → 41943 / 95 / 24)
+- CLS "좋음" 기준은 0.1 이하라서 원래도 문제 수준은 아니었다. 눈에 보이는 움찔을 없애는 품질 개선이다.
+- ⚠️ 맑은 고딕이 있는 **Windows에서만** 효과가 있다. macOS는 local()이 실패하고 Apple SD Gothic Neo로 넘어간다. (맥에서 같은 방법으로 재서 추가하면 된다)
+- 측정 중 알게 된 것: React 19는 하이드레이션할 때 `<html>`에 끼어든 낯선 태그를 정리한다. 테스트용으로 넣은 `<style>`이 지워져서 `adoptedStyleSheets`로 바꿔 측정했다.
+
+**11. 접근성 보강 (전환하면서 함께 고친 것)**
 - 검색창에 `aria-label="상품 검색"`: placeholder는 입력하면 사라지고 이름으로 읽히지 않을 수 있다.
 - 카테고리 칩에 `:focus-visible` 테두리 추가 (Tailwind 때는 브라우저 기본 표시였다).
 - 카드 떠오르기 효과는 `prefers-reduced-motion: reduce`(모션 줄이기 설정) 사용자에게는 끈다.
@@ -493,6 +534,7 @@ CSS 변수 안에 SCSS 값을 넣을 때는 `#{...}`(보간)로 감싼다. `--co
 3. 개발자 도구 Application 탭 → Local Storage에 `theme: dark`가 저장되는지. 지우고 새로고침하면 운영체제 설정을 따르는지
 4. 개발자 도구 Elements에서 `<html data-theme="dark">`, 카드의 클래스가 `Card-module-scss-module__...__card` 같은 고유 이름인지
 5. 브라우저 폭을 줄여 가며 그리드가 4 → 3 → 2 → 1열로 바뀌는지 (1280 / 1024 / 640px 기준)
+5-1. 개발자 도구 Network 탭에서 **Disable cache**를 켜고 새로고침 → 칩·정렬 옵션이 움찔하지 않는지. `_fonts.scss`의 `'Pretendard Fallback'`을 폰트 스택에서 잠깐 빼면 움찔하는 것과 비교해 보기
 6. `layout.tsx`에서 `suppressHydrationWarning`을 잠깐 지우고, 다크 모드로 새로고침 → 콘솔에 하이드레이션 경고가 뜨는지 확인 후 되돌리기
 7. 스크린리더(Windows 내레이터: Ctrl+Win+Enter) 또는 개발자 도구 Accessibility 탭에서 다크 모드 버튼 이름이 테마에 따라 "다크 모드로 전환" / "라이트 모드로 전환"으로 바뀌는지
 8. `_tokens.scss`에서 `$radius-xl`을 `0`으로 바꿔 보기 → 모든 카드 모서리가 한 번에 바뀌는지 (확인 후 되돌리기)

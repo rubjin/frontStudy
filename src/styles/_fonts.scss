@@ -1,0 +1,61 @@
+// 폰트 설정 — 폰트 스택 + 크기를 보정한 대체 폰트 (Step 3-2 보강)
+//
+// 문제: 새로고침(캐시 없음)할 때 글자와 요소가 '움찔'한다
+// - Pretendard CSS는 font-display: swap 이라서, 폰트가 도착하기 전에는 대체 폰트(맑은 고딕)로 먼저 그린다.
+// - 맑은 고딕이 Pretendard보다 약 11% 넓어서, 폰트가 도착해 바꿔 끼우는 순간
+//   글자 길이로 너비가 정해지는 요소(카테고리 칩, 정렬 옵션)가 줄어들며 움직인다. (레이아웃 이동, CLS)
+//
+// 해결: 맑은 고딕을 Pretendard와 '같은 크기'로 보정한 대체 폰트를 만든다
+// - @font-face로 새 폰트 이름('Pretendard Fallback')을 만들되, 실제 글꼴은 컴퓨터에 설치된 맑은 고딕(local)을 쓴다.
+// - size-adjust로 글자 폭을, ascent/descent-override로 위아래 높이를 Pretendard에 맞춘다.
+// - 그러면 폰트가 바뀌어도 글자 모양만 바뀌고 크기는 거의 같아서 요소가 움직이지 않는다.
+// - Next.js의 next/font가 영문 구글 폰트에 자동으로 해 주는 것과 같은 원리다. (한글 dynamic subset에는 직접 해야 한다)
+//
+// 보정값은 어떻게 구했나? (2026-09-30 측정)
+// - 헤드리스 Chrome에서 이 사이트 목록 화면에 실제로 나오는 글자(719자)를 canvas measureText로 쟀다.
+//   size-adjust     = Pretendard 폭 / 맑은 고딕 폭          (400: 0.8885, 700: 0.8820)
+//   ascent-override = Pretendard 윗높이(0.95) / size-adjust
+//   descent-override= Pretendard 아랫높이(0.24) / size-adjust
+// - 한글만 재면 0.864, 숫자·영문만 재면 1.068로 차이가 커서, 실제 화면 글자 전체로 잰 값을 쓴다.
+//
+// ⚠️ 한계: 맑은 고딕이 있는 Windows에서만 효과가 있다.
+// - macOS·iOS에는 맑은 고딕이 없어서 local()이 실패하고, 폰트 스택의 다음 글꼴(Apple SD Gothic Neo)로 넘어간다.
+//   (보정하려면 맥에서 같은 방법으로 재서 'Pretendard Fallback Mac'을 추가하면 된다)
+
+// 보통 굵기(100~500) 요청 → 맑은 고딕 Regular
+@font-face {
+  font-family: 'Pretendard Fallback';
+  src: local('Malgun Gothic');
+  font-weight: 100 500; // 이 범위의 굵기를 요청하면 이 면(face)을 쓴다
+  size-adjust: 88.85%;
+  ascent-override: 106.92%; // 0.95 / 0.8885
+  descent-override: 27.01%; // 0.24 / 0.8885
+  line-gap-override: 0%;
+}
+
+// 굵은 굵기(600~900) 요청 → 맑은 고딕 Bold
+// Regular 하나로 굵게를 흉내 내면(가짜 굵게) 폭이 달라지므로 Bold 파일을 따로 연결한다
+@font-face {
+  font-family: 'Pretendard Fallback';
+  src: local('Malgun Gothic Bold');
+  font-weight: 600 900;
+  size-adjust: 88.2%;
+  ascent-override: 107.71%; // 0.95 / 0.882
+  descent-override: 27.21%; // 0.24 / 0.882
+  line-gap-override: 0%;
+}
+
+// 폰트 스택: 앞에서부터 쓸 수 있는 글꼴을 고른다
+// 1) Pretendard (웹폰트, 도착하면 사용)
+// 2) Pretendard Fallback (도착 전 Windows: 크기를 맞춘 맑은 고딕)
+// 3) 운영체제 기본 글꼴 (macOS·iOS 등)
+$font-family-base:
+  'Pretendard Variable',
+  Pretendard,
+  'Pretendard Fallback',
+  -apple-system,
+  BlinkMacSystemFont,
+  system-ui,
+  'Apple SD Gothic Neo',
+  'Malgun Gothic',
+  sans-serif;

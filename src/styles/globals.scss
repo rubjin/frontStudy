@@ -1,10 +1,11 @@
 @use 'themes';
+@use 'fonts';
 @use 'index' as *;
 
 // 전역 스타일 — 모든 페이지에 한 번만 적용되는 기본 스타일 (Step 3-2에서 Tailwind → SCSS)
 //
 // layout.tsx에서 한 번만 import 한다. 컴포넌트별 스타일은 각자의 .module.scss에 둔다.
-// 여기에는 ① 테마 변수 ② 리셋 ③ html/body 기본값 ④ 전역 유틸리티(sr-only)만 둔다.
+// 여기에는 ① 테마 변수 ② 폰트(보정된 대체 폰트) ③ 리셋 ④ html/body 기본값 ⑤ 전역 유틸리티(sr-only)만 둔다.
 
 // ─── 리셋 ────────────────────────────────────────────────
 // 브라우저마다 다른 기본 스타일(여백, 글꼴 등)을 맞춘다. Tailwind의 preflight가 해 주던 일이다.
@@ -20,16 +21,9 @@
 }
 
 html {
-  // Pretendard를 못 불러오면 운영체제 기본 한글 글꼴로 대체한다 (폰트 스택)
-  font-family:
-    'Pretendard Variable',
-    Pretendard,
-    -apple-system,
-    BlinkMacSystemFont,
-    system-ui,
-    'Apple SD Gothic Neo',
-    'Malgun Gothic',
-    sans-serif;
+  // 폰트 스택: Pretendard → 크기를 맞춘 대체 폰트 → 운영체제 기본 글꼴 (_fonts.scss)
+  // fonts.$font-family-base: @use 'fonts'로 불러온 모듈의 변수는 '모듈이름.변수' 로 꺼낸다
+  font-family: fonts.$font-family-base;
   line-height: 1.5;
   -webkit-text-size-adjust: 100%; // 모바일에서 가로로 돌렸을 때 글자가 멋대로 커지지 않게
 }
