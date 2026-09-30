@@ -25,6 +25,9 @@ html {
   // fonts.$font-family-base: @use 'fonts'로 불러온 모듈의 변수는 '모듈이름.변수' 로 꺼낸다
   font-family: fonts.$font-family-base;
   line-height: 1.5;
+  // iOS Safari는 아직 접두사 없는 text-size-adjust를 지원하지 않아서 -webkit-이 필요하다.
+  // 규칙을 이 줄에서만 끄고, 끄는 이유를 -- 뒤에 적는다 (Step 3-4c)
+  // stylelint-disable-next-line property-no-vendor-prefix -- iOS Safari 지원
   -webkit-text-size-adjust: 100%; // 모바일에서 가로로 돌렸을 때 글자가 멋대로 커지지 않게
 }
 

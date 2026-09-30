@@ -45,6 +45,7 @@
 - 스텝별 설명: `docs/steps/`
 - 실행: `npm run dev` / 빌드: `npm run build` / 린트: `npm run lint` / 타입 검사: `npx tsc --noEmit` / 포맷: `npm run format`(고치기)·`npm run format:check`(검사)
 - 코드 모양: **Prettier**(`prettier.config.mjs`: 세미콜론 없음, 작은따옴표, `printWidth` 120). 코드를 쓰거나 고친 뒤 `npm run format` 실행. `*.md`와 `package-lock.json`은 제외(`.prettierignore`). 표처럼 줄 맞춘 부분만 윗줄에 단독 `// prettier-ignore`. ESLint는 `eslint-config-prettier`로 모양 규칙을 끔(배열 마지막)
+- SCSS 검사: **Stylelint**(`stylelint.config.mjs`, `npm run lint:css`). 색 값(hex·이름·rgb/hsl)은 `_tokens`·`_themes`에서만, `rem` 직접 입력은 `_functions`에서만 허용, `font-size`·`line-height` px 금지, 중첩 3단계까지, CSS Module 클래스는 camelCase. 규칙을 꺼야 하면 그 줄만 `// stylelint-disable-next-line 규칙 -- 이유`
 - 참고: 사용자가 `npm run dev`(localhost:3000)를 켜 두는 경우가 많다. Next.js 16은 같은 폴더에서 dev 서버를 두 개 못 띄우므로, 검증은 `npm run build` 후 `next start -p <다른 포트>`로 하거나 켜진 3000 서버를 읽기 전용으로 쓴다. 파일을 임시로 바꾸면 사용자 화면에도 반영된다.
 - 참고: 회사 네트워크 — npm 저장소는 연결되지만 이미지 사이트(Unsplash·Pexels·Wikimedia·Picsum)는 회사 SSL 검사 인증서 때문에 Node는 `SELF_SIGNED_CERT_IN_CHAIN`, curl은 오류 35로 실패한다. 인증서 검사를 끄지 말 것(`NODE_TLS_REJECT_UNAUTHORIZED=0` 금지). 필요하면 사용자에게 브라우저로 받아 달라고 하거나, 동의를 받아 회사 루트 인증서를 `NODE_EXTRA_CA_CERTS`로 지정한다. (2026-09-30 사용자는 샘플 이미지 유지 선택)
 - 줄바꿈: `.gitattributes`(`* text=auto eol=lf`)로 저장소·작업 폴더 모두 LF(Windows `core.autocrlf=true`여도). `.editorconfig`는 UTF-8·LF·스페이스 2칸·파일 끝 빈 줄
@@ -98,4 +99,5 @@
   - 3-3 보강: px→rem 함수 `to-rem()`(SCSS)·`toRem()`(TS) 도입, 토큰·스켈레톤·스토리 적용. 컴파일 결과 CSS 전후 동일 확인.
   - 3-4a 완료: `.editorconfig` + `.gitattributes`. 작업 폴더에 섞여 있던 CRLF 파일 5개를 LF로 통일(저장소 내용 변경 없음).
   - 3-4b 완료: Prettier + eslint-config-prettier, `format`/`format:check` 스크립트, VS Code 추천 확장. 설정 커밋과 정리 결과 커밋을 분리.
-  - 다음은 3-4c Stylelint → 3-4d husky + lint-staged.
+  - 3-4c 완료: Stylelint(standard-scss + CSS Module용 조정 + 프로젝트 규칙: 색 직접 입력·rem 직접 입력·글자 px 금지). 도구가 찾은 `Card`의 `#fff` → `--color-on-overlay`, sr-only `clip` → `clip-path`.
+  - 다음은 3-4d husky + lint-staged.

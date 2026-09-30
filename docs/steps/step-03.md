@@ -1,6 +1,6 @@
 # Step 3. 실무 환경 전환 — Next.js · TypeScript · SCSS Module · Storybook
 
-> 상태: 진행 중 (3-1, 3-2, 3-3, 3-4a, 3-4b 완료)
+> 상태: 진행 중 (3-1, 3-2, 3-3, 3-4a~c 완료)
 
 ## 목표
 지금까지는 Vite + JavaScript + Tailwind로 "React가 어떻게 동작하는지"를 익혔다.
@@ -14,7 +14,7 @@ Step 3에서는 **화면은 그대로 두고, 그 아래의 개발 환경을 실
 - [ ] **3-4** 코드 품질 도구
   - [x] 3-4a `.editorconfig` + `.gitattributes` (줄바꿈·들여쓰기 통일)
   - [x] 3-4b Prettier (코드 모양 자동 정리, ESLint와 역할 나누기)
-  - [ ] 3-4c Stylelint (SCSS 규칙 검사)
+  - [x] 3-4c Stylelint (SCSS 규칙 검사)
   - [ ] 3-4d husky + lint-staged (커밋 전 자동 검사)
 
 > 한 번에 다 바꾸지 않고, **각 단계가 끝날 때마다 화면이 정상 동작하는 상태**를 유지한다.
@@ -876,6 +876,72 @@ npm i -D prettier eslint-config-prettier
 4. `products.ts`의 표 모양이 그대로인지 (`prettier-ignore` 동작)
 
 > 참고: `npx tsc --noEmit`에서 `.next/types/...dev/jev/page.js`를 못 찾는다는 에러가 나면, 다른 브랜치에서 빌드한 흔적이 `.next`에 남은 것이다. `npm run build`를 한 번 하면 사라진다.
+
+### 3-4c. Stylelint — SCSS 규칙 검사
+
+#### 설치
+```bash
+npm i -D stylelint stylelint-config-standard-scss
+```
+
+#### 파일별 설명
+| 파일 | 역할 |
+|---|---|
+| `stylelint.config.mjs` (새 파일) | 추천 규칙(`standard-scss`) + 이 프로젝트에 맞춘 조정 + 프로젝트 규칙 |
+| `package.json` | `npm run lint:css` (고칠 수 있는 것은 `npm run lint:css -- --fix`) |
+| `.vscode/extensions.json` | 추천 확장에 Stylelint 추가 |
+| `src/styles/_themes.scss` | `--color-on-overlay` 추가 (오버레이 위 글자색) |
+| `src/components/Card.module.scss` | 품절 글자 `#fff` → `var(--color-on-overlay)` |
+| `src/styles/_mixins.scss` | `sr-only`의 `clip: rect(...)`(폐지 예정) → `clip-path: inset(50%)` |
+| `src/styles/globals.scss` | `-webkit-text-size-adjust` 줄만 규칙 예외 처리 (이유 주석) |
+
+#### 진행 순서 — 먼저 돌려 보고 규칙을 정했다
+1. 추천 규칙만으로 실행 → **약 107건**. 규칙별로 세어 보니 대부분 빈 줄 개수, 클래스 이름 형식 같은 **취향 차이**였다.
+2. 규칙마다 "이 프로젝트에 맞나?"를 판단해 조정 → **3건**만 남음. 모두 진짜로 고칠 만한 것이었다.
+3. CLAUDE.md에 글로만 적힌 약속을 **프로젝트 규칙**으로 추가 → 이미 어긴 곳 **1건 발견** (`Card`의 `#fff`).
+
+#### 핵심 개념
+**1. 추천 규칙을 그대로 쓰지 않고 조정한 것**
+| 규칙 | 추천값 | 바꾼 값 | 이유 |
+|---|---|---|---|
+| `selector-class-pattern` | kebab-case (`.sold-out`) | camelCase (`.soldOut`) | CSS Module은 TSX에서 `styles.soldOut`처럼 점으로 꺼낸다. kebab이면 `styles['sold-out']` |
+| `selector-pseudo-class-no-unknown` | `:global` 에러 | `global` 허용 | CSS Module 전용 문법 |
+| `alpha-value-notation` | `60%` | `0.6` | `opacity: 0.5`와 같은 숫자 방식 |
+| `value-keyword-case` | 소문자 | `Pretendard`, `BlinkMacSystemFont` 예외 | 글꼴 이름 |
+| 빈 줄 규칙 5개, `scss/comment-no-empty` | 켜짐 | 끔 | 모양 규칙. 설명 주석과 선언을 붙여 쓰고, 빈 `//`로 주석 문단을 나누는 이 프로젝트 방식과 안 맞음 |
+| `globals.scss`의 클래스 이름 | camelCase | 검사 안 함 | 전역 CSS는 `className="sr-only"`처럼 문자열로 쓰므로 일반적인 kebab-case |
+
+**2. 프로젝트 규칙 — "약속"을 "검사"로**
+문서에 적어 둔 규칙은 바쁘면 잊는다. 도구로 만들면 어기는 순간 빨간 줄이 뜬다.
+
+| 약속 (CLAUDE.md) | Stylelint 규칙 | 걸리는 예 |
+|---|---|---|
+| 색은 `var(--color-...)`만 | `color-no-hex`, `color-named`, `function-disallowed-list: rgb, hsl` | `#333`, `red`, `rgb(0 0 0 / 0.1)` |
+| rem을 직접 계산하지 않는다 | `unit-disallowed-list: rem` | `padding: 1.5rem` |
+| 글자 크기는 rem (WCAG 1.4.4) | `declaration-property-unit-disallowed-list` | `font-size: 14px` |
+| 선택자를 깊게 중첩하지 않는다 | `max-nesting-depth: 3` | `.a { .b { .c { .d {} } } }` |
+
+- 오류 문구를 `message`로 한국어 안내로 바꿨다. "무엇이 틀렸는지"가 아니라 **"대신 뭘 쓰면 되는지"**를 알려 준다.
+- **예외 파일(`overrides`)**: 색을 *정의하는* `_tokens.scss`·`_themes.scss`는 색 값을 써도 되고, `to-rem()`을 *정의하는* `_functions.scss`는 `rem`을 써도 된다.
+
+**3. 도구가 찾아낸 것**
+- **`Card.module.scss`의 `color: #fff`** (품절 글자): 다크 모드에서도 흰색이라 지금은 문제없지만, 테마 변수를 거치지 않는 색이 하나라도 있으면 나중에 테마를 바꿀 때 빠진다. → `--color-on-overlay` 변수로. 이름은 기존 `--color-on-primary`("~ 위의 글자")와 같은 방식.
+- **`clip: rect(0, 0, 0, 0)`** (sr-only): 폐지 예정 속성 → `clip-path: inset(50%)`. 요소를 가운데로 50%씩 잘라서 보이는 부분을 없앤다. 스크린리더에는 그대로 읽힌다.
+- **`-webkit-text-size-adjust`**: "접두사 없는 속성을 써라"는 규칙에 걸렸지만 iOS Safari는 아직 `-webkit-`이 필요하다. → **그 줄에서만 끄고 이유를 적는다.**
+  ```scss
+  // stylelint-disable-next-line property-no-vendor-prefix -- iOS Safari 지원
+  -webkit-text-size-adjust: 100%;
+  ```
+  규칙을 통째로 끄지 않고 한 줄만 끄면, 다른 곳의 불필요한 접두사는 계속 잡힌다.
+
+**4. Stylelint와 Prettier**
+Stylelint 16부터 들여쓰기·따옴표 같은 모양 규칙이 빠졌다. 그래서 ESLint처럼 충돌 방지 설정(`stylelint-config-prettier`)이 필요 없다. (예전 글에 나오는 이 패키지는 이제 쓰지 않는다)
+
+#### 확인 방법
+1. `npm run lint:css` → 에러 없이 끝나는지
+2. 아무 `*.module.scss`에 `color: #333;`이나 `padding: 1.5rem;`을 넣고 `npm run lint:css` → 한국어 안내가 뜨는지 (확인 후 되돌리기)
+3. VS Code에서 Stylelint 확장 설치 후 **설정 → `stylelint.validate`에 `scss` 추가** (기본값은 css만) → 저장하지 않아도 밑줄이 뜨는지
+4. 빌드한 CSS에 `clip-path:inset(50%)`, `color:var(--color-on-overlay)`가 들어갔는지 → 확인함. 품절 카드·스크린리더 전용 글자 모양은 그대로다.
 
 ---
 

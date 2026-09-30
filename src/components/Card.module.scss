@@ -97,7 +97,7 @@
   background-color: var(--color-overlay);
   @include text(sm);
   font-weight: $font-weight-semibold;
-  color: #fff;
+  color: var(--color-on-overlay);
 }
 
 .category {

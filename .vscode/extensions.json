@@ -8,6 +8,8 @@
     // Prettier — 설정에서 '기본 포맷터: Prettier' + 'Format On Save'를 켜면 저장할 때마다 정리된다
     "esbenp.prettier-vscode",
     // ESLint — 코드 실수를 에디터에 빨간 밑줄로 보여 준다
-    "dbaeumer.vscode-eslint"
+    "dbaeumer.vscode-eslint",
+    // Stylelint (Step 3-4c) — SCSS 규칙 위반(직접 쓴 색, rem 등)을 에디터에 밑줄로 보여 준다
+    "stylelint.vscode-stylelint"
   ]
 }

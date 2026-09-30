@@ -44,7 +44,8 @@
   padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  // 잘라내서 안 보이게. 예전 clip: rect(0, 0, 0, 0)은 폐지 예정이라 clip-path로 바꿈 (Step 3-4c, Stylelint가 알려 줌)
+  clip-path: inset(50%);
   white-space: nowrap;
   border-width: 0;
 }
