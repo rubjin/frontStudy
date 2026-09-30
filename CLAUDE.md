@@ -24,7 +24,10 @@
   - 다크 모드: `<html data-theme="dark">` + localStorage(`lib/theme.ts`). `<head>`의 `themeInitScript`로 깜빡임 방지. 아이콘·버튼 이름은 CSS로 전환(ThemeToggle)
   - 이미지: `next/image`. 샘플은 `public/images/products/{id}.jpg`(크기·비율 제각각, sharp로 생성. 실제 사진으로 교체할 때는 같은 파일 이름 + `products.ts`의 width/height 수정). 카드는 `fill` + `sizes` + `object-fit: cover`, 첫 줄만 `loading="eager"`(`priority`는 16에서 폐지 예정). `images.localPatterns`로 `/images/**`만 허용
   - 폰트: Pretendard dynamic subset (`pretendard` 패키지 CSS를 layout에서 import). `_fonts.scss`의 `'Pretendard Fallback'`(맑은 고딕 + `size-adjust`, 실측값)으로 폰트 교체 때 레이아웃 이동 방지. 폰트 스택은 `fonts.$font-family-base`
-  - 컴포넌트 문서화: Storybook (Step 3-3 예정)
+  - 컴포넌트 문서화: **Storybook 10** (`@storybook/nextjs-vite`). `npm run storybook`(6006) / `npm run build-storybook`
+    - `.storybook/main.ts`: Sass loadPaths를 Next 설정과 같게(`viteFinal`), `staticDirs: public` / `preview.tsx`: 전역 CSS·폰트, `withThemeByDataAttribute`(html data-theme), `autodocs`, `a11y: { test: 'todo' }`
+    - 스토리는 컴포넌트 옆 `*.stories.tsx`. 제어 컴포넌트는 `useArgs`로 조작 가능하게. 새 컴포넌트를 만들면 스토리도 만든다
+    - 확인: 빌드 후 정적 서버 + 헤드리스 Chrome으로 모든 스토리 렌더링 + axe 검사(라이트/다크). 첫 로딩이 느리니 고정 대기 대신 렌더 완료를 기다릴 것
 - 구조
   - `src/app/` — 파일 기반 라우팅. `layout.tsx`(공통 틀·Header), `page.tsx`("/"), `products/[id]/page.tsx`(상세), `not-found.tsx`(404), `error.tsx`(실행 에러), `global-error.tsx`(레이아웃 에러), `dev/skeleton/`(개발용 스켈레톤 미리보기, production에서 404)
   - `src/components/ui/` — 기능과 무관한 기본 부품. Button(`Button`=`<button>` / `ButtonLink`=`<a>`, `variant`·`size`), Skeleton(스켈레톤 조각)
@@ -54,7 +57,7 @@
 - [ ] **Step 3** 실무 환경 전환
   - [x] 3-1 Vite → Next.js(App Router) + TypeScript. 서버/클라이언트 컴포넌트 구분, 파일 기반 라우팅
   - [x] 3-2 SCSS Module 전환: 디자인 토큰(`_tokens.scss`), mixin(반응형·포커스), CSS 변수 테마(`data-theme`) + 다크 모드 localStorage 저장·깜빡임 방지, `next/font`. Tailwind 제거
-  - [ ] 3-3 Storybook: 컴포넌트별 `*.stories.tsx`, Controls/Docs 자동 문서, a11y addon, 다크 모드 전환 툴바
+  - [x] 3-3 Storybook: 컴포넌트별 `*.stories.tsx`, Controls/Docs 자동 문서, a11y addon, 다크 모드 전환 툴바
   - [ ] 3-4 코드 품질 도구: Prettier, Stylelint(SCSS), husky + lint-staged(커밋 전 자동 검사), `.editorconfig`·`.gitattributes`
 - [ ] **Step 4** 라우팅 심화: 상품 상세 완성(`notFound()`, `generateMetadata`로 페이지별 SEO), 검색·필터·정렬을 `searchParams`(URL 쿼리)로 관리, `loading.tsx`·`error.tsx`
 - [ ] **Step 5** 장바구니: Context + `useReducer`(또는 Zustand), localStorage 저장
@@ -88,4 +91,5 @@
   - 3-2 보강: 스켈레톤 UI(`ui/Skeleton`, CardSkeleton, CatalogSkeleton) + `page.tsx` Suspense. 실제 화면과 크기 일치 검증(1280·390px), `<select>` 높이 명시.
   - 3-2 보강: 개발용 미리보기 `/dev/skeleton`(스켈레톤/실제/로딩 재현, production 404).
   - 3-2 보강: 상품 샘플 이미지(크기 제각각 12장) + `next/image`. 카드 틀 크기 일정, WebP 3~8KB로 전송 확인.
-  - 다음은 3-3 Storybook.
+  - Step 3-3 완료: Storybook 10 + nextjs-vite, 스토리 29개(UI·Product·Feedback·Layout), 다크 모드 툴바, autodocs, a11y. axe 검사에서 StatusView 코드 숫자 대비 부족 발견 → 수정(58/58 통과).
+  - 다음은 3-4 코드 품질 도구 (Prettier, Stylelint, husky + lint-staged, .gitattributes).

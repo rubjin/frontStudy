@@ -1,6 +1,6 @@
 # Step 3. 실무 환경 전환 — Next.js · TypeScript · SCSS Module · Storybook
 
-> 상태: 진행 중 (3-1, 3-2 완료)
+> 상태: 진행 중 (3-1, 3-2, 3-3 완료)
 
 ## 목표
 지금까지는 Vite + JavaScript + Tailwind로 "React가 어떻게 동작하는지"를 익혔다.
@@ -10,7 +10,7 @@ Step 3에서는 **화면은 그대로 두고, 그 아래의 개발 환경을 실
 ## 세부 단계
 - [x] **3-1** Vite → Next.js(App Router) + TypeScript
 - [x] **3-2** Tailwind → SCSS Module (디자인 토큰, mixin, CSS 변수 다크 모드, 한글 웹폰트)
-- [ ] **3-3** Storybook (컴포넌트 스토리, 자동 문서, 접근성 검사)
+- [x] **3-3** Storybook (컴포넌트 스토리, 자동 문서, 접근성 검사, 다크 모드 전환)
 - [ ] **3-4** 코드 품질 도구 (Prettier, Stylelint, husky + lint-staged)
 
 > 한 번에 다 바꾸지 않고, **각 단계가 끝날 때마다 화면이 정상 동작하는 상태**를 유지한다.
@@ -625,6 +625,99 @@ font-family: 'Pretendard Variable', Pretendard, 'Pretendard Fallback', ...;
 ### 알려진 한계
 - `global-error.tsx`는 레이아웃 대신 그려지는 화면이라 테마 스크립트가 없어서 항상 라이트로 보인다. (Next.js 문서에도 명시된 동작. 거의 볼 일이 없는 화면이라 그대로 둠)
 - 상세 페이지 갔다가 돌아오면 필터가 초기화된다 → Step 4 (URL 쿼리)
+
+---
+
+## 3-3. Storybook
+
+### 왜 필요한가?
+- 페이지에서는 **데이터가 우연히 그 상태일 때만** 보이는 화면이 많다. (품절 카드, 이미지 없는 상품, 긴 상품명, 404·500 화면, 스켈레톤)
+- Storybook은 컴포넌트를 페이지와 떼어서 **상태별로 이름 붙여** 띄워 보는 작업실이다. 퍼블리셔의 "UI 가이드 문서"가 코드와 연결되어 살아 움직이는 것이라고 보면 된다.
+- 실무에서는 디자이너·기획자와 화면을 확인하는 공용 문서, 접근성·시각 검사의 기반으로 쓴다. 배포하면 포트폴리오 링크가 된다(Step 11).
+
+### 설치
+```bash
+npm install -D storybook @storybook/nextjs-vite @storybook/addon-docs @storybook/addon-a11y @storybook/addon-themes vite eslint-plugin-storybook
+```
+- **`@storybook/nextjs-vite`**: Next.js + Vite용 프레임워크. `next/image`, `next/link`, `next/navigation`(useRouter)을 Storybook 안에서 흉내 낸다. Storybook 10.6은 Next.js 16·React 19를 공식 지원한다.
+- 설치 중 `ECONNRESET`(연결 끊김)이 한 번 났다. `--fetch-retries=5`로 재시도해서 해결.
+- 실행: `npm run storybook` → http://localhost:6006 / 정적 빌드: `npm run build-storybook` → `storybook-static/` (gitignore)
+
+### 파일별 설명
+| 파일 | 역할 |
+| --- | --- |
+| `.storybook/main.ts` (새 파일) | 스토리 위치(`src/**/*.stories.tsx`), 애드온, 프레임워크, `public` 제공, **Sass loadPaths**(Next 설정과 같게) |
+| `.storybook/preview.tsx` (새 파일) | 전역 CSS·폰트, **다크 모드 전환**(`<html data-theme>`), `autodocs`, a11y 검사 모드 |
+| `src/components/ui/Button.stories.tsx` | Primary / Secondary / Ghost / IconOnly / Disabled / AsLink / AllVariants |
+| `src/components/ui/Skeleton.stories.tsx` | Inline / Block / Radius / KeepsLineHeight(줄 높이 유지 비교) |
+| `src/components/Card.stories.tsx` | Default / SoldOut / NoImage / LongName / WideImage / TallImage |
+| `src/components/Skeletons.stories.tsx` | CardOnly / **CardSideBySide**(스켈레톤과 실제 카드 나란히) / Catalog |
+| `src/components/StatusView.stories.tsx` | NotFound / ServerError / TitleOnly |
+| `src/components/Filters.stories.tsx` | Category / Search / Sort / SoldOut — **직접 조작하면 값이 바뀜**(useArgs) |
+| `src/components/Header.stories.tsx` | Default / ThemeToggleOnly |
+| `src/styles/_themes.scss` | `--color-status-code` 대비 개선 (접근성 검사에서 발견) |
+| `package.json` | `storybook`, `build-storybook` 스크립트 |
+| `eslint.config.mjs` | `eslint-plugin-storybook` 규칙 추가 |
+| `tsconfig.json` | `.storybook/*.ts(x)`도 타입 검사 (점으로 시작하는 폴더는 `**`에 안 잡힘) |
+
+### 핵심 개념
+
+**1. 스토리 파일의 구조 (CSF: Component Story Format)**
+```tsx
+const meta = {
+  title: 'UI/Button',          // 왼쪽 메뉴 위치
+  component: Button,
+  args: { children: '버튼', onClick: fn() },  // 모든 스토리의 기본 props
+} satisfies Meta<typeof Button>
+export default meta
+
+export const Primary: StoryObj<typeof meta> = {
+  args: { variant: 'primary', children: '다시 시도' },  // 이 상태의 props
+}
+```
+- `export default` = 이 파일 공통 설정, `export const` 하나 = 스토리(상태) 하나.
+- 스토리 위의 `/** 주석 */`은 Docs 페이지에 설명으로 나온다.
+- `satisfies Meta<...>`: 타입 검사는 하면서 적은 값의 정확한 타입을 유지한다 → `StoryObj<typeof meta>`가 기본 args까지 안다.
+- `fn()`: 가짜 함수. 누르면 **Actions 탭**에 호출 기록이 남는다.
+
+**2. 자동 문서 (autodocs)**
+`preview.tsx`의 `tags: ['autodocs']` 한 줄로 모든 컴포넌트에 **Docs 페이지**가 생긴다. TypeScript props 타입을 읽어 props 표를 만들고, 모든 스토리를 예시로 보여 준다. 따로 문서를 쓰지 않아도 코드와 문서가 항상 일치한다.
+
+**3. 다크 모드 전환 — 실제 사이트와 같은 방식**
+```tsx
+withThemeByDataAttribute({ themes: { light: 'light', dark: 'dark' }, attributeName: 'data-theme', parentSelector: 'html' })
+```
+툴바의 붓 아이콘으로 `<html data-theme>`을 바꾼다. 테마 색이 CSS 변수로 되어 있어서(3-2) **스토리마다 다크 모드용 코드가 필요 없다.**
+
+**4. 제어 컴포넌트를 스토리에서 움직이게 — `useArgs`**
+CategoryFilter처럼 값을 부모가 관리하는 컴포넌트는 그냥 그리면 클릭해도 안 바뀐다. `useArgs`로 Storybook의 args를 부모 state처럼 써서, 클릭 → args 변경 → 다시 그림. Controls 탭 값도 같이 바뀌어 **조작과 props가 연결되는 것**이 보인다.
+
+**5. 접근성 자동 검사 (addon-a11y) — 실제로 문제를 찾았다**
+모든 스토리를 axe로 검사해 **Accessibility 탭**에 결과를 보여 준다. 29개 스토리 × 라이트/다크 = 58번 검사에서 **StatusView의 큰 404·500 숫자 대비 부족**(serious)이 걸렸다.
+| | 이전 | 대비 | 이후 | 대비 |
+| --- | --- | --- | --- | --- |
+| 라이트 | primary-200 | 1.36 : 1 | **primary-500** | **3.52 : 1** |
+| 다크 | gray-700 | 1.95 : 1 | **gray-500** | **4.16 : 1** |
+- 큰 글자(24px 이상 굵은 글씨)의 WCAG 기준은 **3 : 1**. (일반 글자는 4.5 : 1)
+- 숫자는 `aria-hidden`이라 스크린리더는 안 읽지만, **눈으로 보는 저시력 사용자**에게는 읽혀야 한다.
+- 고친 뒤 58번 모두 통과. 페이지만 봤으면 지나쳤을 문제를 컴포넌트 단위 검사로 잡은 예다.
+- 지금은 `a11y: { test: 'todo' }`(보여 주기만). Step 10에서 테스트와 연결하면 `'error'`로 올려 CI에서 막을 수 있다.
+
+**6. Next.js 설정과 Storybook 설정 맞추기**
+Storybook은 Next.js가 아니라 Vite로 빌드하므로, `next.config.ts`의 Sass `loadPaths`를 `.storybook/main.ts`의 `viteFinal`에도 똑같이 넣었다. 전역 CSS·폰트도 `preview.tsx`에서 layout과 똑같이 불러온다. → **스토리 모양 = 실제 사이트 모양**.
+
+### 확인 방법
+1. `npm run storybook` → http://localhost:6006 이 열리고 왼쪽에 UI / Product / Feedback / Layout 그룹이 보이는지
+2. 툴바 붓 아이콘으로 dark를 고르면 모든 스토리가 다크 모드로 바뀌는지
+3. **Product/Filters → Category**에서 칩을 누르면 선택이 바뀌고, Controls 탭의 value와 Actions 탭 기록이 같이 바뀌는지
+4. **UI/Button → Docs**에서 props 표와 예시가 자동으로 만들어졌는지
+5. 아무 스토리의 **Accessibility 탭**에서 Violations가 0인지. `_themes.scss`의 `--color-status-code`를 `palette($primary, 200)`으로 되돌리면 StatusView에서 위반이 뜨는지 (확인 후 되돌리기)
+6. **Product/Skeletons → CardSideBySide**에서 스켈레톤과 실제 카드 높이가 같은지
+7. `npm run build-storybook`이 에러 없이 끝나는지
+
+### 알려진 한계
+- ThemeToggle 스토리에서 버튼을 누르면 localStorage에도 저장된다. Storybook(6006)과 실제 사이트(3000)는 주소가 달라 서로 섞이지 않는다.
+- 스토리 파일 이름: 작은 컨트롤 4개(Filters), 스켈레톤 2개(Skeletons)는 한 파일에 모았다. 컴포넌트가 커지면 컴포넌트마다 파일을 나눈다.
 
 ---
 

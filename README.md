@@ -5,7 +5,8 @@
 ## 기술 스택
 - **Next.js 16** (App Router) · **React 19** · **TypeScript**
 - 스타일: SCSS Module + 디자인 토큰 (CSS 변수 기반 라이트·다크 테마)
-- (예정) Storybook, TanStack Query, Vitest · Playwright
+- **Storybook 10** — 컴포넌트 상태별 문서, 다크 모드 전환, 접근성(axe) 검사
+- (예정) TanStack Query, Vitest · Playwright
 
 ## 실행
 ```bash
@@ -13,6 +14,8 @@ npm install
 npm run dev     # http://localhost:3000
 npm run build   # 프로덕션 빌드
 npm run lint    # ESLint
+npm run storybook        # 컴포넌트 문서 http://localhost:6006
+npm run build-storybook  # Storybook 정적 빌드
 ```
 
 ## 구조

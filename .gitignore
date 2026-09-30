@@ -28,3 +28,7 @@ dist-ssr
 out
 next-env.d.ts
 *.tsbuildinfo
+
+# Storybook
+storybook-static
+*storybook.log
