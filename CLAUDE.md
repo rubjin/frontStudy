@@ -22,7 +22,7 @@
     - 색은 반드시 테마 변수 `var(--color-...)`만 쓴다. 팔레트(`$gray` 등)는 `_themes.scss`에서만 사용
     - 여러 클래스 조합은 `clsx`. 상태 스타일은 가능하면 aria 속성 선택자(`[aria-pressed='true']`)
   - 다크 모드: `<html data-theme="dark">` + localStorage(`lib/theme.ts`). `<head>`의 `themeInitScript`로 깜빡임 방지. 아이콘·버튼 이름은 CSS로 전환(ThemeToggle)
-  - 이미지: `next/image`. 샘플은 `public/images/products/{id}.jpg`(크기·비율 제각각, sharp로 생성 — 회사 네트워크에서 외부 이미지 사이트 차단됨). 카드는 `fill` + `sizes` + `object-fit: cover`, 첫 줄만 `loading="eager"`(`priority`는 16에서 폐지 예정). `images.localPatterns`로 `/images/**`만 허용
+  - 이미지: `next/image`. 샘플은 `public/images/products/{id}.jpg`(크기·비율 제각각, sharp로 생성. 실제 사진으로 교체할 때는 같은 파일 이름 + `products.ts`의 width/height 수정). 카드는 `fill` + `sizes` + `object-fit: cover`, 첫 줄만 `loading="eager"`(`priority`는 16에서 폐지 예정). `images.localPatterns`로 `/images/**`만 허용
   - 폰트: Pretendard dynamic subset (`pretendard` 패키지 CSS를 layout에서 import). `_fonts.scss`의 `'Pretendard Fallback'`(맑은 고딕 + `size-adjust`, 실측값)으로 폰트 교체 때 레이아웃 이동 방지. 폰트 스택은 `fonts.$font-family-base`
   - 컴포넌트 문서화: Storybook (Step 3-3 예정)
 - 구조
@@ -41,6 +41,7 @@
 - 스텝별 설명: `docs/steps/`
 - 실행: `npm run dev` / 빌드: `npm run build` / 린트: `npm run lint` / 타입 검사: `npx tsc --noEmit`
 - 참고: 사용자가 `npm run dev`(localhost:3000)를 켜 두는 경우가 많다. Next.js 16은 같은 폴더에서 dev 서버를 두 개 못 띄우므로, 검증은 `npm run build` 후 `next start -p <다른 포트>`로 하거나 켜진 3000 서버를 읽기 전용으로 쓴다. 파일을 임시로 바꾸면 사용자 화면에도 반영된다.
+- 참고: 회사 네트워크 — npm 저장소는 연결되지만 이미지 사이트(Unsplash·Pexels·Wikimedia·Picsum)는 회사 SSL 검사 인증서 때문에 Node는 `SELF_SIGNED_CERT_IN_CHAIN`, curl은 오류 35로 실패한다. 인증서 검사를 끄지 말 것(`NODE_TLS_REJECT_UNAUTHORIZED=0` 금지). 필요하면 사용자에게 브라우저로 받아 달라고 하거나, 동의를 받아 회사 루트 인증서를 `NODE_EXTRA_CA_CERTS`로 지정한다. (2026-09-30 사용자는 샘플 이미지 유지 선택)
 - 참고: Windows(`core.autocrlf=true`)에서 작업하면 작업 폴더 파일이 CRLF다. 스크립트로 문자열 치환할 때 줄바꿈 주의 (Step 3-4에서 `.gitattributes`로 정리 예정)
 
 ## 로드맵
