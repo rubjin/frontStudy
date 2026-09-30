@@ -13,9 +13,27 @@ if (existsSync('.env.local')) process.loadEnvFile('.env.local')
 
 const key = process.env.OPENROUTER_API_KEY
 if (!key) {
+  // CODESPACES: GitHub Codespaces 안에서는 'true'로 자동 설정되는 환경 변수
+  const inCodespaces = process.env.CODESPACES === 'true'
+  // 이름이 비슷한 변수가 있으면 오타일 수 있으니 이름만 보여 준다 (값은 출력하지 않음)
+  const similar = Object.keys(process.env).filter((name) => name !== 'OPENROUTER_API_KEY' && /OPENROUTER|OPEN_ROUTER/i.test(name))
+
   console.log('✗ OPENROUTER_API_KEY가 없습니다.')
-  console.log('  1) cp .env.example .env.local')
-  console.log('  2) .env.local의 OPENROUTER_API_KEY= 뒤에 키를 붙여 넣기')
+  console.log(`  실행 위치: ${inCodespaces ? 'GitHub Codespaces' : '이 컴퓨터(로컬)'} · .env.local ${existsSync('.env.local') ? '있음(키 줄이 비어 있음)' : '없음'}`)
+  if (similar.length) console.log(`  비슷한 이름의 변수가 있습니다: ${similar.join(', ')} → 이름을 OPENROUTER_API_KEY로 맞추세요.`)
+
+  if (inCodespaces) {
+    console.log('  Codespaces Secret을 확인하세요.')
+    console.log('  1) GitHub → Settings → Codespaces → Secrets 에 이름이 정확히 OPENROUTER_API_KEY 인지')
+    console.log('     (저장소 Settings의 Actions secrets에 넣으면 Codespaces에는 들어오지 않습니다)')
+    console.log('  2) 그 Secret의 Repository access에 이 저장소가 포함돼 있는지')
+    console.log('  3) Codespace를 만든 뒤에 등록했다면 다시 시작: F1 → "Codespaces: Rebuild Container"')
+    console.log('  확인 명령: echo ${OPENROUTER_API_KEY:+키 있음}')
+  } else {
+    console.log('  1) cp .env.example .env.local')
+    console.log('  2) .env.local의 OPENROUTER_API_KEY= 뒤에 키를 붙여 넣기 (프로젝트 맨 위 폴더)')
+    console.log('  ※ 회사 네트워크에서는 키를 넣어도 연결이 막힐 수 있습니다. 그때는 Codespaces에서 확인하세요.')
+  }
   process.exit(1)
 }
 console.log(`• 키 확인: ${key.slice(0, 6)}… (${key.length}자)`)
