@@ -1,7 +1,9 @@
 // AI 교차 리뷰 스크립트 (cloude 브랜치 · AI 연동 5단계)
 // 실행: npm run review:ai            → 커밋 전 변경 사항(staged, 없으면 작업 중 변경) 리뷰
 //       npm run review:ai -- --last  → 마지막 커밋 리뷰
-//       npm run review:ai -- --with-qwen  → Qwen3.8 Max를 세 번째 리뷰어로 추가 (비쌈)
+//
+// 무료 모델만 호출한다 (models.ts의 isFreeModel). 유료인 Jev 위험도 채점은 건너뛴다.
+// 무료 모델은 하루 요청 수 제한(약 50회)이 있으니 필요할 때만 실행한다.
 //
 // 하는 일
 // ① Jev(판단): 변경의 위험도(0~3)와 "테스트가 필요한가"를 확신도와 함께 채점
@@ -16,7 +18,7 @@
 import { execSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { TypeSafeClient, noul, score } from '@typesafe-ai/sdk'
-import { JUDGE_MODEL, OPTIONAL_REVIEW_MODELS, REVIEW_MODELS } from '../src/lib/ai/models.ts'
+import { isFreeModel, JUDGE_MODEL, REVIEW_MODELS } from '../src/lib/ai/models.ts'
 
 if (existsSync('.env.local')) process.loadEnvFile('.env.local')
 const key = process.env.OPENROUTER_API_KEY
@@ -61,7 +63,9 @@ console.log(`• 리뷰 대상: ${target} · 파일 ${files.length}개 · ${diff
 
 // ─── ① Jev: 위험도 채점 ────────────────────────────────────
 const jev = new TypeSafeClient({ apiKey: key, baseURL: 'https://openrouter.ai/api', defaultModel: JUDGE_MODEL.id, timeout: 30000 })
-const jevTask = jev
+const jevTask = !isFreeModel(JUDGE_MODEL.id)
+  ? Promise.resolve({ ok: false, skipped: true })
+  : jev
   .systemOne({
     state: cut(diff, JEV_LIMIT),
     questions: {
@@ -85,7 +89,7 @@ diff를 보고 실제 문제만 최대 5개 골라라: 버그, 보안(키 노출
 각 항목: "[심각도: 높음/중간/낮음] 파일:줄 — 문제 — 고치는 방법" 한 줄씩. 문제가 없으면 "특별한 문제 없음" 한 줄.
 칭찬·요약·서론은 쓰지 않는다.`
 
-const reviewers = [...REVIEW_MODELS, ...(process.argv.includes('--with-qwen') ? OPTIONAL_REVIEW_MODELS : [])]
+const reviewers = REVIEW_MODELS.filter((model) => isFreeModel(model.id))
 const reviewTasks = reviewers.map(async (model) => {
   const started = Date.now()
   try {
@@ -98,7 +102,7 @@ const reviewTasks = reviewers.map(async (model) => {
           { role: 'system', content: SYSTEM },
           { role: 'user', content: `변경된 파일: ${files.join(', ')}\n\n${cut(diff, LLM_LIMIT)}` },
         ],
-        max_tokens: 4000, // 추론 모델은 생각하는 데도 토큰을 쓰므로 여유 있게
+        max_tokens: 4000, // 추론 모델은 생각하는 데도 토큰을 쓰므로 여유 있게 (무료 모델이라 비용 없음)
         reasoning: { effort: 'low' }, // 리뷰는 빠르게 (지원하는 모델만 적용됨)
         usage: { include: true }, // 응답에 실제 비용(usage.cost)을 포함
       }),
@@ -129,6 +133,8 @@ if (jevOutcome.ok) {
   console.log(`  테스트 필요 확률 ${Math.round(needsTests.noul * 100)}%`)
   // 설계 문서의 규칙: 위험도 2 이상이거나 확신도 0.6 미만이면 사람이 꼼꼼히 본다
   if (risk.score >= 2 || risk.confidence < 0.6) console.log('  → 사람이 꼼꼼히 검토하세요. (위험도 2 이상 또는 확신도 60% 미만)')
+} else if (jevOutcome.skipped) {
+  console.log('  유료 모델이라 건너뜀 (무료 모델만 사용)')
 } else {
   console.log(`  ✗ 실패: ${jevOutcome.error?.message ?? jevOutcome.error}`)
 }
@@ -143,5 +149,5 @@ for (const review of reviews) {
   totalCost += review.cost
   console.log(review.text.split('\n').map((line) => `  ${line}`).join('\n'))
 }
-console.log(`\n• LLM 리뷰 비용 합계 약 $${totalCost.toFixed(4)} (Jev는 입력 토큰만 과금)`)
+console.log(`\n• LLM 리뷰 비용 합계 약 $${totalCost.toFixed(4)} (무료 모델이면 0)`)
 console.log('• AI 리뷰는 참고용입니다. 지적이 맞는지 직접 확인하고 판단하세요.')

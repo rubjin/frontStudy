@@ -18,12 +18,14 @@
 - **`cloude`**: 2026-09-30부터 AI 연동 작업(Jev·Qwen·Gemini)은 이 브랜치에서만 한다. 작업 전 `git branch --show-current`로 확인.
 
 ## AI 연동 (cloude 브랜치)
+- **무료 모델만 사용 (2026-09-30 사용자 결정).** `models.ts`의 `isFreeModel()`(`:free` 또는 `openrouter/free`)이 false인 모델은 앱·스크립트 어디서도 호출하지 않는다. Jev는 유료라 꺼짐(`reason: 'paid'`). 무료 한도: 분당 약 20회·하루 약 50회
+- 현재 무료 모델: 대체 해석 `qwen/qwen3.8-27b:free` → `nvidia/nemotron-3-super-120b-a12b:free`, 리뷰 Qwen3.8 27B + `cohere/north-mini-code:free`. 실측: 유료 대비 느리고(4~6초) 가끔 형식 오류
 - 구조: Claude Code·Gemini·Qwen은 코드를 쓰고, **TypeSafe Jev**(판단 전용 모델: choice/score/noul + confidence)는 작업 분배·위험도·검색 의도를 판단한다. 아키텍처: https://claude.ai/code/artifact/a726702d-e2f3-4c58-8dcc-a55ae3fafce3 , 설명 `docs/ai/`
 - `src/lib/ai/jev.ts`: `askJev()` 서버 전용(`import 'server-only'`). OpenRouter 경유(baseURL `https://openrouter.ai/api`, 모델 `typesafe/jev-1.13`). 확신도 문턱 `CONFIDENCE.AUTO=0.85`, `CONFIRM=0.6`
 - 키 없음·`AI_MOCK=1`·연결 실패 시 예외 대신 **확신도 0인 가짜 응답**(`source: 'mock'`, `reason`) → 항상 fallback. 가짜 답이 실제 판단처럼 쓰이면 안 된다
 - 키: `OPENROUTER_API_KEY`는 `.env.local`(gitignore)에만. 채팅·코드·커밋에 키를 적지 않는다. 사용자는 OpenRouter 키 보유(2026-09-30)
 - 확인: `npm run check:ai`(Jev + 모델 6개, 원인 구분), 개발 페이지 `/dev/jev`(production 404). 네트워크가 막히면 Codespaces(Secrets에 키 등록)에서 확인. 사용자는 회사 네트워크 설정을 확인하기 어렵다고 함
-- 모델 목록은 `src/lib/ai/models.ts` 한 곳(앱·스크립트 공용). 판단 Jev / 대체 해석 DeepSeek V4 Flash → Gemini 3.8 Flash → GPT-6 Luna / 교차 리뷰 GLM 5.3 + Kimi K3 / 선택 Qwen3.8 Max. 모델 ID를 추측하지 말고 `npm run check:ai`로 확인
+- 모델 목록은 `src/lib/ai/models.ts` 한 곳(앱·스크립트 공용). 무료 목록은 OpenRouter `/api/v1/models`에서 가격 0인 것을 직접 조회해 고른다(검색 결과는 출처마다 다름). 모델 ID를 추측하지 말고 `npm run check:ai`로 확인
 - `src/lib/ai/llm.ts` `askLlmJson()`: OpenRouter `models` 자동 대체 + JSON 스키마 강제 + `validate` 재검사. **LLM 결과는 자동 적용하지 않고 사용자 확인만**. 추론 모델은 대체 목록에 넣지 않음(max_tokens 300). 제한 시간 8초(6초는 실측 실패)
 - `npm run review:ai`: Jev 위험도 + GLM·Kimi 교차 리뷰(비용 출력, 직접 실행만). AI 리뷰 지적은 코드와 대조한 뒤 반영
 - 스크립트에서 네트워크 사용 후 `process.exit()` 금지(Windows 충돌, 종료 코드 127) → `process.exitCode`

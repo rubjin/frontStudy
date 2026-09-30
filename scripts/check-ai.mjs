@@ -7,11 +7,12 @@
 //
 // 모델 목록은 src/lib/ai/models.ts 하나에서 가져온다. (Node 22.18+/24는 .ts 파일을 바로 import 할 수 있다)
 // 옵션: --jev-only  LLM 확인은 건너뛴다
+// 무료 모델만 호출한다. 유료 모델(Jev 등)은 '건너뜀'으로만 표시한다. (models.ts의 isFreeModel)
 // 키 값 자체는 절대 출력하지 않는다.
 
 import { existsSync } from 'node:fs'
 import { TypeSafeClient, noul } from '@typesafe-ai/sdk'
-import { FALLBACK_MODELS, JUDGE_MODEL, OPTIONAL_REVIEW_MODELS, REVIEW_MODELS } from '../src/lib/ai/models.ts'
+import { FALLBACK_MODELS, isFreeModel, JUDGE_MODEL, REVIEW_MODELS } from '../src/lib/ai/models.ts'
 
 // .env.local 읽기 (Node 20.12+ 내장 기능. 별도 패키지 불필요)
 if (existsSync('.env.local')) process.loadEnvFile('.env.local')
@@ -52,23 +53,25 @@ function explain(status, detail = '') {
   if (status === 401 || status === 403) return 'API 키가 틀렸거나 권한이 없습니다. OpenRouter에서 키를 확인하세요.'
   if (status === 402) return 'OpenRouter 잔액(크레딧)이 부족합니다.'
   if (status === 404) return '모델 ID를 찾지 못했습니다. src/lib/ai/models.ts의 ID를 OpenRouter 모델 페이지와 비교하세요.'
-  if (status === 429) return '요청이 너무 많습니다. 잠시 후 다시 시도하세요.'
+  if (status === 429) return '요청 한도 초과. 무료 모델은 분당 약 20회·하루 약 50회 제한이 있습니다. 잠시 후 다시 시도하세요.'
   return `${status ?? ''} ${detail}`.trim()
 }
 
 // ─── ① Jev ───────────────────────────────────────────────
-const client = new TypeSafeClient({
-  apiKey: key,
-  baseURL: 'https://openrouter.ai/api',
-  defaultModel: JUDGE_MODEL.id,
-  timeout: 15000,
-  retry: { maxRetries: 0 },
-})
-
+// 무료 모델만 쓰기로 해서(models.ts) Jev가 유료면 호출하지 않고 건너뛴다
 let networkBlocked = false
 // Jev가 실패하면 LLM이 모두 성공해도 전체 결과는 실패(종료 코드 1)여야 한다 (AI 교차 리뷰 GLM 지적)
 let jevFailed = false
-try {
+if (!isFreeModel(JUDGE_MODEL.id)) {
+  console.log(`• ${JUDGE_MODEL.label}: 유료 모델이라 호출하지 않습니다`)
+} else try {
+  const client = new TypeSafeClient({
+    apiKey: key,
+    baseURL: 'https://openrouter.ai/api',
+    defaultModel: JUDGE_MODEL.id,
+    timeout: 15000,
+    retry: { maxRetries: 0 },
+  })
   const started = Date.now()
   const result = await client.systemOne({
     state: '결제가 두 번 됐어요. 오늘 안에 꼭 환불해 주세요.',
@@ -96,11 +99,20 @@ process.exitCode = jevFailed ? 1 : 0
 if (networkBlocked) {
   console.log('• LLM 확인은 건너뜁니다 (같은 네트워크 문제로 모두 실패합니다)')
 } else if (!process.argv.includes('--jev-only')) {
-  const targets = [
-    ...FALLBACK_MODELS.map((model) => ({ ...model, role: '대체 해석' })),
-    ...REVIEW_MODELS.map((model) => ({ ...model, role: '코드 리뷰' })),
-    ...OPTIONAL_REVIEW_MODELS.map((model) => ({ ...model, role: '리뷰(선택)' })),
-  ]
+  // 같은 모델이 두 역할에 있으면 한 번만 확인하고, 유료 모델은 호출하지 않는다
+  const byId = new Map()
+  for (const [list, role] of [[FALLBACK_MODELS, '대체 해석'], [REVIEW_MODELS, '코드 리뷰']]) {
+    for (const model of list) {
+      const found = byId.get(model.id)
+      if (found) found.role += '·' + role
+      else byId.set(model.id, { ...model, role })
+    }
+  }
+  const all = [...byId.values()]
+  for (const model of all.filter((m) => !isFreeModel(m.id))) {
+    console.log(`• ${model.label}: 유료 모델이라 호출하지 않습니다 (models.ts에서 :free 모델로 바꾸세요)`)
+  }
+  const targets = all.filter((m) => isFreeModel(m.id))
 
   console.log('\n• LLM 모델 확인 (모델당 짧은 요청 1회)')
   for (const model of targets) {
@@ -109,7 +121,8 @@ if (networkBlocked) {
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', 'X-Title': 'Shoppr check:ai' },
-        body: JSON.stringify({ model: model.id, messages: [{ role: 'user', content: 'OK라고만 답해' }], max_tokens: 16 }),
+        // 무료 모델은 모두 추론 모델이라 생각할 토큰을 조금 준다 (무료라 비용 없음)
+        body: JSON.stringify({ model: model.id, messages: [{ role: 'user', content: 'OK라고만 답해' }], max_tokens: 200, reasoning: { effort: 'low' } }),
         signal: AbortSignal.timeout(60000), // 추론 모델(GLM 등)은 느릴 수 있다
       })
       const body = await response.json().catch(() => ({}))

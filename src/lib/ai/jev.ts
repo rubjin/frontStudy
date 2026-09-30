@@ -7,7 +7,7 @@ import {
   type SystemOneRequest,
   type SystemOneResult,
 } from '@typesafe-ai/sdk'
-import { JUDGE_MODEL } from './models'
+import { isFreeModel, JUDGE_MODEL } from './models'
 
 // Jev(TypeSafe) 서버 전용 클라이언트 (cloude 브랜치 · AI 연동 2단계)
 //
@@ -43,7 +43,8 @@ export const CONFIDENCE = { AUTO: 0.85, CONFIRM: 0.6 } as const
 /** 답이 어디서 왔는지 */
 export type JevSource = 'jev' | 'mock'
 /** 가짜 응답을 쓴 이유 */
-export type MockReason = 'no-key' | 'forced' | 'network' | 'error'
+// paid: 무료 모델만 쓰기로 해서 유료인 Jev를 부르지 않음 (models.ts)
+export type MockReason = 'no-key' | 'forced' | 'paid' | 'network' | 'error'
 
 export interface JevOutcome<Q extends Questions> {
   source: JevSource
@@ -70,6 +71,8 @@ function getClient(apiKey: string) {
 
 /** 지금 설정이면 실제 API를 부르는지, 가짜 응답을 쓰는지 */
 export function getJevMode(): { source: JevSource; reason?: MockReason } {
+  // 무료가 아니면 키가 있어도 절대 부르지 않는다 (요금 방지)
+  if (!isFreeModel(JEV_MODEL)) return { source: 'mock', reason: 'paid' }
   if (process.env.AI_MOCK === '1') return { source: 'mock', reason: 'forced' }
   if (!process.env.OPENROUTER_API_KEY) return { source: 'mock', reason: 'no-key' }
   return { source: 'jev' }

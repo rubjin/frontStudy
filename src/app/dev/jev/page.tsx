@@ -44,6 +44,7 @@ const DECIDED_LABEL: Record<DecidedBy, string> = {
 
 const REASON_LABEL = {
   'no-key': '키 없음 (.env.local)',
+  paid: 'Jev는 유료라 꺼 둠',
   forced: 'AI_MOCK=1',
   network: '연결 실패 (네트워크)',
   error: '요청 실패 (서버 로그 확인)',

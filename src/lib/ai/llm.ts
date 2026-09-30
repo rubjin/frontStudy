@@ -1,5 +1,5 @@
 import 'server-only'
-import { FALLBACK_MODELS, type ModelInfo } from './models'
+import { FALLBACK_MODELS, isFreeModel, type ModelInfo } from './models'
 
 // LLM 호출 (서버 전용, OpenRouter) — 정해진 JSON 모양으로 답을 받는다 (cloude 브랜치 · AI 연동)
 //
@@ -30,7 +30,7 @@ function textOf(content: MessageContent): string {
 // source: 'mock' = 아예 부르지 않음(키 없음, AI_MOCK=1) / 'llm' = 실제로 시도함(성공이든 실패든)
 // 실패 이유는 reason으로 구분한다. (AI 교차 리뷰에서 GLM·Kimi가 둘 다 '기준이 섞였다'고 지적해 통일)
 export type LlmSource = 'llm' | 'mock'
-export type LlmFailReason = 'no-key' | 'forced' | 'network' | 'timeout' | 'http' | 'invalid'
+export type LlmFailReason = 'no-key' | 'forced' | 'paid' | 'network' | 'timeout' | 'http' | 'invalid'
 
 export interface LlmResult<T> {
   source: LlmSource
@@ -63,7 +63,9 @@ export async function askLlmJson<T>(options: AskLlmOptions<T>): Promise<LlmResul
   const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) return { source: 'mock', data: null, reason: 'no-key' }
 
-  const models = (options.models ?? FALLBACK_MODELS).map((model) => model.id)
+  // 무료 모델만 남긴다. 하나도 없으면 부르지 않는다 (요금 방지)
+  const models = (options.models ?? FALLBACK_MODELS).map((model) => model.id).filter(isFreeModel)
+  if (models.length === 0) return { source: 'mock', data: null, reason: 'paid' }
 
   // 요청 보내기 + 응답 본문 읽기를 모두 try 안에 둔다.
   // ⚠️ 제한 시간(AbortSignal.timeout)은 본문을 읽는 동안에도 적용된다.
@@ -92,9 +94,11 @@ export async function askLlmJson<T>(options: AskLlmOptions<T>): Promise<LlmResul
         // 형식 강제를 지원하는 제공사로만 보낸다
         provider: { require_parameters: true },
         // 짧은 JSON 답이면 충분. 긴 답(=비용)을 막는다
-        // ⚠️ 추론(reasoning) 모델은 생각하는 데도 토큰을 써서 300으로는 JSON이 잘릴 수 있다.
-        //    그래서 FALLBACK_MODELS에는 추론 모델을 넣지 않는다. (models.ts 참고)
-        max_tokens: 300,
+        // ⚠️ 추론(reasoning) 모델은 생각하는 데도 토큰을 쓴다. 무료 모델은 모두 추론 모델이라
+        //    JSON이 잘리지 않게 넉넉히(1000) 준다. 무료라 토큰 비용은 없다.
+        max_tokens: 1000,
+        // 무료 모델은 모두 추론 모델이라 생각을 짧게 시킨다 (지원하는 모델만 적용됨)
+        reasoning: { effort: 'low' },
         temperature: 0,
       }),
       // AbortSignal.timeout: 제한 시간이 지나면 요청을 끊는다 (사용자가 오래 기다리지 않게)

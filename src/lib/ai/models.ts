@@ -1,88 +1,67 @@
 // 사용하는 AI 모델 목록 — 역할별로 한 곳에서 관리 (cloude 브랜치 · AI 연동)
 //
-// 모든 모델은 OpenRouter 키 하나로 부른다. 모델 ID는 OpenRouter 기준 이름('회사/모델').
+// ⚠️ 무료 모델만 쓴다 (2026-09-30 사용자 결정)
+// - OpenRouter에서 ID가 ':free'로 끝나는 모델은 토큰 요금이 0이다.
+// - isFreeModel()이 false인 모델은 앱·check:ai·review:ai 어디서도 호출하지 않는다. (실수로 유료 모델을 넣어도 요금이 안 나감)
+// - 무료 모델의 제한: 분당 약 20회, 하루 약 50회(크레딧을 산 적 없는 계정 기준). 넘으면 429 오류 → 가짜 응답으로 대신한다.
+// - 무료 목록은 자주 바뀐다. 모델이 사라지면 404가 나므로 `npm run check:ai`로 확인하고 여기서 바꾼다.
+//
 // 모델을 바꾸고 싶으면 이 파일만 고친다. (코드 곳곳에 ID를 흩어 두지 않는다)
-//
-// 역할 나누기
-// - 판단(Jev):       정해진 답 + 확신도. 빠르고 싸다. → jev.ts
-// - 대체 해석(LLM):  Jev가 확신하지 못한 입력을 LLM이 해석. 싼 모델부터 차례로. → llm.ts
-// - 코드 리뷰(LLM):  개발 중 변경 사항을 다른 회사 모델이 교차 검토. → scripts/review-ai.mjs
-//
-// 가격은 2026-09-30에 OpenRouter 모델 페이지·검색으로 확인한 대략값이다. (제공사마다 다르고 자주 바뀐다)
-// ⚠️ 이 ID들은 문서·검색으로 확인했지만 실제 호출로는 아직 확인하지 못했다(회사 네트워크).
-//    Codespaces에서 `npm run check:ai`로 모든 모델이 응답하는지 먼저 확인한다.
+// 2026-09-30 OpenRouter 공식 목록(/api/v1/models)에서 가격 0인 모델 20개 중에서 골랐다.
 
 export interface ModelInfo {
   /** OpenRouter 모델 ID */
   id: string
   /** 화면·로그에 보여 줄 이름 */
   label: string
-  /** 입력 / 출력 가격 (100만 토큰당 USD, 대략) */
-  price: string
   /** 왜 이 자리에 이 모델을 쓰는지 */
   why: string
 }
 
-/** 판단 모델 — Jev */
+/** 무료 모델인지 — ':free'로 끝나는 ID와 OpenRouter의 무료 자동 선택기(openrouter/free)만 무료로 본다 */
+export function isFreeModel(id: string): boolean {
+  return id.endsWith(':free') || id === 'openrouter/free'
+}
+
+/**
+ * 판단 모델 — Jev (유료, 무료 버전 없음) → 호출하지 않는다.
+ * jev.ts는 이 값이 무료가 아니면 항상 '판단 불가'(확신도 0)를 돌려준다.
+ * 무료 판단 모델이 생기면 여기만 바꾸면 다시 켜진다.
+ */
 export const JUDGE_MODEL: ModelInfo = {
   id: 'typesafe/jev-1.13',
-  label: 'Jev 1.13',
-  price: '입력 과금, 출력 무료',
-  why: '정해진 답만 나오고 확신도를 준다. 분류·점수·예/아니오 판단 전용',
+  label: 'Jev 1.13 (유료 · 꺼짐)',
+  why: '정해진 답 + 확신도를 주는 판단 전용 모델. 무료가 없어 사용하지 않는다',
 }
 
 /**
  * 대체 해석 모델 — 앞에서부터 시도하고, 실패하면 OpenRouter가 다음 모델로 자동으로 넘긴다.
- * 싼 모델을 앞에 둔다: 대부분 첫 모델에서 끝나므로 비용이 가장 낮다.
- * 규칙: 추론(reasoning) 모델은 넣지 않는다 — 생각 토큰 때문에 짧은 max_tokens에서 JSON이 잘린다.
- * 순서(2026-09-30 실측 반영): 짧은 요청 응답 시간 두 번 측정
- *   DeepSeek 1.2초·1.0초 / Gemini 1.9초·1.9초 / GPT Luna 11.9초·1.4초
- *   → 사용자가 기다리는 검색이라, 들쭉날쭉했던 GPT Luna보다 일정했던 Gemini를 두 번째에 둔다.
- *   (자동 대체는 '오류'일 때만 일어나고 '느림'에는 일어나지 않는다. 느린 모델이 걸리면 제한 시간 8초에 걸려 전체가 실패한다)
+ * 조건: 무료 + 답 형식(JSON 스키마) 강제 지원 (공식 목록의 supported_parameters로 확인)
+ * 무료 모델은 모두 추론(reasoning) 모델이라 llm.ts에서 추론을 짧게(effort: low) 하고 max_tokens를 넉넉히 준다.
  */
 export const FALLBACK_MODELS: ModelInfo[] = [
   {
-    id: 'deepseek/deepseek-v4-flash',
-    label: 'DeepSeek V4 Flash',
-    price: '약 $0.10 / $0.20',
-    why: '가장 싸고 빠르다. 짧은 검색어 해석에 충분',
+    id: 'qwen/qwen3.8-27b:free',
+    label: 'Qwen3.8 27B (무료)',
+    why: '무료 중 JSON 강제 지원, 한국어 이해가 좋은 편',
   },
   {
-    id: 'google/gemini-3.8-flash',
-    label: 'Gemini 3.8 Flash',
-    price: '$0.75 / $3.75',
-    why: '두 번째. DeepSeek보다 비싸지만 빠르고(실측 1.9초) 다국어가 강하다',
-  },
-  {
-    id: 'openai/gpt-6-luna',
-    label: 'GPT-6 Luna',
-    price: '$0.10 / $0.50',
-    why: '마지막. 가장 싸지만 실측 응답이 들쭉날쭉했다(1.4~11.9초) — 앞의 둘이 모두 실패할 때만',
+    id: 'nvidia/nemotron-3-super-120b-a12b:free',
+    label: 'Nemotron 3 Super (무료)',
+    why: '무료 중 JSON 강제 지원. Qwen이 한도 초과·오류일 때 대신',
   },
 ]
 
 /** 코드 리뷰 모델 — 서로 다른 회사 모델로 교차 검토 (npm run review:ai) */
 export const REVIEW_MODELS: ModelInfo[] = [
   {
-    id: 'z-ai/glm-5.3',
-    label: 'GLM 5.3',
-    price: '페이지 확인 필요',
-    why: '코딩·추론에 강하다. 추론이 항상 켜져 있어 느리지만 꼼꼼하다',
+    id: 'qwen/qwen3.8-27b:free',
+    label: 'Qwen3.8 27B (무료)',
+    why: '범용 코딩·추론',
   },
   {
-    id: 'moonshotai/kimi-k3',
-    label: 'Kimi K3',
-    price: '약 $0.40~3 / $9~15',
-    why: '코딩·에이전트 작업에 강하다. 다른 시각의 두 번째 리뷰어',
-  },
-]
-
-/** 리뷰어로 바꿔 쓸 수 있는 선택지 (npm run review:ai -- --with-qwen) */
-export const OPTIONAL_REVIEW_MODELS: ModelInfo[] = [
-  {
-    id: 'qwen/qwen3.8-max-0902',
-    label: 'Qwen3.8 Max',
-    price: '$2 / $6',
-    why: '고성능이지만 비싸서 필요할 때만 세 번째 리뷰어로',
+    id: 'cohere/north-mini-code:free',
+    label: 'North Mini Code (무료)',
+    why: '코드 전용 모델. 다른 회사 모델의 두 번째 시각',
   },
 ]
