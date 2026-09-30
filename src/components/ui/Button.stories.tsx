@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { fn } from 'storybook/test'
 import { Moon } from '../icons'
 import { Button, ButtonLink } from './Button'
+import { toRem } from '@/lib/units'
 
 // Button 스토리 (Step 3-3)
 //
@@ -78,7 +79,7 @@ export const AsLink: Story = {
 /** 모든 모양을 한눈에 비교 (디자인 검수용) */
 export const AllVariants: Story = {
   render: (args) => (
-    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+    <div style={{ display: 'flex', gap: toRem(12), flexWrap: 'wrap', alignItems: 'center' }}>
       <Button {...args} variant="primary">
         Primary
       </Button>

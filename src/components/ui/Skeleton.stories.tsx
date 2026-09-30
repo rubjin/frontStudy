@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { Skeleton } from './Skeleton'
+import { toRem } from '@/lib/units'
 
 // Skeleton 스토리 (Step 3-3)
 // 로딩 중 자리 표시 조각. 실제로는 CardSkeleton·CatalogSkeleton이 조립해서 쓴다.
@@ -26,21 +27,21 @@ type Story = StoryObj<typeof meta>
 
 /** 글자 한 줄 자리. Controls에서 width를 바꿔 본다. */
 export const Inline: Story = {
-  args: { width: '12rem' },
+  args: { width: toRem(192) },
 }
 
 /** 이미지·입력창 자리처럼 한 줄 전체를 차지하는 상자 */
 export const Block: Story = {
-  args: { block: true, height: '8rem', radius: 'lg' },
+  args: { block: true, height: toRem(128), radius: 'lg' },
 }
 
 /** 둥글기 비교 */
 export const Radius: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-      <Skeleton width="6rem" height="2rem" radius="md" />
-      <Skeleton width="6rem" height="2rem" radius="lg" />
-      <Skeleton width="6rem" height="2rem" radius="full" />
+    <div style={{ display: 'flex', gap: toRem(16), alignItems: 'center' }}>
+      <Skeleton width={toRem(96)} height={toRem(32)} radius="md" />
+      <Skeleton width={toRem(96)} height={toRem(32)} radius="lg" />
+      <Skeleton width={toRem(96)} height={toRem(32)} radius="full" />
     </div>
   ),
 }
@@ -51,10 +52,10 @@ export const Radius: Story = {
  */
 export const KeepsLineHeight: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
-      <p style={{ fontSize: '1.125rem', lineHeight: '1.75rem', outline: '1px dashed gray' }}>₩189,000</p>
-      <p style={{ fontSize: '1.125rem', lineHeight: '1.75rem', outline: '1px dashed gray' }}>
-        <Skeleton width="5.5rem" />
+    <div style={{ display: 'flex', gap: toRem(32), alignItems: 'flex-start' }}>
+      <p style={{ fontSize: toRem(18), lineHeight: toRem(28), outline: '1px dashed gray' }}>₩189,000</p>
+      <p style={{ fontSize: toRem(18), lineHeight: toRem(28), outline: '1px dashed gray' }}>
+        <Skeleton width={toRem(88)} />
       </p>
     </div>
   ),

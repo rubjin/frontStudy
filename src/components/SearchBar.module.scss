@@ -4,7 +4,7 @@
 
 .wrap {
   position: relative; // 돋보기 아이콘의 기준점
-  max-width: 36rem;
+  max-width: to-rem(576); // 시안 기준 576px
   margin: 0 auto space(10); // 가운데 정렬 + 아래 여백
 }
 

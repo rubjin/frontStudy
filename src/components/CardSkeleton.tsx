@@ -1,5 +1,6 @@
 import clsx from 'clsx'
 import { Skeleton } from './ui/Skeleton'
+import { toRem } from '@/lib/units'
 import styles from './Card.module.scss'
 
 // 상품 카드 스켈레톤 (Step 3-2 보강)
@@ -21,17 +22,17 @@ function CardSkeleton() {
         <Skeleton block height="100%" radius="lg" className={styles.thumbFill} />
       </div>
       <p className={styles.category}>
-        <Skeleton width="3rem" />
+        <Skeleton width={toRem(48)} />
       </p>
       <p className={styles.name}>
         <Skeleton width="75%" />
       </p>
       <div className={styles.meta}>
         <p className={styles.price}>
-          <Skeleton width="5.5rem" />
+          <Skeleton width={toRem(88)} />
         </p>
         <p className={styles.rating}>
-          <Skeleton width="2.5rem" />
+          <Skeleton width={toRem(40)} />
         </p>
       </div>
     </div>

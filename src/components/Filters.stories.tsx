@@ -8,6 +8,7 @@ import SortSelect from './SortSelect'
 import { products } from '@/data/products'
 import { getCategories } from '@/lib/filterProducts'
 import { SORT_OPTIONS } from '@/lib/sortProducts'
+import { toRem } from '@/lib/units'
 
 // 검색·필터·정렬 컨트롤 스토리 (Step 3-3)
 //
@@ -60,7 +61,7 @@ export const Search: StoryObj<typeof SearchBar> = {
   render: function Render(args) {
     const [, updateArgs] = useArgs()
     return (
-      <div style={{ maxWidth: '36rem' }}>
+      <div style={{ maxWidth: toRem(576) }}>
         <SearchBar
           {...args}
           onChange={(value) => {

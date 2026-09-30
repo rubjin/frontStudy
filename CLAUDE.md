@@ -17,8 +17,9 @@
 - 이름: **Shoppr** (상품 목록 쇼핑몰 UI)
 - 스택: **Next.js 16 (App Router) + React 19 + TypeScript**
   - 스타일: **SCSS Module** (`*.module.scss`) + 디자인 토큰. Tailwind는 3-2에서 제거
-    - `src/styles/`: `_tokens.scss`(색상표·`space()`·글자·둥글기·브레이크포인트), `_mixins.scss`(`mq`·`text`·`focus-ring`·`sr-only`·`container`), `_themes.scss`(라이트/다크 CSS 변수), `globals.scss`
+    - `src/styles/`: `_functions.scss`(`to-rem`), `_tokens.scss`(색상표·`space()`·글자·둥글기·브레이크포인트), `_mixins.scss`(`mq`·`text`·`focus-ring`·`sr-only`·`container`), `_themes.scss`(라이트/다크 CSS 변수), `globals.scss`
     - 컴포넌트 SCSS 첫 줄은 `@use 'styles' as *;` (`next.config.ts`의 `sassOptions.loadPaths`에 `src` 등록. `'@/styles'`는 Sass에서 안 됨)
+    - 크기는 시안 px를 `to-rem(px)`(SCSS, `_functions.scss`) / `toRem(px)`(TS, `lib/units.ts`)로 적는다. rem을 직접 계산해 쓰지 않는다. 4px 간격 체계 값은 `space(n)`. 테두리·그림자·blur·브레이크포인트는 px 유지
     - 색은 반드시 테마 변수 `var(--color-...)`만 쓴다. 팔레트(`$gray` 등)는 `_themes.scss`에서만 사용
     - 여러 클래스 조합은 `clsx`. 상태 스타일은 가능하면 aria 속성 선택자(`[aria-pressed='true']`)
   - 다크 모드: `<html data-theme="dark">` + localStorage(`lib/theme.ts`). `<head>`의 `themeInitScript`로 깜빡임 방지. 아이콘·버튼 이름은 CSS로 전환(ThemeToggle)
@@ -92,4 +93,5 @@
   - 3-2 보강: 개발용 미리보기 `/dev/skeleton`(스켈레톤/실제/로딩 재현, production 404).
   - 3-2 보강: 상품 샘플 이미지(크기 제각각 12장) + `next/image`. 카드 틀 크기 일정, WebP 3~8KB로 전송 확인.
   - Step 3-3 완료: Storybook 10 + nextjs-vite, 스토리 29개(UI·Product·Feedback·Layout), 다크 모드 툴바, autodocs, a11y. axe 검사에서 StatusView 코드 숫자 대비 부족 발견 → 수정(58/58 통과).
+  - 3-3 보강: px→rem 함수 `to-rem()`(SCSS)·`toRem()`(TS) 도입, 토큰·스켈레톤·스토리 적용. 컴파일 결과 CSS 전후 동일 확인.
   - 다음은 3-4 코드 품질 도구 (Prettier, Stylelint, husky + lint-staged, .gitattributes).

@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { products } from '@/data/products'
 import type { Product } from '@/types/product'
 import Card from './Card'
+import { toRem } from '@/lib/units'
 
 // Card 스토리 (Step 3-3)
 // 목록 페이지에서는 데이터에 따라 우연히 보이는 상태(품절, 이미지 없음, 긴 이름)를 여기서는 일부러 만들어 확인한다.
@@ -16,7 +17,7 @@ const meta = {
   // decorators: 스토리를 감싸는 포장지. 실제 그리드의 카드 폭(약 290px)과 비슷하게 맞춘다.
   decorators: [
     (Story) => (
-      <div style={{ width: '290px' }}>
+      <div style={{ width: toRem(290) }}>
         <Story />
       </div>
     ),

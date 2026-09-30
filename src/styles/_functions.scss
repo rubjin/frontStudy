@@ -1,0 +1,64 @@
+@use 'sass:list';
+@use 'sass:math';
+@use 'sass:meta';
+
+// 단위 변환 함수 (Step 3-3 보강)
+//
+// to-rem(): 디자인 시안(피그마)의 px 값을 그대로 넣으면 rem으로 바꿔 준다.
+//
+// 왜 rem을 쓰나?
+// - rem = 루트(<html>) 글자 크기의 배수. 브라우저 기본값은 16px이라 1rem = 16px.
+// - 사용자가 브라우저 설정에서 글자 크기를 '크게'로 바꾸면 rem으로 만든 글자·간격·너비가 함께 커진다.
+//   px로 고정하면 글자만 커지지 않거나 레이아웃이 깨진다. (접근성: WCAG 1.4.4 텍스트 크기 조정)
+//
+// 왜 함수로 만드나?
+// - 시안에는 px로 적혀 있다. 매번 24 ÷ 16 = 1.5rem 처럼 암산하면 실수하기 쉽고, 코드만 보고 원래 px를 알기 어렵다.
+// - to-rem(24)라고 쓰면 시안 숫자가 그대로 보이고, 계산은 Sass가 빌드할 때 한다. (결과 CSS에는 1.5rem만 남는다)
+//
+// 이름을 to-rem으로 지은 이유
+// - 'px를 rem으로 바꾼다'는 동작이 이름에 바로 드러난다. (Sass는 이름을 kebab-case로 짓는 관례)
+// - 그냥 rem()으로 지으면 CSS에 이미 있는 rem() 함수(나머지 계산: rem(10, 3) = 1)와 이름이 겹친다.
+// - TypeScript 쪽에는 같은 역할의 toRem()이 있다. (src/lib/units.ts)
+//
+// 사용 예
+//   font-size: to-rem(14);          → 0.875rem   (단위 없는 숫자 = px로 본다)
+//   max-width: to-rem(576px);       → 36rem      (px를 붙여도 된다)
+//   padding: to-rem(12 16);         → 0.75rem 1rem  (여러 값을 한 번에)
+//   margin: to-rem(-4);             → -0.25rem
+//
+// 언제 px를 그대로 두나?
+// - 테두리(1px), 그림자, blur처럼 '글자 크기와 상관없이 얇아야 하는 선·효과'는 px로 둔다.
+//   (글자를 키웠다고 테두리가 두꺼워질 필요는 없다)
+// - 미디어 쿼리 기준점($breakpoints)도 시안 해상도 기준이라 px로 둔다.
+
+// 기준 글자 크기. 브라우저 기본값과 같게 16px. (html의 font-size를 바꾸지 않는 한 그대로 둔다)
+$root-font-size: 16px;
+
+@function to-rem($value) {
+  // 여러 값(12 16)이면 하나씩 바꿔서 다시 공백으로 이어 붙인다
+  @if meta.type-of($value) == 'list' {
+    $result: ();
+    @each $v in $value {
+      $result: list.append($result, to-rem($v), $separator: space);
+    }
+    @return $result;
+  }
+
+  // 0은 단위가 필요 없다 (0rem 대신 0)
+  @if $value == 0 {
+    @return 0;
+  }
+
+  // 단위 없는 숫자는 px로 본다
+  @if math.is-unitless($value) {
+    $value: $value * 1px;
+  }
+
+  // px가 아닌 값(%, em, rem...)을 넣으면 빌드를 멈추고 알려 준다 → 실수를 빌드 단계에서 잡는다
+  @if math.unit($value) != 'px' {
+    @error 'to-rem()에는 px 또는 단위 없는 숫자만 넣을 수 있습니다. 받은 값: #{$value}';
+  }
+
+  // math.div: Sass의 나누기. (예전 문법인 / 나누기는 폐지 예정이다)
+  @return math.div($value, $root-font-size) * 1rem;
+}

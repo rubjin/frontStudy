@@ -656,6 +656,9 @@ npm install -D storybook @storybook/nextjs-vite @storybook/addon-docs @storybook
 | `src/components/Filters.stories.tsx` | Category / Search / Sort / SoldOut — **직접 조작하면 값이 바뀜**(useArgs) |
 | `src/components/Header.stories.tsx` | Default / ThemeToggleOnly |
 | `src/styles/_themes.scss` | `--color-status-code` 대비 개선 (접근성 검사에서 발견) |
+| `src/styles/_functions.scss` (새 파일, 보강) | `to-rem()`: 시안 px → rem. 여러 값·음수·0 처리, 잘못된 단위는 빌드 에러 |
+| `src/lib/units.ts` (새 파일, 보강) | `toRem()`: TSX용 같은 함수 |
+| `src/styles/_tokens.scss` | 글자 크기·둥글기·최대 너비를 `to-rem(시안 px)`로, `space()`도 `to-rem` 기반 |
 | `package.json` | `storybook`, `build-storybook` 스크립트 |
 | `eslint.config.mjs` | `eslint-plugin-storybook` 규칙 추가 |
 | `tsconfig.json` | `.storybook/*.ts(x)`도 타입 검사 (점으로 시작하는 폴더는 `**`에 안 잡힘) |
@@ -714,6 +717,28 @@ Storybook은 Next.js가 아니라 Vite로 빌드하므로, `next.config.ts`의 S
 5. 아무 스토리의 **Accessibility 탭**에서 Violations가 0인지. `_themes.scss`의 `--color-status-code`를 `palette($primary, 200)`으로 되돌리면 StatusView에서 위반이 뜨는지 (확인 후 되돌리기)
 6. **Product/Skeletons → CardSideBySide**에서 스켈레톤과 실제 카드 높이가 같은지
 7. `npm run build-storybook`이 에러 없이 끝나는지
+
+### 3-3 보강: px → rem 변환 함수 `to-rem()` / `toRem()`
+
+시안(피그마)에는 px로 적혀 있는데 코드에는 rem을 쓴다. 매번 `24 ÷ 16 = 1.5rem`을 암산하면 실수하기 쉽고, 코드만 보고 원래 px를 알기 어렵다.
+```scss
+// src/styles/_functions.scss
+font-size: to-rem(14);       // → 0.875rem   (단위 없는 숫자 = px)
+max-width: to-rem(576px);    // → 36rem      (px를 붙여도 됨)
+padding: to-rem(12 16);      // → 0.75rem 1rem
+to-rem(1em)                  // → 빌드 에러: "px 또는 단위 없는 숫자만 넣을 수 있습니다"
+```
+```tsx
+// src/lib/units.ts — TSX에서 스타일 값을 props로 넘길 때
+<Skeleton width={toRem(88)} />               // '5.5rem'
+const H = `calc(${toRem(32)} + 2px)`         // 'calc(2rem + 2px)'
+```
+- **왜 rem?** 루트 글자 크기(기본 16px)의 배수라서, 사용자가 브라우저 글자 크기를 키우면 글자·간격·너비가 함께 커진다. (WCAG 1.4.4)
+- **이름**: 동작이 드러나는 `to-rem`(Sass는 kebab-case), TS는 `toRem`. 그냥 `rem()`은 CSS에 이미 있는 **나머지 계산 함수** `rem(10, 3)`과 이름이 겹쳐서 피했다.
+- **`space(n)` vs `to-rem(px)`**: 4px 간격 체계 안의 값은 `space(6)`(=24px), 체계 밖의 시안 값은 `to-rem(576)`. `space()`도 내부적으로 `to-rem(n × 4)`를 쓴다.
+- **px로 두는 것**: 테두리(1px), 그림자, blur, 미디어 쿼리 기준점. 글자를 키워도 선이 두꺼워질 필요는 없다.
+- **`math.div`**: Sass의 나누기. 예전 `/` 나누기는 폐지 예정이다. 잘못된 단위는 `@error`로 **빌드 단계에서** 막는다.
+- **검증**: 바꾸기 전후로 모든 SCSS(16개 파일)를 컴파일해 비교 → **결과 CSS가 한 글자도 다르지 않음**. TSX도 이전 문자열과 `toRem()` 결과 15개를 대조해 모두 일치. 표기만 바뀌고 화면은 그대로다.
 
 ### 알려진 한계
 - ThemeToggle 스토리에서 버튼을 누르면 localStorage에도 저장된다. Storybook(6006)과 실제 사이트(3000)는 주소가 달라 서로 섞이지 않는다.

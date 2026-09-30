@@ -13,8 +13,9 @@ import styles from './Skeleton.module.scss'
 // (Button처럼 기능과 무관한 기본 부품이라 components/ui/에 둔다)
 //
 // props
-// - width:  너비 (예: '60%', '4rem'). 없으면 부모 너비를 따르거나(block) 1em(inline)
-// - height: 높이 (예: '2rem'). 없으면 글자 한 줄 높이에 맞춘 기본값
+// - width:  너비 (예: '60%', toRem(64)). 없으면 부모 너비를 따르거나(block) 1em(inline)
+// - height: 높이 (예: toRem(32)). 없으면 글자 한 줄 높이에 맞춘 기본값
+//   px 값은 lib/units.ts의 toRem(시안 px)으로 넘긴다
 // - block:  true면 한 줄 전체를 차지하는 상자(이미지 자리 등), false면 글자처럼 줄 안에 들어가는 조각
 // - radius: 둥글기. 'md'(기본) | 'lg' | 'full'(알약 모양)
 // - className: 크기를 SCSS로 정하고 싶을 때

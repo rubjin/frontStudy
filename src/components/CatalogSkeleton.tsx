@@ -1,5 +1,6 @@
 import { Skeleton } from './ui/Skeleton'
 import CardSkeleton from './CardSkeleton'
+import { toRem } from '@/lib/units'
 import searchStyles from './SearchBar.module.scss'
 import filterStyles from './CategoryFilter.module.scss'
 import catalogStyles from './ProductCatalog.module.scss'
@@ -24,14 +25,15 @@ import gridStyles from './CardGrid.module.scss'
 
 // 보여 줄 카드 개수: 넓은 화면(4열)에서 두 줄을 채우는 정도
 const CARD_COUNT = 8
-// 카테고리 칩 개수와 폭 (실제 칩처럼 폭을 조금씩 다르게 해서 자연스럽게)
-const CHIP_WIDTHS = ['3.5rem', '4rem', '4.5rem', '4.5rem', '5rem', '4.5rem', '4.5rem']
+// 카테고리 칩 개수와 폭(px) (실제 칩처럼 폭을 조금씩 다르게 해서 자연스럽게)
+const CHIP_WIDTHS = [56, 64, 72, 72, 80, 72, 72]
 
-// 칩·선택 상자 높이 = 위아래 여백(space(1.5) × 2) + 줄 높이(1.25rem) + 테두리(1px × 2)
+// 칩·선택 상자 높이 = 위아래 여백(6px × 2) + 줄 높이(20px) + 테두리(1px × 2)
+// 테두리는 글자 크기와 상관없이 1px이어야 하므로 rem으로 바꾸지 않고 calc로 더한다
 // (선택 상자는 브라우저가 line-height를 무시하므로 SortSelect.module.scss에서 같은 높이를 직접 지정해 두었다)
-const CONTROL_HEIGHT = 'calc(2rem + 2px)'
-// 검색창 높이 = 위아래 여백(space(3) × 2) + 줄 높이(1.5rem) + 테두리(1px × 2)
-const SEARCH_HEIGHT = 'calc(3rem + 2px)'
+const CONTROL_HEIGHT = `calc(${toRem(32)} + 2px)`
+// 검색창 높이 = 위아래 여백(12px × 2) + 줄 높이(24px) + 테두리(1px × 2)
+const SEARCH_HEIGHT = `calc(${toRem(48)} + 2px)`
 
 function CatalogSkeleton() {
   return (
@@ -45,19 +47,19 @@ function CatalogSkeleton() {
 
         <div className={catalogStyles.toolbar}>
           <div className={filterStyles.group}>
-            {CHIP_WIDTHS.map((width, index) => (
+            {CHIP_WIDTHS.map((px, index) => (
               // 순서가 절대 바뀌지 않는 고정 목록이라 index를 key로 써도 안전하다
-              <Skeleton key={index} width={width} height={CONTROL_HEIGHT} radius="full" />
+              <Skeleton key={index} width={toRem(px)} height={CONTROL_HEIGHT} radius="full" />
             ))}
           </div>
           <div className={catalogStyles.options}>
-            <Skeleton width="7.5rem" height="1.25rem" />
-            <Skeleton width="7rem" height={CONTROL_HEIGHT} />
+            <Skeleton width={toRem(120)} height={toRem(20)} />
+            <Skeleton width={toRem(112)} height={CONTROL_HEIGHT} />
           </div>
         </div>
 
         <p className={gridStyles.count}>
-          <Skeleton width="6rem" />
+          <Skeleton width={toRem(96)} />
         </p>
 
         <div className={gridStyles.grid}>

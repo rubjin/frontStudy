@@ -3,6 +3,7 @@ import Card from './Card'
 import CardSkeleton from './CardSkeleton'
 import CatalogSkeleton from './CatalogSkeleton'
 import { products } from '@/data/products'
+import { toRem } from '@/lib/units'
 
 // 로딩 스켈레톤 스토리 (Step 3-3)
 // CardSkeleton과 CatalogSkeleton은 props가 없어서 한 파일에 모았다.
@@ -27,7 +28,7 @@ type Story = StoryObj<typeof meta>
 export const CardOnly: Story = {
   decorators: [
     (Story) => (
-      <div style={{ width: '290px' }}>
+      <div style={{ width: toRem(290) }}>
         <Story />
       </div>
     ),
@@ -37,7 +38,7 @@ export const CardOnly: Story = {
 /** 왼쪽 스켈레톤, 오른쪽 실제 카드 — 높이·여백이 같아야 한다 */
 export const CardSideBySide: Story = {
   render: () => (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 290px)', gap: '1.5rem', alignItems: 'start' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: `repeat(2, ${toRem(290)})`, gap: toRem(24), alignItems: 'start' }}>
       <CardSkeleton />
       <Card product={products[0]} />
     </div>
@@ -50,7 +51,7 @@ export const Catalog: Story = {
   parameters: { layout: 'fullscreen' },
   decorators: [
     (Story) => (
-      <div style={{ padding: '2rem' }}>
+      <div style={{ padding: toRem(32) }}>
         <Story />
       </div>
     ),
