@@ -54,8 +54,32 @@
   position: relative; // 품절 오버레이의 기준점
   aspect-ratio: 1; // 가로:세로 = 1:1 정사각형
   margin-bottom: space(4);
+  overflow: hidden; // 안쪽 이미지가 둥근 모서리 밖으로 삐져나오지 않게 자른다
   border-radius: $radius-lg;
+  // 이미지가 도착하기 전·없는 상품일 때 보이는 배경
   background: linear-gradient(to bottom right, var(--color-thumb-from), var(--color-thumb-to));
+}
+
+// 상품 이미지 (next/image의 fill → position: absolute로 .thumb를 꽉 채움)
+// object-fit: cover — 비율을 유지한 채 틀을 빈틈없이 채우고, 넘치는 부분은 잘라 낸다.
+//   가로로 긴 사진은 좌우가, 세로로 긴 사진은 위아래가 잘린다. (가운데 기준)
+//   contain으로 바꾸면 잘리지 않는 대신 빈 여백(레터박스)이 생긴다.
+.image {
+  object-fit: cover;
+  transition: transform $duration-base;
+
+  // 카드에 마우스를 올리면 사진이 살짝 커진다 (틀은 그대로, 안쪽만 확대 — overflow: hidden 덕분)
+  .card:hover & {
+    transform: scale(1.04);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    .card:hover & {
+      transform: none;
+    }
+  }
 }
 
 .initial {

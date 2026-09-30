@@ -12,6 +12,14 @@ const nextConfig: NextConfig = {
   sassOptions: {
     loadPaths: [path.join(process.cwd(), 'src')],
   },
+
+  // 이미지 최적화 설정 (Step 3-2 보강)
+  images: {
+    // localPatterns: next/image가 최적화해 줄 '내 사이트 안의 경로'를 제한한다.
+    // 지정한 경로 밖의 이미지를 최적화하라는 요청은 거부(400)해서, 서버 자원을 악용하는 요청을 막는다.
+    // search: '' → 주소 뒤에 ?query가 붙은 요청도 거부
+    localPatterns: [{ pathname: '/images/**', search: '' }],
+  },
 }
 
 export default nextConfig

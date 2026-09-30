@@ -2,6 +2,9 @@ import Card from './Card'
 import type { Product } from '@/types/product'
 import styles from './CardGrid.module.scss'
 
+// 첫 화면에 보이는 카드 수(넓은 화면 4열 기준 첫 줄). 이 카드들의 이미지만 지연 없이 바로 불러온다.
+const EAGER_COUNT = 4
+
 // 상품 카드 목록 (Step 1에서 만들고 Step 2에서 역할을 줄임)
 //
 // Step 1에서는 이 컴포넌트가 직접 검색어로 목록을 걸러냈다.
@@ -43,11 +46,12 @@ function CardGrid({ products, query }: CardGridProps) {
       </p>
       {/* 목록이므로 div 대신 ul/li를 쓴다 (시맨틱 마크업) */}
       <ul className={styles.grid}>
-        {products.map((product) => (
+        {/* index: 몇 번째 카드인지. 첫 줄(최대 4개)만 이미지를 즉시 불러온다 (Step 3-2 보강) */}
+        {products.map((product, index) => (
           // key는 index 대신 고유한 id를 쓴다.
           // index를 쓰면 필터로 순서가 바뀔 때 React가 항목을 헷갈릴 수 있다.
           <li key={product.id}>
-            <Card product={product} />
+            <Card product={product} eager={index < EAGER_COUNT} />
           </li>
         ))}
       </ul>

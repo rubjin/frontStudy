@@ -22,6 +22,7 @@
     - 색은 반드시 테마 변수 `var(--color-...)`만 쓴다. 팔레트(`$gray` 등)는 `_themes.scss`에서만 사용
     - 여러 클래스 조합은 `clsx`. 상태 스타일은 가능하면 aria 속성 선택자(`[aria-pressed='true']`)
   - 다크 모드: `<html data-theme="dark">` + localStorage(`lib/theme.ts`). `<head>`의 `themeInitScript`로 깜빡임 방지. 아이콘·버튼 이름은 CSS로 전환(ThemeToggle)
+  - 이미지: `next/image`. 샘플은 `public/images/products/{id}.jpg`(크기·비율 제각각, sharp로 생성 — 회사 네트워크에서 외부 이미지 사이트 차단됨). 카드는 `fill` + `sizes` + `object-fit: cover`, 첫 줄만 `loading="eager"`(`priority`는 16에서 폐지 예정). `images.localPatterns`로 `/images/**`만 허용
   - 폰트: Pretendard dynamic subset (`pretendard` 패키지 CSS를 layout에서 import). `_fonts.scss`의 `'Pretendard Fallback'`(맑은 고딕 + `size-adjust`, 실측값)으로 폰트 교체 때 레이아웃 이동 방지. 폰트 스택은 `fonts.$font-family-base`
   - 컴포넌트 문서화: Storybook (Step 3-3 예정)
 - 구조
@@ -85,4 +86,5 @@
   - 3-2 보강(2026-09-30): 새로고침 때 움찔(FOUT) 원인 측정 → 크기 보정 대체 폰트로 CLS 0.00066 → 0.00003.
   - 3-2 보강: 스켈레톤 UI(`ui/Skeleton`, CardSkeleton, CatalogSkeleton) + `page.tsx` Suspense. 실제 화면과 크기 일치 검증(1280·390px), `<select>` 높이 명시.
   - 3-2 보강: 개발용 미리보기 `/dev/skeleton`(스켈레톤/실제/로딩 재현, production 404).
+  - 3-2 보강: 상품 샘플 이미지(크기 제각각 12장) + `next/image`. 카드 틀 크기 일정, WebP 3~8KB로 전송 확인.
   - 다음은 3-3 Storybook.

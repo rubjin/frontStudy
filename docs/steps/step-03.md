@@ -394,6 +394,12 @@ clsx(styles.button, styles[variant], styles[size], className)
 | `src/app/dev/skeleton/page.tsx` (새 파일) | **개발용 미리보기** `/dev/skeleton`. 배포 환경(`production`)에서는 `notFound()`로 404 |
 | `src/app/dev/skeleton/SkeletonPreview.tsx` (새 파일) | 스켈레톤 / 실제 화면 / 로딩 재현(2초) 전환 버튼 |
 | `src/components/SortSelect.module.scss` | `<select>` 높이 명시 (브라우저가 line-height를 무시해서 스켈레톤과 2px 어긋났음) |
+| `public/images/products/1~12.jpg` (새 파일) | 샘플 상품 이미지. **크기·비율이 제각각**(800×600, 600×900, 1200×500, 500×1000 …). 원본 크기·비율·테두리·십자선을 그려 넣어 잘리는 모양을 볼 수 있게 함 |
+| `src/types/product.ts` | `ProductImage { src, width, height }`, `Product.image?` 추가 |
+| `src/data/products.ts` | 상품마다 `image` 추가 |
+| `src/components/Card.tsx` | `next/image`(`fill` + `sizes` + `object-fit: cover`), 이미지 없으면 첫 글자, `eager` prop |
+| `src/components/CardGrid.tsx` | 첫 줄 4개만 `eager` (즉시 로딩) |
+| `next.config.ts` | `images.localPatterns`: 최적화 허용 경로를 `/images/**`로 제한 |
 | `src/components/SearchBar.tsx` | `aria-label="상품 검색"` 추가 (placeholder만 있고 이름이 없던 접근성 문제) |
 | `src/components/CategoryFilter.tsx` | 선택 모양을 클래스 대신 `[aria-pressed='true']` 선택자로 |
 
@@ -565,7 +571,38 @@ font-family: 'Pretendard Variable', Pretendard, 'Pretendard Fallback', ...;
 - **모션 줄이기**: `prefers-reduced-motion: reduce`면 반짝이는 애니메이션 없이 회색 면만 보여 준다.
 - 스켈레톤이 '로딩 중'이라는 뜻이 되려면 **내용이 아니라 모양만** 흉내 낸다. 그래서 `<article>`·`<h3>`·`<a>` 대신 `<div>`·`<p>`를 쓴다. (아직 없는 제목·링크가 읽히면 안 된다)
 
-**12. 접근성 보강 (전환하면서 함께 고친 것)**
+**12. 크기가 제각각인 상품 이미지 — 카드 모양은 항상 같게 (`next/image`)**
+
+판매자마다 사진 비율이 다른 상황을 흉내 내려고 샘플 이미지 12장을 일부러 다른 크기로 만들었다. (가로형 4:3·16:9·12:5, 세로형 2:3·3:4·1:2, 정사각형)
+> 회사 네트워크에서 외부 샘플 사진 사이트가 막혀서, Next.js에 들어 있는 sharp로 이미지를 직접 생성했다. 이미지 안에 원본 크기·비율, 점선 테두리, 가운데 십자선을 그려 넣어 **어디가 잘렸는지** 보이게 했다. 실제 사진이 생기면 같은 파일 이름으로 바꾸면 된다.
+
+```tsx
+<div className={styles.thumb}>          {/* position: relative; aspect-ratio: 1; overflow: hidden */}
+  <Image src={image.src} alt="" fill sizes={THUMB_SIZES} className={styles.image} loading={eager ? 'eager' : 'lazy'} />
+</div>
+```
+```scss
+.image { object-fit: cover; }   // 비율 유지하며 틀을 꽉 채우고 넘치는 부분은 자름 (background-size: cover와 같은 원리)
+```
+- **`fill`**: width/height 대신 부모를 꽉 채운다. 부모에 `position: relative`와 크기(여기서는 `aspect-ratio: 1`)가 있어야 한다.
+- **`object-fit: cover`**: 가로로 긴 사진은 좌우가, 세로로 긴 사진은 위아래가 잘린다(가운데 기준). `contain`이면 잘리지 않는 대신 빈 여백이 생긴다.
+- **`sizes`**: 이 이미지가 화면에서 **실제로 몇 px로 보이는지** 알려 준다. 브라우저가 알맞은 크기 하나만 받는다. 없으면 fill 이미지는 화면 전체 너비로 가정해 너무 큰 파일을 받는다.
+  `'(min-width: 1280px) 290px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw'` ← 그리드 열 개수와 맞춤
+- **next/image가 해 주는 일**: 크기 줄이기 + WebP 변환 + 기본 지연 로딩.
+  | | 원본 | 실제로 받은 파일 |
+  | --- | --- | --- |
+  | 형식 | JPG | **WebP** |
+  | 가로 | 480~1600px | **384px** (1280px 화면) / 640px (390px 화면) |
+  | 용량 | 12~38KB | **3~8KB** |
+- **`loading="eager"`는 첫 줄만**: 첫 화면에 보이는 4장만 즉시 받고 나머지는 지연 로딩(기본값). 모든 이미지를 즉시 받으면 오히려 첫 화면이 느려진다.
+  > Next.js 16에서 `priority`는 폐지 예정이고, 문서는 `loading="eager"`나 `fetchPriority="high"`를 권장한다. (설치 버전 문서로 확인)
+- **`alt=""`**: 바로 아래 상품명 링크가 같은 정보를 주므로 카드 이미지는 장식으로 보고 빈 alt를 준다. alt 속성을 **빼면 안 된다**(스크린리더가 파일 이름을 읽을 수 있음). 이미지가 주인공인 상세 페이지(Step 4)에서는 상품명을 alt로 준다.
+- **`localPatterns`**: next/image가 최적화할 수 있는 경로를 `/images/**`로 제한한다. 아무 경로나 최적화 요청을 받으면 서버 자원을 악용당할 수 있다.
+- **원본 크기(width, height)를 데이터에 두는 이유**: 목록은 fill이라 필요 없지만, 상세 페이지에서 원본 비율로 보여 줄 때 로딩 전에도 자리를 잡아 레이아웃 이동을 막는다.
+- **검증**: 1280px에서 이미지 틀이 모두 236×236, 390px에서 308×308. 레이아웃 이동은 이미지 추가 전과 같음(0.00003). 12장 모두 로딩, 콘솔 에러 없음.
+- hover하면 틀은 그대로 두고 안쪽 사진만 살짝 확대된다. (`overflow: hidden` + `transform: scale`, 모션 줄이기 설정 시 끔)
+
+**13. 접근성 보강 (전환하면서 함께 고친 것)**
 - 검색창에 `aria-label="상품 검색"`: placeholder는 입력하면 사라지고 이름으로 읽히지 않을 수 있다.
 - 카테고리 칩에 `:focus-visible` 테두리 추가 (Tailwind 때는 브라우저 기본 표시였다).
 - 카드 떠오르기 효과는 `prefers-reduced-motion: reduce`(모션 줄이기 설정) 사용자에게는 끈다.
@@ -581,6 +618,7 @@ font-family: 'Pretendard Variable', Pretendard, 'Pretendard Fallback', ...;
 6. `layout.tsx`에서 `suppressHydrationWarning`을 잠깐 지우고, 다크 모드로 새로고침 → 콘솔에 하이드레이션 경고가 뜨는지 확인 후 되돌리기
 7. 스크린리더(Windows 내레이터: Ctrl+Win+Enter) 또는 개발자 도구 Accessibility 탭에서 다크 모드 버튼 이름이 테마에 따라 "다크 모드로 전환" / "라이트 모드로 전환"으로 바뀌는지
 7-1. 스켈레톤 보기: `npm run dev` 후 http://localhost:3000/dev/skeleton → '로딩 재현'을 눌러 스켈레톤이 실제 화면으로 바뀔 때 아무것도 움직이지 않는지 확인. 다크 모드·좁은 화면에서도 해 보기. (`npm run build && npm run start`로 띄우면 이 주소는 404여야 정상)
+7-2. 상품 이미지: 개발자 도구 Network 탭에서 Img 필터 → 요청 주소가 `/_next/image?url=...&w=384`이고 형식이 webp인지. 창 너비를 줄이면 `w` 값이 바뀌는지. `Card.module.scss`의 `object-fit`을 `contain`으로 바꿔 잘림 대신 여백이 생기는 것 비교해 보기
 8. `_tokens.scss`에서 `$radius-xl`을 `0`으로 바꿔 보기 → 모든 카드 모서리가 한 번에 바뀌는지 (확인 후 되돌리기)
 9. `npm run build`, `npm run lint`, `npx tsc --noEmit`이 에러 없이 끝나는지
 
