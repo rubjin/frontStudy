@@ -1,6 +1,6 @@
 # Step 3. 실무 환경 전환 — Next.js · TypeScript · SCSS Module · Storybook
 
-> 상태: 진행 중 (3-1, 3-2, 3-3, 3-4a~c 완료)
+> 상태: 완료 (3-1, 3-2, 3-3, 3-4)
 
 ## 목표
 지금까지는 Vite + JavaScript + Tailwind로 "React가 어떻게 동작하는지"를 익혔다.
@@ -11,11 +11,11 @@ Step 3에서는 **화면은 그대로 두고, 그 아래의 개발 환경을 실
 - [x] **3-1** Vite → Next.js(App Router) + TypeScript
 - [x] **3-2** Tailwind → SCSS Module (디자인 토큰, mixin, CSS 변수 다크 모드, 한글 웹폰트)
 - [x] **3-3** Storybook (컴포넌트 스토리, 자동 문서, 접근성 검사, 다크 모드 전환)
-- [ ] **3-4** 코드 품질 도구
+- [x] **3-4** 코드 품질 도구
   - [x] 3-4a `.editorconfig` + `.gitattributes` (줄바꿈·들여쓰기 통일)
   - [x] 3-4b Prettier (코드 모양 자동 정리, ESLint와 역할 나누기)
   - [x] 3-4c Stylelint (SCSS 규칙 검사)
-  - [ ] 3-4d husky + lint-staged (커밋 전 자동 검사)
+  - [x] 3-4d husky + lint-staged (커밋 전 자동 검사)
 
 > 한 번에 다 바꾸지 않고, **각 단계가 끝날 때마다 화면이 정상 동작하는 상태**를 유지한다.
 > 그래서 3-1에서는 스타일(Tailwind)을 건드리지 않고 프레임워크와 언어만 바꿨다.
@@ -942,6 +942,58 @@ Stylelint 16부터 들여쓰기·따옴표 같은 모양 규칙이 빠졌다. �
 2. 아무 `*.module.scss`에 `color: #333;`이나 `padding: 1.5rem;`을 넣고 `npm run lint:css` → 한국어 안내가 뜨는지 (확인 후 되돌리기)
 3. VS Code에서 Stylelint 확장 설치 후 **설정 → `stylelint.validate`에 `scss` 추가** (기본값은 css만) → 저장하지 않아도 밑줄이 뜨는지
 4. 빌드한 CSS에 `clip-path:inset(50%)`, `color:var(--color-on-overlay)`가 들어갔는지 → 확인함. 품절 카드·스크린리더 전용 글자 모양은 그대로다.
+
+### 3-4d. husky + lint-staged — 커밋 전 자동 검사
+
+#### 왜 필요한가?
+3-4a~c에서 도구를 만들었지만, **사람이 실행해야** 동작한다. 바쁘면 `npm run lint`를 잊고 커밋한다.
+커밋 버튼을 누르는 순간 자동으로 검사하면, 규칙을 어긴 코드가 **저장소에 들어오지 못한다.**
+
+#### 설치
+```bash
+npm i -D husky lint-staged
+npx husky init   # .husky/pre-commit 생성 + package.json에 "prepare": "husky" 추가
+```
+
+#### 파일별 설명
+| 파일 | 역할 |
+|---|---|
+| `.husky/pre-commit` (새 파일) | 커밋 직전에 Git이 실행하는 스크립트. `npx lint-staged` 한 줄 (init 기본값 `npm test`는 테스트가 아직 없어서 교체) |
+| `lint-staged.config.mjs` (새 파일) | 파일 종류별로 실행할 명령 |
+| `package.json` | `"prepare": "husky"` — `npm install` 할 때 Git hook을 자동으로 연결 |
+
+#### 핵심 개념
+**1. Git hook과 husky**
+Git에는 원래 "커밋 직전(pre-commit)", "push 직전(pre-push)" 같은 순간에 스크립트를 실행하는 기능(hook)이 있다.
+그런데 기본 위치 `.git/hooks/`는 **저장소에 올라가지 않는다** → 나만 검사하고 팀원은 안 한다.
+husky는 hook 파일을 `.husky/`(커밋되는 폴더)에 두고, Git 설정 `core.hooksPath`를 그쪽으로 돌려 준다.
+`prepare` 스크립트 덕분에 누가 `npm install`만 해도 자동으로 연결된다. (Codespace를 새로 만들어도 마찬가지)
+
+**2. lint-staged — "올린 파일만"**
+| 파일 | 실행 순서 |
+|---|---|
+| `*.{ts,tsx}` | ESLint `--fix` → Prettier `--write` → `tsc --noEmit`(프로젝트 전체) |
+| `*.{js,mjs}` | ESLint `--fix` → Prettier `--write` |
+| `*.scss` | Stylelint `--fix` → Prettier `--write` |
+| `*.{json,css,yml,yaml}` | Prettier `--write` |
+
+- 명령 뒤에 **stage에 올린 파일 경로만** 붙는다. 12개 파일 중 1개를 고쳤으면 1개만 검사 → 빠르다.
+- `--fix` / `--write`로 **고칠 수 있는 것은 고쳐서** 커밋에 다시 넣는다. (따옴표, 줄바꿈 등)
+- **고칠 수 없는 것**(직접 쓴 색, 타입 에러)은 커밋을 **취소**한다. 파일은 커밋 전 상태로 돌아간다.
+- **타입 검사만 전체**: 타입은 파일 하나로 판단할 수 없다(`Product` 타입을 고치면 쓰는 쪽 파일이 깨질 수 있음). 함수 형태 `() => 'tsc --noEmit'`로 쓰면 파일 경로가 붙지 않는다.
+- **패턴이 겹치지 않게**: lint-staged는 패턴별 작업을 **동시에** 실행한다. 같은 파일이 두 패턴에 걸리면 두 도구가 동시에 고치다 충돌할 수 있다. 처음에 `*.{ts,tsx,js,mjs}`와 `*.{ts,tsx}`(tsc)를 따로 썼다가 겹쳐서, tsc를 같은 배열 끝에 넣고 js는 따로 나눴다.
+
+**3. 검사 건너뛰기**
+`git commit --no-verify`로 건너뛸 수 있다. 급할 때를 위한 탈출구지만, 습관이 되면 도구를 만든 의미가 없다.
+Step 10에서 GitHub Actions(CI)에 같은 검사를 넣으면, 건너뛴 코드도 서버에서 한 번 더 잡힌다.
+
+#### 확인 방법
+1. **자동 정리**: `src/lib/format.ts` 끝에 `export const  testValue = {a:"x",   b : 1};`를 넣고 `git add` → `npx lint-staged`
+   → `export const testValue = { a: 'x', b: 1 }`로 바뀌고 다시 stage 됨 (확인함. 확인 후 되돌리기)
+2. **커밋 막기**: 아무 `*.module.scss`에 `color: #333;`을 넣고 `git add` → `git commit -m test`
+   → Stylelint 한국어 안내가 뜨고 커밋이 만들어지지 않음 (`git log`로 확인. 확인 후 되돌리기)
+3. **타입 에러 막기**: `.tsx`에서 `const n: number = 'a'`를 넣고 커밋 → tsc 에러로 커밋 취소
+4. `git config core.hooksPath` → `.husky/_`
 
 ---
 

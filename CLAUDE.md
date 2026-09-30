@@ -46,6 +46,7 @@
 - 실행: `npm run dev` / 빌드: `npm run build` / 린트: `npm run lint` / 타입 검사: `npx tsc --noEmit` / 포맷: `npm run format`(고치기)·`npm run format:check`(검사)
 - 코드 모양: **Prettier**(`prettier.config.mjs`: 세미콜론 없음, 작은따옴표, `printWidth` 120). 코드를 쓰거나 고친 뒤 `npm run format` 실행. `*.md`와 `package-lock.json`은 제외(`.prettierignore`). 표처럼 줄 맞춘 부분만 윗줄에 단독 `// prettier-ignore`. ESLint는 `eslint-config-prettier`로 모양 규칙을 끔(배열 마지막)
 - SCSS 검사: **Stylelint**(`stylelint.config.mjs`, `npm run lint:css`). 색 값(hex·이름·rgb/hsl)은 `_tokens`·`_themes`에서만, `rem` 직접 입력은 `_functions`에서만 허용, `font-size`·`line-height` px 금지, 중첩 3단계까지, CSS Module 클래스는 camelCase. 규칙을 꺼야 하면 그 줄만 `// stylelint-disable-next-line 규칙 -- 이유`
+- 커밋 전 검사: **husky**(`.husky/pre-commit`) → **lint-staged**(`lint-staged.config.mjs`). 커밋이 막히면 `--no-verify`로 우회하지 말고 원인을 고친다. 사용자가 작업 중인 파일이 stage돼 있으면 lint-staged가 같이 검사하므로, Claude가 커밋할 때는 자기 파일만 `git add`했는지 확인
 - 참고: 사용자가 `npm run dev`(localhost:3000)를 켜 두는 경우가 많다. Next.js 16은 같은 폴더에서 dev 서버를 두 개 못 띄우므로, 검증은 `npm run build` 후 `next start -p <다른 포트>`로 하거나 켜진 3000 서버를 읽기 전용으로 쓴다. 파일을 임시로 바꾸면 사용자 화면에도 반영된다.
 - 참고: 회사 네트워크 — npm 저장소는 연결되지만 이미지 사이트(Unsplash·Pexels·Wikimedia·Picsum)는 회사 SSL 검사 인증서 때문에 Node는 `SELF_SIGNED_CERT_IN_CHAIN`, curl은 오류 35로 실패한다. 인증서 검사를 끄지 말 것(`NODE_TLS_REJECT_UNAUTHORIZED=0` 금지). 필요하면 사용자에게 브라우저로 받아 달라고 하거나, 동의를 받아 회사 루트 인증서를 `NODE_EXTRA_CA_CERTS`로 지정한다. (2026-09-30 사용자는 샘플 이미지 유지 선택)
 - 줄바꿈: `.gitattributes`(`* text=auto eol=lf`)로 저장소·작업 폴더 모두 LF(Windows `core.autocrlf=true`여도). `.editorconfig`는 UTF-8·LF·스페이스 2칸·파일 끝 빈 줄
@@ -58,11 +59,11 @@
 ### Phase 1. React 기본기 + 실무 개발 환경
 - [x] **Step 1** 데이터 분리, price 숫자화 + `Intl` 포맷, 검색 연결, 빈 상태 화면
 - [x] **Step 2** 카테고리 필터 + 정렬(가격·평점) + 품절 숨기기. 파생 상태, `useMemo`, 컴포넌트 분리
-- [ ] **Step 3** 실무 환경 전환
+- [x] **Step 3** 실무 환경 전환
   - [x] 3-1 Vite → Next.js(App Router) + TypeScript. 서버/클라이언트 컴포넌트 구분, 파일 기반 라우팅
   - [x] 3-2 SCSS Module 전환: 디자인 토큰(`_tokens.scss`), mixin(반응형·포커스), CSS 변수 테마(`data-theme`) + 다크 모드 localStorage 저장·깜빡임 방지, `next/font`. Tailwind 제거
   - [x] 3-3 Storybook: 컴포넌트별 `*.stories.tsx`, Controls/Docs 자동 문서, a11y addon, 다크 모드 전환 툴바
-  - [ ] 3-4 코드 품질 도구: Prettier, Stylelint(SCSS), husky + lint-staged(커밋 전 자동 검사), `.editorconfig`·`.gitattributes`
+  - [x] 3-4 코드 품질 도구: Prettier, Stylelint(SCSS), husky + lint-staged(커밋 전 자동 검사), `.editorconfig`·`.gitattributes`
 - [ ] **Step 4** 라우팅 심화: 상품 상세 완성(`notFound()`, `generateMetadata`로 페이지별 SEO), 검색·필터·정렬을 `searchParams`(URL 쿼리)로 관리, `loading.tsx`·`error.tsx`
 - [ ] **Step 5** 장바구니: Context + `useReducer`(또는 Zustand), localStorage 저장
 
@@ -100,4 +101,5 @@
   - 3-4a 완료: `.editorconfig` + `.gitattributes`. 작업 폴더에 섞여 있던 CRLF 파일 5개를 LF로 통일(저장소 내용 변경 없음).
   - 3-4b 완료: Prettier + eslint-config-prettier, `format`/`format:check` 스크립트, VS Code 추천 확장. 설정 커밋과 정리 결과 커밋을 분리.
   - 3-4c 완료: Stylelint(standard-scss + CSS Module용 조정 + 프로젝트 규칙: 색 직접 입력·rem 직접 입력·글자 px 금지). 도구가 찾은 `Card`의 `#fff` → `--color-on-overlay`, sr-only `clip` → `clip-path`.
-  - 다음은 3-4d husky + lint-staged.
+  - 3-4d 완료: husky + lint-staged. 커밋할 때 stage한 파일만 ESLint·Stylelint(--fix) → Prettier, ts 변경 시 tsc 전체.
+  - 다음은 Step 3 마무리 확인 후 Step 4 라우팅 심화.
