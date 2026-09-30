@@ -1,0 +1,20 @@
+// VS Code 프로젝트 설정 (Step 3-4 보강)
+// 이 폴더를 열 때만 적용되고, 개인 사용자 설정보다 우선한다.
+// 저장소에 커밋해서 Codespace·다른 PC에서도 같은 에디터 동작을 쓴다. (.gitignore에서 이 파일만 허용)
+{
+  // Stylelint 확장이 검사할 파일 종류. 기본값은 css·postcss뿐이라 scss를 넣어야 에디터에 밑줄이 뜬다
+  // (비슷한 이름의 stylelint.snippet은 자동 완성 조각 설정이라 검사와 상관없다)
+  "stylelint.validate": ["css", "scss"],
+  // CSS 기본 검사기는 SCSS 문법(@use, @include)을 모르고 Stylelint와 같은 내용을 두 번 알려 주므로 끈다
+  "css.validate": false,
+  "scss.validate": false,
+
+  // 저장할 때 Prettier로 모양 정리 (Step 3-4b)
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  // 저장할 때 ESLint·Stylelint가 고칠 수 있는 것은 고친다 ("explicit": 직접 저장했을 때만, 자동 저장 때는 안 함)
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.stylelint": "explicit"
+  }
+}

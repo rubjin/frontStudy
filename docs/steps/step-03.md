@@ -827,6 +827,7 @@ npm i -D prettier eslint-config-prettier
 | `eslint.config.mjs` | 마지막에 `eslint-config-prettier` 추가 → ESLint의 모양 규칙을 끔 |
 | `package.json` | `npm run format`(고치기), `npm run format:check`(검사만) |
 | `.vscode/extensions.json` (새 파일) | 추천 확장: EditorConfig, Prettier, ESLint. 프로젝트를 열면 설치 알림이 뜬다 |
+| `.vscode/settings.json` (3-4 보강) | 프로젝트 에디터 설정: 저장 시 Prettier·ESLint/Stylelint 자동 수정, Stylelint가 scss도 검사. `.gitignore`에서 허용해 커밋 |
 | `src/data/products.ts`, `src/styles/_tokens.scss` | `// prettier-ignore`로 표처럼 맞춘 부분만 정리에서 제외 |
 | 그 외 `src/` 10개 파일 | Prettier가 모양만 바꿈 (별도 커밋) |
 
@@ -866,7 +867,7 @@ npm i -D prettier eslint-config-prettier
 
 **5. VS Code에서 저장할 때 자동 정리**
 1. 추천 확장 설치 (프로젝트를 열면 알림, 또는 확장 탭에서 `@recommended`)
-2. 설정(`Ctrl + ,`)에서 **Default Formatter** → *Prettier - Code formatter*, **Format On Save** 체크
+2. ~~설정에서 Default Formatter·Format On Save 켜기~~ → 3-4 보강에서 `.vscode/settings.json`(프로젝트 설정)으로 커밋해서 따로 할 필요 없음
 → 저장할 때마다 `prettier.config.mjs` 규칙대로 정리된다. 확장이 없는 사람도 `npm run format`으로 같은 결과를 얻는다.
 
 #### 확인 방법
@@ -940,7 +941,10 @@ Stylelint 16부터 들여쓰기·따옴표 같은 모양 규칙이 빠졌다. �
 #### 확인 방법
 1. `npm run lint:css` → 에러 없이 끝나는지
 2. 아무 `*.module.scss`에 `color: #333;`이나 `padding: 1.5rem;`을 넣고 `npm run lint:css` → 한국어 안내가 뜨는지 (확인 후 되돌리기)
-3. VS Code에서 Stylelint 확장 설치 후 **설정 → `stylelint.validate`에 `scss` 추가** (기본값은 css만) → 저장하지 않아도 밑줄이 뜨는지
+3. VS Code에서 Stylelint 확장 설치 후 `*.module.scss`에 `background-color: #333;` → 저장하지 않아도 밑줄이 뜨는지
+   - 확장 기본값은 css만 검사한다. 프로젝트 설정 `.vscode/settings.json`의 `"stylelint.validate": ["css", "scss"]`로 해결 (3-4 보강)
+   - **헷갈림 주의**: 설정 검색에서 바로 옆에 나오는 `stylelint.snippet`은 자동 완성 조각 설정이라 검사와 상관없다. 실제로 이걸 넣었다가 밑줄이 안 떠서 원인을 찾았다.
+   - 밑줄이 안 뜨면: 명령 팔레트(`Ctrl+Shift+P`) → *Developer: Reload Window*, 그래도 안 되면 *Stylelint: Show output channel*에서 에러 확인
 4. 빌드한 CSS에 `clip-path:inset(50%)`, `color:var(--color-on-overlay)`가 들어갔는지 → 확인함. 품절 카드·스크린리더 전용 글자 모양은 그대로다.
 
 ### 3-4d. husky + lint-staged — 커밋 전 자동 검사
