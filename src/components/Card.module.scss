@@ -35,6 +35,19 @@
   }
 }
 
+// 스켈레톤 카드 (Step 3-2 보강, CardSkeleton에서 .card와 함께 쓴다)
+// 크기·여백은 .card 그대로 두고, 로딩 중에는 눌러도 반응이 없으므로 hover 효과만 끈다
+.isSkeleton:hover {
+  box-shadow: $shadow-sm;
+  transform: none;
+}
+
+// 스켈레톤이 썸네일 자리(.thumb)를 꽉 채우도록
+.thumbFill {
+  position: absolute;
+  inset: 0;
+}
+
 // 이미지 대신 쓰는 자리 표시 영역
 .thumb {
   @include flex-center;

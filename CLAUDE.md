@@ -26,11 +26,12 @@
   - 컴포넌트 문서화: Storybook (Step 3-3 예정)
 - 구조
   - `src/app/` — 파일 기반 라우팅. `layout.tsx`(공통 틀·Header), `page.tsx`("/"), `products/[id]/page.tsx`(상세), `not-found.tsx`(404), `error.tsx`(실행 에러), `global-error.tsx`(레이아웃 에러), `globals.css`
-  - `src/components/ui/` — 기능과 무관한 기본 부품. Button(`Button`=`<button>` / `ButtonLink`=`<a>`, `variant`·`size`)
-  - `src/components/` — Header(서버 컴포넌트), ThemeToggle(`'use client'`), ProductCatalog(목록 화면·상태, `'use client'`), StatusView(404·에러 공통 화면), BackButton(이전 페이지로), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
+  - `src/components/ui/` — 기능과 무관한 기본 부품. Button(`Button`=`<button>` / `ButtonLink`=`<a>`, `variant`·`size`), Skeleton(스켈레톤 조각)
+  - `src/components/` — Header(서버 컴포넌트), ThemeToggle(`'use client'`), ProductCatalog(목록 화면·상태, `'use client'`), StatusView(404·에러 공통 화면), BackButton(이전 페이지로), CardSkeleton·CatalogSkeleton(로딩 스켈레톤, `page.tsx`의 Suspense fallback), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
   - `src/lib/` — format, filterProducts, sortProducts (순수 함수), site(`SITE_NAME`, `formatTitle`) / `src/data/products.ts` (목 데이터) / `src/types/` (공통 타입)
   - import는 `@/` 별칭(= `src/`) 사용
 - 원칙: `page.tsx`·`layout.tsx`는 서버 컴포넌트로 두고, 상태·이벤트가 필요한 부분만 작은 `'use client'` 컴포넌트로 뺀다.
+- 원칙: 스켈레톤은 실제 컴포넌트의 SCSS 클래스를 그대로 써서 크기를 맞춘다(치수를 따로 적지 않음). 바꾼 뒤에는 실제 화면과 영역 크기를 비교해 확인한다.
 - 원칙: 버튼 모양이 필요하면 직접 클래스를 쓰지 말고 `ui/Button`을 쓴다. 페이지 이동은 `ButtonLink`, 화면 안 동작은 `Button`.
 - 원칙: 404·에러처럼 모양이 같은 안내 화면은 `StatusView`를 재사용하고, 각 파일은 문구와 버튼만 정한다. 공통 틀에는 문구를 넣지 않는다.
 - 원칙: 같은 값이 한 파일 안에서 반복되면 그 파일의 상수로, 여러 파일에서 쓰이면 공통 파일(`lib/`, 나중에 `constants/`)로 모은다.
@@ -82,4 +83,5 @@
   - 3-1 보강: 페이지별 metadata — 레이아웃 title template·description·Open Graph, not-found·상세(`generateMetadata`)·error 제목.
   - Step 3-2 완료: Tailwind → SCSS Module. 디자인 토큰·mixin·CSS 변수 테마, 다크 모드 localStorage 유지 + 깜빡임 방지, Header 서버 컴포넌트화(ThemeToggle 분리), Pretendard, 검색창 aria-label.
   - 3-2 보강(2026-09-30): 새로고침 때 움찔(FOUT) 원인 측정 → 크기 보정 대체 폰트로 CLS 0.00066 → 0.00003.
+  - 3-2 보강: 스켈레톤 UI(`ui/Skeleton`, CardSkeleton, CatalogSkeleton) + `page.tsx` Suspense. 실제 화면과 크기 일치 검증(1280·390px), `<select>` 높이 명시.
   - 다음은 3-3 Storybook.

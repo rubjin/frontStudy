@@ -1,0 +1,74 @@
+import { Skeleton } from './ui/Skeleton'
+import CardSkeleton from './CardSkeleton'
+import searchStyles from './SearchBar.module.scss'
+import filterStyles from './CategoryFilter.module.scss'
+import catalogStyles from './ProductCatalog.module.scss'
+import gridStyles from './CardGrid.module.scss'
+
+// 상품 목록 화면 전체의 스켈레톤 (Step 3-2 보강)
+//
+// 어디에 쓰나? → app/page.tsx의 <Suspense fallback={<CatalogSkeleton />}>
+// - Step 4: 검색·필터를 URL(useSearchParams)로 옮기면 Next.js가 ProductCatalog를 Suspense로 감싸라고 요구한다.
+//   (정적 페이지에서 useSearchParams를 Suspense 없이 쓰면 빌드가 실패한다)
+//   그때 URL을 읽기 전까지 이 스켈레톤이 보인다.
+// - Step 6: 상품 데이터를 API로 받아오면 응답을 기다리는 동안 이 스켈레톤이 보인다.
+// ※ 지금(Step 3)은 데이터가 파일에 있어서 기다릴 일이 없으므로 실제로는 거의 보이지 않는다.
+//
+// 크기 맞추기: 각 영역의 실제 SCSS 클래스(.wrap, .toolbar, .grid ...)를 그대로 가져와서
+// 여백·배치·반응형 열 개수가 진짜 화면과 똑같이 나오게 했다.
+// 다른 컴포넌트의 .module.scss도 import해서 쓸 수 있다. (이름이 겹치지 않도록 xxxStyles로 받는다)
+//
+// 접근성
+// - role="status": 스크린리더가 이 안의 글자를 '상태 알림'으로 읽어 준다. (aria-live="polite"와 같은 효과)
+// - 회색 조각들은 읽을 내용이 없으니 aria-hidden, 대신 sr-only 문장 하나로 "불러오는 중"을 알린다.
+
+// 보여 줄 카드 개수: 넓은 화면(4열)에서 두 줄을 채우는 정도
+const CARD_COUNT = 8
+// 카테고리 칩 개수와 폭 (실제 칩처럼 폭을 조금씩 다르게 해서 자연스럽게)
+const CHIP_WIDTHS = ['3.5rem', '4rem', '4.5rem', '4.5rem', '5rem', '4.5rem', '4.5rem']
+
+// 칩·선택 상자 높이 = 위아래 여백(space(1.5) × 2) + 줄 높이(1.25rem) + 테두리(1px × 2)
+// (선택 상자는 브라우저가 line-height를 무시하므로 SortSelect.module.scss에서 같은 높이를 직접 지정해 두었다)
+const CONTROL_HEIGHT = 'calc(2rem + 2px)'
+// 검색창 높이 = 위아래 여백(space(3) × 2) + 줄 높이(1.5rem) + 테두리(1px × 2)
+const SEARCH_HEIGHT = 'calc(3rem + 2px)'
+
+function CatalogSkeleton() {
+  return (
+    <div role="status">
+      <span className="sr-only">상품 목록을 불러오는 중입니다.</span>
+
+      <div aria-hidden="true">
+        <div className={searchStyles.wrap}>
+          <Skeleton block height={SEARCH_HEIGHT} radius="lg" />
+        </div>
+
+        <div className={catalogStyles.toolbar}>
+          <div className={filterStyles.group}>
+            {CHIP_WIDTHS.map((width, index) => (
+              // 순서가 절대 바뀌지 않는 고정 목록이라 index를 key로 써도 안전하다
+              <Skeleton key={index} width={width} height={CONTROL_HEIGHT} radius="full" />
+            ))}
+          </div>
+          <div className={catalogStyles.options}>
+            <Skeleton width="7.5rem" height="1.25rem" />
+            <Skeleton width="7rem" height={CONTROL_HEIGHT} />
+          </div>
+        </div>
+
+        <p className={gridStyles.count}>
+          <Skeleton width="6rem" />
+        </p>
+
+        <div className={gridStyles.grid}>
+          {/* Array.from({ length: 8 }): 길이 8짜리 빈 배열을 만들어 map으로 카드 8개를 그린다 */}
+          {Array.from({ length: CARD_COUNT }, (_, index) => (
+            <CardSkeleton key={index} />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default CatalogSkeleton

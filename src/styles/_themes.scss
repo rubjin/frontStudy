@@ -49,6 +49,10 @@
   --color-overlay: rgb(17 24 39 / 0.6); // 품절 오버레이
   --color-status-code: #{palette($primary, 200)}; // 404·500 큰 숫자
 
+  // 스켈레톤(로딩 중 자리 표시) — 기본 면 색 + 반짝이는 빛 색 (Step 3-2 보강)
+  --color-skeleton: #{palette($gray, 200)};
+  --color-skeleton-highlight: #{palette($gray, 100)};
+
   // color-scheme: 스크롤바, 체크박스, select 같은 '브라우저 기본 부품'도 테마에 맞춰 그리게 한다
   color-scheme: light;
 }
@@ -78,6 +82,9 @@
   --color-thumb-text: #{palette($primary, 400)};
 
   --color-status-code: #{palette($gray, 700)};
+
+  --color-skeleton: #{palette($gray, 800)};
+  --color-skeleton-highlight: #{palette($gray, 700)};
 
   color-scheme: dark;
 }

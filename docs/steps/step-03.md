@@ -387,6 +387,11 @@ clsx(styles.button, styles[variant], styles[size], className)
 | `src/app/global-error.tsx` | `globals.scss`와 `layout.module.scss`를 직접 import |
 | `src/components/*.module.scss` (새 파일 11개) | Button, Header, ThemeToggle, Card, CardGrid, CategoryFilter, SearchBar, SoldOutToggle, SortSelect, ProductCatalog, StatusView |
 | `src/app/layout.module.scss`, `src/app/products/[id]/page.module.scss` (새 파일) | 페이지 전용 스타일은 page.tsx 옆에 둔다 |
+| `src/components/ui/Skeleton.tsx` (새 파일, 3-2 보강) | 스켈레톤 조각. `width`·`height`·`block`·`radius`. 반짝임 애니메이션, 모션 줄이기 대응 |
+| `src/components/CardSkeleton.tsx` (새 파일) | 카드 스켈레톤. **Card.module.scss 클래스를 그대로 써서** 크기가 같음 |
+| `src/components/CatalogSkeleton.tsx` (새 파일) | 목록 화면 전체 스켈레톤(검색창·툴바·개수·카드 8개). `role="status"` |
+| `src/app/page.tsx` | `<Suspense fallback={<CatalogSkeleton />}>`로 ProductCatalog를 감쌈 |
+| `src/components/SortSelect.module.scss` | `<select>` 높이 명시 (브라우저가 line-height를 무시해서 스켈레톤과 2px 어긋났음) |
 | `src/components/SearchBar.tsx` | `aria-label="상품 검색"` 추가 (placeholder만 있고 이름이 없던 접근성 문제) |
 | `src/components/CategoryFilter.tsx` | 선택 모양을 클래스 대신 `[aria-pressed='true']` 선택자로 |
 
@@ -522,7 +527,33 @@ font-family: 'Pretendard Variable', Pretendard, 'Pretendard Fallback', ...;
 - ⚠️ 맑은 고딕이 있는 **Windows에서만** 효과가 있다. macOS는 local()이 실패하고 Apple SD Gothic Neo로 넘어간다. (맥에서 같은 방법으로 재서 추가하면 된다)
 - 측정 중 알게 된 것: React 19는 하이드레이션할 때 `<html>`에 끼어든 낯선 태그를 정리한다. 테스트용으로 넣은 `<style>`이 지워져서 `adoptedStyleSheets`로 바꿔 측정했다.
 
-**11. 접근성 보강 (전환하면서 함께 고친 것)**
+**11. 스켈레톤 UI — 로딩 중에 최종 화면과 같은 모양 보여 주기**
+```tsx
+// app/page.tsx
+<Suspense fallback={<CatalogSkeleton />}>
+  <ProductCatalog />
+</Suspense>
+```
+- **`<Suspense>`**: 안쪽 컴포넌트가 '아직 준비 안 됨'을 알리면(suspend) 준비될 때까지 `fallback`을 보여 준다.
+- **지금은 거의 안 보인다**: 데이터가 파일에 있어서 기다릴 일이 없다. 미리 자리를 만들어 둔 것이다.
+  - Step 4: 정적 페이지에서 `useSearchParams`를 쓰면 Next.js가 Suspense로 감싸라고 요구한다. (없으면 **빌드 실패**, 설치 버전 문서로 확인)
+  - Step 6: API 응답을 기다리는 동안 보인다.
+- **핵심은 크기를 똑같이 맞추는 것**: 다르면 진짜 화면으로 바뀔 때 레이아웃이 움직인다. (폰트 교체 문제와 같은 원리)
+  - 치수를 따로 적지 않고 **실제 컴포넌트의 SCSS 클래스를 그대로** 쓴다. (`CardSkeleton` → `Card.module.scss`의 `.card`, `.thumb`, `.name`...)
+  - 글자 자리는 원래 글자 태그 안에 `<Skeleton />`(높이 0.8em)을 넣어서 **줄 높이가 그대로** 유지된다.
+  - 다른 컴포넌트의 `.module.scss`도 import해서 쓸 수 있다. (`searchStyles`, `gridStyles`처럼 이름을 나눠 받기)
+- **검증**: 실제 목록 화면과 스켈레톤의 영역 위치·크기를 헤드리스 Chrome으로 재서 비교했다.
+  | 너비 | 검색창 | 툴바 | 개수 | 카드 1·5번 | 썸네일 | 상품명 |
+  | --- | --- | --- | --- | --- | --- | --- |
+  | 1280px | 같음 | 같음 | 같음 | 같음 | 같음 | 같음 |
+  | 390px | 같음 | 같음 (처음엔 2px 차이) | 같음 | 같음 | 같음 | 같음 |
+
+  모바일 툴바가 처음에 2px 달랐다. **`<select>`는 브라우저가 line-height를 무시**해서 계산(34px)과 달리 32px로 그려졌기 때문이다. 스켈레톤을 줄이지 않고 **실제 select에 높이를 명시**해서 해결했다. (브라우저마다 다른 select 높이도 통일되고, 옆 칩과 높이도 맞는다)
+- **접근성**: 회색 조각은 `aria-hidden`, 전체는 `role="status"` + sr-only 문장 "상품 목록을 불러오는 중입니다." 하나로 알린다. 조각마다 "로딩 중"을 읽으면 스크린리더 사용자는 수십 번 같은 말을 듣게 된다.
+- **모션 줄이기**: `prefers-reduced-motion: reduce`면 반짝이는 애니메이션 없이 회색 면만 보여 준다.
+- 스켈레톤이 '로딩 중'이라는 뜻이 되려면 **내용이 아니라 모양만** 흉내 낸다. 그래서 `<article>`·`<h3>`·`<a>` 대신 `<div>`·`<p>`를 쓴다. (아직 없는 제목·링크가 읽히면 안 된다)
+
+**12. 접근성 보강 (전환하면서 함께 고친 것)**
 - 검색창에 `aria-label="상품 검색"`: placeholder는 입력하면 사라지고 이름으로 읽히지 않을 수 있다.
 - 카테고리 칩에 `:focus-visible` 테두리 추가 (Tailwind 때는 브라우저 기본 표시였다).
 - 카드 떠오르기 효과는 `prefers-reduced-motion: reduce`(모션 줄이기 설정) 사용자에게는 끈다.
@@ -537,6 +568,7 @@ font-family: 'Pretendard Variable', Pretendard, 'Pretendard Fallback', ...;
 5-1. 개발자 도구 Network 탭에서 **Disable cache**를 켜고 새로고침 → 칩·정렬 옵션이 움찔하지 않는지. `_fonts.scss`의 `'Pretendard Fallback'`을 폰트 스택에서 잠깐 빼면 움찔하는 것과 비교해 보기
 6. `layout.tsx`에서 `suppressHydrationWarning`을 잠깐 지우고, 다크 모드로 새로고침 → 콘솔에 하이드레이션 경고가 뜨는지 확인 후 되돌리기
 7. 스크린리더(Windows 내레이터: Ctrl+Win+Enter) 또는 개발자 도구 Accessibility 탭에서 다크 모드 버튼 이름이 테마에 따라 "다크 모드로 전환" / "라이트 모드로 전환"으로 바뀌는지
+7-1. 스켈레톤 보기: 지금은 대기 시간이 없어 안 보인다. React DevTools의 Suspense 토글(컴포넌트 탭에서 Suspense 선택 → 시계 아이콘)로 강제로 켜 보거나, 3-3 Storybook에서 확인한다
 8. `_tokens.scss`에서 `$radius-xl`을 `0`으로 바꿔 보기 → 모든 카드 모서리가 한 번에 바뀌는지 (확인 후 되돌리기)
 9. `npm run build`, `npm run lint`, `npx tsc --noEmit`이 에러 없이 끝나는지
 
