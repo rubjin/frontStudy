@@ -30,10 +30,10 @@
     - 스토리는 컴포넌트 옆 `*.stories.tsx`. 제어 컴포넌트는 `useArgs`로 조작 가능하게. 새 컴포넌트를 만들면 스토리도 만든다
     - 확인: 빌드 후 정적 서버 + 헤드리스 Chrome으로 모든 스토리 렌더링 + axe 검사(라이트/다크). 첫 로딩이 느리니 고정 대기 대신 렌더 완료를 기다릴 것
 - 구조
-  - `src/app/` — 파일 기반 라우팅. `layout.tsx`(공통 틀·Header), `page.tsx`("/"), `products/[id]/page.tsx`(상세), `not-found.tsx`(404), `error.tsx`(실행 에러), `global-error.tsx`(레이아웃 에러), `dev/skeleton/`(개발용 스켈레톤 미리보기, production에서 404)
+  - `src/app/` — 파일 기반 라우팅. `layout.tsx`(공통 틀·Header), `page.tsx`("/"), `products/[id]/page.tsx`(상세: `generateStaticParams` + `dynamicParams = false` + `generateMetadata`, 화면은 ProductDetail), `not-found.tsx`(404), `error.tsx`(실행 에러), `global-error.tsx`(레이아웃 에러), `dev/skeleton/`(개발용 스켈레톤 미리보기, production에서 404)
   - `src/components/ui/` — 기능과 무관한 기본 부품. Button(`Button`=`<button>` / `ButtonLink`=`<a>`, `variant`·`size`), Skeleton(스켈레톤 조각)
-  - `src/components/` — Header(서버 컴포넌트), ThemeToggle(`'use client'`), ProductCatalog(목록 화면·상태, `'use client'`), StatusView(404·에러 공통 화면), BackButton(이전 페이지로), CardSkeleton·CatalogSkeleton(로딩 스켈레톤, `page.tsx`의 Suspense fallback), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
-  - `src/lib/` — format, filterProducts, sortProducts (순수 함수), site(`SITE_NAME`, `formatTitle`) / `src/data/products.ts` (목 데이터) / `src/types/` (공통 타입)
+  - `src/components/` — Header(서버 컴포넌트), ThemeToggle(`'use client'`), ProductCatalog(목록 화면·상태, `'use client'`), StatusView(404·에러 공통 화면), BackButton(이전 페이지로), ProductDetail(상세 화면, 서버 컴포넌트), CardSkeleton·CatalogSkeleton(로딩 스켈레톤, `page.tsx`의 Suspense fallback), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
+  - `src/lib/` — products(`getProduct`·`getProductIds`, 데이터 접근은 여기로. Step 6에서 API로 교체), format, filterProducts, sortProducts (순수 함수), site(`SITE_NAME`, `formatTitle`) / `src/data/products.ts` (목 데이터) / `src/types/` (공통 타입)
   - import는 `@/` 별칭(= `src/`) 사용
 - 원칙: `page.tsx`·`layout.tsx`는 서버 컴포넌트로 두고, 상태·이벤트가 필요한 부분만 작은 `'use client'` 컴포넌트로 뺀다.
 - 원칙: 스켈레톤은 실제 컴포넌트의 SCSS 클래스를 그대로 써서 크기를 맞춘다(치수를 따로 적지 않음). 바꾼 뒤에는 실제 화면과 영역 크기를 비교해 확인한다.
@@ -42,6 +42,7 @@
 - 원칙: 같은 값이 한 파일 안에서 반복되면 그 파일의 상수로, 여러 파일에서 쓰이면 공통 파일(`lib/`, 나중에 `constants/`)로 모은다.
 - 원칙: 페이지를 만들면 metadata도 함께 정한다. 레이아웃에 `title.template: '%s | Shoppr'`가 있으므로 페이지는 `title`만 적는다. 고정 제목은 `metadata` 객체, 주소에 따라 다르면 `generateMetadata`, `'use client'` 파일은 `<title>` 태그.
 - Next.js 16 주의: `error.tsx`의 복구 함수는 `retry`(예전 `reset`). API가 헷갈리면 `node_modules/next/dist/docs/`의 설치 버전 문서를 확인한다.
+- Next.js 16.3.6 버그: page 안에서 `notFound()`를 부르면 404 화면이 서버 HTML에 안 들어간다(빈 `<html id="__next_error__">` → lang 없음·다크 모드 풀림). [#99287](https://github.com/vercel/next.js/issues/99287). 동적 라우트는 `dynamicParams = false`로 우회. 404 검증은 상태 코드뿐 아니라 HTML(`<html lang="ko">`)과 다크 모드까지 확인. Next를 올리면 다시 확인할 것
 - 스텝별 설명: `docs/steps/`
 - 실행: `npm run dev` / 빌드: `npm run build` / 린트: `npm run lint` / 타입 검사: `npx tsc --noEmit` / 포맷: `npm run format`(고치기)·`npm run format:check`(검사)
 - 코드 모양: **Prettier**(`prettier.config.mjs`: 세미콜론 없음, 작은따옴표, `printWidth` 120). 코드를 쓰거나 고친 뒤 `npm run format` 실행. `*.md`와 `package-lock.json`은 제외(`.prettierignore`). 표처럼 줄 맞춘 부분만 윗줄에 단독 `// prettier-ignore`. ESLint는 `eslint-config-prettier`로 모양 규칙을 끔(배열 마지막)
@@ -102,4 +103,7 @@
   - 3-4b 완료: Prettier + eslint-config-prettier, `format`/`format:check` 스크립트, VS Code 추천 확장. 설정 커밋과 정리 결과 커밋을 분리.
   - 3-4c 완료: Stylelint(standard-scss + CSS Module용 조정 + 프로젝트 규칙: 색 직접 입력·rem 직접 입력·글자 px 금지). 도구가 찾은 `Card`의 `#fff` → `--color-on-overlay`, sr-only `clip` → `clip-path`.
   - 3-4d 완료: husky + lint-staged. 커밋할 때 stage한 파일만 ESLint·Stylelint(--fix) → Prettier, ts 변경 시 tsc 전체.
-  - 다음은 Step 3 마무리 확인 후 Step 4 라우팅 심화.
+- 2026-10-01: Step 4 시작
+  - 4-1 완료: 상품 상세(`lib/products.ts`, ProductDetail + 스토리 7개, `generateMetadata`, SSG 12개). 없는 상품 404에서 Next.js 버그 발견 → `dynamicParams = false`로 우회, 상품 전용 not-found는 보류.
+  - 4-1에서 발견(나중에): 홈 화면 axe `heading-order`(h1 다음 바로 h3) → 4-2에서 정리. `/dev/skeleton`도 같은 notFound 버그.
+  - 다음은 4-2 검색·필터·정렬을 URL 쿼리로.

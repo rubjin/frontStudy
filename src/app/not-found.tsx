@@ -11,7 +11,7 @@ import { ButtonLink } from '@/components/ui/Button'
 // (SPA에서는 없는 주소도 200 OK로 응답하는 문제가 있었다)
 //
 // 화면 모양은 StatusView가 맡고, 이 파일은 404에 맞는 문구와 버튼만 정한다.
-// 나중에 Step 4에서 없는 상품 id(/products/999)용 not-found.tsx를 따로 만들 때도 StatusView를 재사용한다.
+// 없는 상품 id(/products/999)도 이 화면이 맡는다. (Step 4-1: 상품 전용 404는 Next.js 버그 때문에 보류 — products/[id]/page.tsx 참고)
 //
 // metadata: 레이아웃의 title.template('%s | Shoppr')에 들어가서 '페이지를 찾을 수 없습니다 | Shoppr'가 된다.
 // 404 응답에는 Next.js가 <meta name="robots" content="noindex">를 자동으로 넣어 준다.

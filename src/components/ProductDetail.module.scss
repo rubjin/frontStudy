@@ -1,0 +1,142 @@
+@use 'styles' as *;
+
+// 상품 상세 화면 스타일 (Step 4-1)
+
+// ─── 이동 경로(breadcrumb) ───────────────────────────────
+.breadcrumb {
+  margin-bottom: space(6);
+  @include text(sm);
+  color: var(--color-text-muted);
+
+  ol {
+    display: flex;
+    flex-wrap: wrap; // 상품명이 길면 다음 줄로
+    gap: space(2);
+  }
+
+  // 두 번째 항목부터 앞에 구분 기호
+  // content: '/' / '' → 슬래시 뒤의 '' 는 '대체 텍스트'. 스크린리더가 '/'를 읽지 않게 빈 값으로 둔다
+  li + li::before {
+    content: '/' / '';
+    margin-right: space(2);
+    color: var(--color-border-strong);
+  }
+
+  a {
+    border-radius: $radius-md;
+    color: inherit;
+
+    &:hover {
+      color: var(--color-text);
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+  }
+
+  // 지금 페이지(마지막 항목)는 진하게
+  [aria-current='page'] {
+    color: var(--color-text);
+  }
+}
+
+// ─── 사진 | 정보 두 칸 배치 ─────────────────────────────
+.layout {
+  display: grid;
+  gap: space(8);
+
+  // 768px 이상에서 두 칸으로. 1fr 1fr = 남는 폭을 반씩
+  @include mq(md) {
+    grid-template-columns: 1fr 1fr;
+    gap: space(12);
+    align-items: start; // 정보 칸이 사진 높이만큼 늘어나지 않게
+  }
+}
+
+// 사진 틀: 원본 비율이 제각각이라, 세로로 긴 사진은 높이를 제한하고 남는 좌우는 이 배경이 보인다
+.media {
+  @include flex-center;
+  overflow: hidden;
+  border-radius: $radius-xl;
+  background: linear-gradient(to bottom right, var(--color-thumb-from), var(--color-thumb-to));
+}
+
+// 원본 비율 유지 (width·height 속성으로 브라우저가 비율을 알고 있다)
+// - width: 100% + height: auto → 칸 너비에 맞춰 비율대로 높이가 정해진다
+// - max-height: 세로로 아주 긴 사진(500×1000)이 화면을 넘지 않게 제한
+// - object-fit: contain → 높이가 제한돼도 사진을 자르거나 찌그러뜨리지 않고 안에 맞춘다
+//   (목록 카드는 cover로 잘라서 틀을 채웠다. 상세에서는 사진 전체를 보여 주는 게 목적)
+.image {
+  width: 100%;
+  height: auto;
+  max-height: to-rem(560);
+  object-fit: contain;
+}
+
+// 이미지 없는 상품: 정사각형 자리에 첫 글자
+.initial {
+  @include flex-center;
+  @include text(6xl);
+  width: 100%;
+  aspect-ratio: 1;
+  font-weight: $font-weight-bold;
+  color: var(--color-thumb-text);
+  opacity: 0.5;
+}
+
+// ─── 상품 정보 ──────────────────────────────────────────
+.category {
+  @include text(sm);
+  font-weight: $font-weight-medium;
+  color: var(--color-text-muted);
+}
+
+.name {
+  margin-top: space(2);
+  @include text(2xl);
+  font-weight: $font-weight-bold;
+
+  @include mq(lg) {
+    @include text(4xl);
+  }
+}
+
+.rating {
+  margin-top: space(3);
+  @include text(sm);
+  color: var(--color-text-muted);
+}
+
+.price {
+  margin-top: space(6);
+  @include text(2xl);
+  font-weight: $font-weight-bold;
+  color: var(--color-primary-text);
+}
+
+// 재고 상태: data-status 값에 따라 색만 바꾼다
+.stock {
+  margin-top: space(2);
+  @include text(sm);
+  font-weight: $font-weight-medium;
+  color: var(--color-text-secondary);
+
+  &[data-status='low'] {
+    color: var(--color-primary-text);
+  }
+
+  &[data-status='soldOut'] {
+    color: var(--color-text-muted);
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: space(3);
+  margin-top: space(8);
+  padding-top: space(8);
+  border-top: 1px solid var(--color-border);
+}
