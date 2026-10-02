@@ -13,7 +13,7 @@ import styles from './Card.module.scss'
 //   조각은 줄 높이보다 낮게 그려지므로, 줄 높이 = 원래 글자 줄 높이가 그대로 유지된다.
 //
 // 카드와 다른 점
-// - <article>, <h3>, <a> 대신 <div>, <p>를 쓴다. 아직 내용이 없는데 '제목'이나 '링크'로 읽히면 안 되기 때문이다.
+// - <article>, <h2>, <a> 대신 <div>, <p>를 쓴다. 아직 내용이 없는데 '제목'이나 '링크'로 읽히면 안 되기 때문이다.
 // - .isSkeleton으로 hover 떠오르기 효과를 끈다.
 function CardSkeleton() {
   return (

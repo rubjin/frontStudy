@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { ButtonLink } from '@/components/ui/Button'
+import { toCatalogSearch } from '@/lib/catalogParams'
 import { formatPrice } from '@/lib/format'
 import type { Product } from '@/types/product'
 import styles from './ProductDetail.module.scss'
@@ -51,8 +52,11 @@ function ProductDetail({ product }: ProductDetailProps) {
           <li>
             <Link href="/">전체 상품</Link>
           </li>
-          {/* 카테고리 링크(/?category=오디오)는 4-2에서 필터를 주소로 옮긴 뒤 연결한다 */}
-          <li>{category}</li>
+          <li>
+            {/* 카테고리 링크 (Step 4-2) — 필터가 주소에 담기게 되어서, 링크만으로 '오디오만 고른 목록'을 열 수 있다.
+                toCatalogSearch({ category }) → '?category=%EC%98%A4%EB%94%94%EC%98%A4' (한글은 자동 인코딩) */}
+            <Link href={`/${toCatalogSearch({ category })}`}>{category}</Link>
+          </li>
           <li aria-current="page">{name}</li>
         </ol>
       </nav>

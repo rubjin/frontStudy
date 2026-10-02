@@ -84,12 +84,15 @@ function Card({ product, eager = false }: CardProps) {
       </div>
 
       <p className={styles.category}>{category}</p>
-      <h3 className={styles.name}>
+      {/* 상품명은 h2 (Step 4-2에서 h3 → h2)
+          홈은 h1(상품 목록) 다음에 바로 카드가 온다. h3이면 h2를 건너뛰어 제목 단계가 어긋난다(axe heading-order).
+          스크린리더 사용자는 제목 단계로 페이지 구조를 파악하므로 단계를 건너뛰지 않는다. 모양은 클래스가 정해서 그대로다 */}
+      <h2 className={styles.name}>
         {/* .link: ::after를 카드 크기만큼 늘려 카드 전체를 클릭 영역으로 (늘린 링크) */}
         <Link href={`/products/${product.id}`} className={styles.link}>
           {name}
         </Link>
-      </h3>
+      </h2>
 
       <div className={styles.meta}>
         <p className={styles.price}>

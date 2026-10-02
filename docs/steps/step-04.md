@@ -1,6 +1,6 @@
 # Step 4. 라우팅 심화 — 상품 상세 · URL 상태 · 로딩/에러
 
-> 상태: 진행 중 (4-1 완료)
+> 상태: 진행 중 (4-1, 4-2 완료)
 
 ## 목표
 Step 3에서 Next.js로 옮기면서 상세 페이지는 "주소의 id를 보여 주는 뼈대"만 만들었다.
@@ -11,7 +11,7 @@ Step 4에서는 **주소(URL)를 제대로 다루는 법**을 익힌다.
 
 ## 세부 단계
 - [x] **4-1** 상품 상세 완성: 데이터 함수, `notFound()`, `generateMetadata`, `generateStaticParams`, 상세 화면 컴포넌트
-- [ ] **4-2** 검색·카테고리·정렬·품절 숨기기를 `searchParams`(URL 쿼리)로
+- [x] **4-2** 검색·카테고리·정렬·품절 숨기기를 `searchParams`(URL 쿼리)로
 - [ ] **4-3** `loading.tsx`(구간 로딩 화면)·구간별 `error.tsx`
 
 ---
@@ -126,7 +126,107 @@ export async function generateStaticParams() {
 - Storybook ProductDetail 7개 × 라이트·다크: 렌더링·axe 모두 통과
 
 ### 알려진 한계 · 다음에 할 일
-- **홈 화면 제목 순서**: 검증 중 홈에서 axe `heading-order`(moderate) 발견. h1("상품 목록") 다음이 바로 카드의 h3라 h2를 건너뛴다. 4-2에서 목록 화면을 고칠 때 함께 정리한다.
+- ~~홈 화면 제목 순서: axe `heading-order`(h1 다음 바로 카드의 h3)~~ → 4-2에서 카드 상품명을 h2로 바꿔 해결
 - **`/dev/skeleton`**도 production에서 같은 `notFound()` 버그로 빈 껍데기를 보낸다. 개발용 페이지라 영향은 작지만 기록해 둔다.
-- 이동 경로의 카테고리는 아직 글자만. 4-2에서 필터를 주소로 옮기면 `/?category=오디오` 링크로 연결한다.
+- ~~이동 경로의 카테고리는 글자만~~ → 4-2에서 `/?category=오디오` 링크로 연결
 - 장바구니 담기 버튼은 Step 5.
+
+---
+
+## 4-2. 검색·필터·정렬을 주소(URL 쿼리)로
+
+### 왜 필요한가?
+Step 3까지 검색어·카테고리·정렬·품절 숨기기는 `ProductCatalog`의 `useState`에 있었다.
+- 상품 상세에 갔다가 **뒤로 오면 초기화**된다 (컴포넌트가 새로 만들어지면서 state도 처음 값으로)
+- **새로고침**해도 초기화된다
+- "오디오 중에 가격 낮은순" 화면을 **링크로 공유할 수 없다**
+
+쇼핑몰은 보통 필터를 주소에 담는다. (`/?category=오디오&sort=price-asc`)
+주소가 곧 화면 상태라서, 주소만 있으면 언제든 같은 화면을 다시 만들 수 있다.
+
+### 주소 형식
+| 키 | 값 | 기본값 (주소에 안 적음) |
+|---|---|---|
+| `q` | 검색어 | 없음 |
+| `category` | 카테고리 이름 | 전체 |
+| `sort` | `price-asc` · `price-desc` · `rating` | 기본순 |
+| `instock` | `1` = 품절 상품 숨기기 | 보이기 |
+
+예) `/?q=무선+이어폰` (띄어쓰기는 `+`), `/?category=오디오&sort=price-asc`, 처음 화면은 그냥 `/`
+
+### 파일별 설명
+| 파일 | 역할 |
+|---|---|
+| `src/lib/catalogParams.ts` (새 파일) | `parseCatalogParams`: 주소 → 필터 값 (잘못된 값은 기본값으로) · `toCatalogSearch`: 필터 값 → `?q=...` |
+| `src/components/ProductCatalog.tsx` | `useState` 4개 제거 → `useSearchParams`로 읽고 `window.history`로 쓰기 |
+| `src/app/page.tsx` | `await connection()` 추가 → 요청마다 서버에서 만듦 (빌드 결과 `○ /` → `ƒ /`) |
+| `src/components/Card.tsx` | 상품명 h3 → h2 (홈의 제목 순서 문제 해결) |
+| `src/components/ProductDetail.tsx` | 이동 경로의 카테고리를 `/?category=...` 링크로 |
+| `src/pages/` (빈 폴더) | 삭제. Vite 시절 남은 빈 폴더라 Git에는 없었지만, Next.js가 Pages Router가 섞인 프로젝트로 보고 타입을 바꿨다 (아래 핵심 개념 6) |
+
+### 핵심 개념
+
+**1. 주소가 유일한 원본 (single source of truth)**
+```tsx
+// 전 (Step 3)                              // 후 (Step 4-2)
+const [query, setQuery] = useState('')     const searchParams = useSearchParams()
+const [category, setCategory] = ...        const { query, category, sort, hideSoldOut } =
+const [sort, setSort] = ...                  parseCatalogParams(searchParams, categories)
+const [hideSoldOut, ...] = ...
+```
+- 같은 값을 state와 주소 **두 곳에 두면 어긋나기 쉽다**(뒤로 가기를 하면 주소는 바뀌었는데 state는 그대로…). 그래서 state를 없애고 주소만 본다.
+- 흐름: 입력 → 주소를 바꿈 → `useSearchParams`가 새 값을 줌 → 다시 그려짐
+
+**2. 주소 쓰기: `router.push`가 아니라 `window.history`**
+| | `router.push` / `replace` | `window.history.pushState` / `replaceState` |
+|---|---|---|
+| 하는 일 | 페이지 이동 → 서버에 새 화면(RSC) 요청 | 주소만 바꿈, 서버 요청 없음 |
+| `useSearchParams` | 갱신됨 | Next.js가 감지해서 갱신해 줌 (공식 문서의 방법) |
+| 이번에 맞는 경우 | 서버가 데이터를 다시 만들어야 할 때 | 브라우저에 있는 데이터로 거르기만 할 때 ✔ |
+
+검색어 한 글자마다 서버에 요청할 필요가 없다. 확인 결과 필터를 바꿀 때 서버 요청 **0건**.
+(Step 6에서 API로 바꾸면 "주소가 바뀌면 다시 가져오기"를 붙이고, Step 7에서 검색어 debounce를 다룬다)
+
+**3. push와 replace — "뒤로 가기"의 경험 설계**
+| 동작 | 방식 | 뒤로 가기를 누르면 |
+|---|---|---|
+| 카테고리·정렬·품절 숨기기 | `pushState` (기록에 쌓음) | 직전 선택으로 돌아감 |
+| 검색어 입력 | `replaceState` (기록을 덮어씀) | 검색 전 화면으로 (글자마다 뒤로 가기 X) |
+
+'무', '무선', '무선 이'… 글자마다 기록이 쌓이면 뒤로 가기를 열 번 눌러야 한다.
+
+**4. 주소는 믿지 않는다 — 읽을 때 검사**
+주소는 누구나 고칠 수 있다. `?sort=abc&category=없음` → `sort`는 목록에 없으니 기본순, `category`도 실제 카테고리가 아니니 전체.
+검사 없이 쓰면 칩이 하나도 선택되지 않은 채 빈 화면이 되거나, 정렬 함수가 엉뚱하게 동작할 수 있다.
+
+**5. 첫 HTML에 목록 넣기 — `connection()`**
+- 홈은 원래 빌드할 때 미리 만든 페이지(○)였다. 그런데 미리 만들 때는 **주소의 쿼리를 모른다.**
+- 그 상태에서 `useSearchParams`를 쓰면 Next.js는 목록 부분을 HTML에서 빼고 브라우저에서 그린다 → 처음엔 스켈레톤만 보이고, **HTML에 상품 목록이 없다** (검색엔진·느린 기기에 불리).
+- `await connection()` = "요청이 올 때까지 기다려라(미리 만들지 마라)". 요청마다 서버에서 만들어서 `/?category=오디오`의 HTML에 오디오 상품 3개가 들어간다.
+- 대가: 요청마다 서버가 일한다. 상품 12개를 거르는 정도라 부담은 거의 없다. 상세 페이지는 쿼리가 없어서 그대로 미리 만든다(●).
+
+**6. 띄어쓰기가 사라지는 버그를 미리 막기**
+처음엔 주소에 쓸 때 검색어를 `trim()`했다. 그런데 입력창이 주소 값을 따라가므로, '무선 '을 치는 순간 공백이 지워져 **'무선 이어폰'을 입력할 수 없다.** → 주소에는 그대로 적고, 공백 제거는 거를 때(`filterProducts`)만 한다.
+
+**7. 빈 `src/pages` 폴더와 타입 에러**
+`useSearchParams()` 결과를 넘기는데 "`null`일 수도 있다"는 타입 에러가 났다. 문서에 "pages 폴더가 있으면 null일 수 있다"고 되어 있는데, Vite+react-router 시절의 **빈 `src/pages` 폴더**가 남아 있었다(빈 폴더는 Git에 안 올라가서 몰랐다).
+Next.js는 이 폴더가 있으면 Pages Router가 섞인 프로젝트로 보고 호환용 타입을 붙인다. 폴더를 지우고 다시 빌드하자 해결됐다.
+
+**8. 제목 단계 (heading-order)**
+홈은 h1(상품 목록, sr-only) 다음에 바로 카드가 온다. 카드 상품명이 h3이면 h2를 건너뛴다. 스크린리더 사용자는 제목 단계로 페이지 구조를 파악하므로 → 카드 상품명을 h2로. 크기는 클래스가 정해서 모양은 그대로다(전역 CSS에서 제목 기본 크기를 지웠음).
+
+### 확인 방법
+1. `npm run build` → `ƒ /` (요청마다 생성), `● /products/...` (그대로)
+2. "무선 이어폰"을 입력 → 주소가 `/?q=무선+이어폰`, 띄어쓰기가 사라지지 않는지
+3. 오디오 → 가격 낮은순 → **뒤로 가기** 한 번 → 정렬만 기본순으로 돌아가는지
+4. 카드를 눌러 상세로 갔다가 뒤로 → 필터가 그대로인지
+5. 상세 이동 경로의 카테고리(예: 디스플레이) → 그 카테고리만 고른 목록
+6. `/?sort=abc&category=없음` → 전체·기본순으로 열리는지
+7. 페이지 소스 보기(`Ctrl+U`)로 `/?category=오디오` → HTML에 오디오 상품만 있는지
+
+검증 결과 (production 빌드 + headless Chrome)
+- 서버 HTML: `/`=12개, `?q=무선`=3개, `?category=오디오&sort=price-asc`=3개(스피커가 맨 앞), `?instock=1`=10개, 잘못된 값=12개
+- 브라우저: 빠른 타이핑(10ms 간격)에도 '무선 이어폰' 그대로, 검색은 기록 안 늘어남, 카테고리+정렬은 기록 2개, 뒤로 가기·상세 왕복·이동 경로 링크·새로고침 모두 정상, 필터 변경 시 서버 요청 0건
+  - 요청이 하나 보였는데 `/products/9?_rsc=…`였다. 검색 결과에 나타난 카드의 상세 페이지를 `Link`가 미리 받아 두는 것(prefetch)이라 정상
+- axe 홈 라이트·다크 위반 0 (heading-order 해결), 콘솔 에러 0
+- Storybook Card·ProductDetail·Skeletons 렌더링·axe 통과

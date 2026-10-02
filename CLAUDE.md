@@ -30,10 +30,10 @@
     - 스토리는 컴포넌트 옆 `*.stories.tsx`. 제어 컴포넌트는 `useArgs`로 조작 가능하게. 새 컴포넌트를 만들면 스토리도 만든다
     - 확인: 빌드 후 정적 서버 + 헤드리스 Chrome으로 모든 스토리 렌더링 + axe 검사(라이트/다크). 첫 로딩이 느리니 고정 대기 대신 렌더 완료를 기다릴 것
 - 구조
-  - `src/app/` — 파일 기반 라우팅. `layout.tsx`(공통 틀·Header), `page.tsx`("/"), `products/[id]/page.tsx`(상세: `generateStaticParams` + `dynamicParams = false` + `generateMetadata`, 화면은 ProductDetail), `not-found.tsx`(404), `error.tsx`(실행 에러), `global-error.tsx`(레이아웃 에러), `dev/skeleton/`(개발용 스켈레톤 미리보기, production에서 404)
+  - `src/app/` — 파일 기반 라우팅. `layout.tsx`(공통 틀·Header), `page.tsx`("/", `await connection()`으로 요청마다 생성 — 쿼리별 목록을 HTML에 넣기 위해), `products/[id]/page.tsx`(상세: `generateStaticParams` + `dynamicParams = false` + `generateMetadata`, 화면은 ProductDetail), `not-found.tsx`(404), `error.tsx`(실행 에러), `global-error.tsx`(레이아웃 에러), `dev/skeleton/`(개발용 스켈레톤 미리보기, production에서 404)
   - `src/components/ui/` — 기능과 무관한 기본 부품. Button(`Button`=`<button>` / `ButtonLink`=`<a>`, `variant`·`size`), Skeleton(스켈레톤 조각)
-  - `src/components/` — Header(서버 컴포넌트), ThemeToggle(`'use client'`), ProductCatalog(목록 화면·상태, `'use client'`), StatusView(404·에러 공통 화면), BackButton(이전 페이지로), ProductDetail(상세 화면, 서버 컴포넌트), CardSkeleton·CatalogSkeleton(로딩 스켈레톤, `page.tsx`의 Suspense fallback), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
-  - `src/lib/` — products(`getProduct`·`getProductIds`, 데이터 접근은 여기로. Step 6에서 API로 교체), format, filterProducts, sortProducts (순수 함수), site(`SITE_NAME`, `formatTitle`) / `src/data/products.ts` (목 데이터) / `src/types/` (공통 타입)
+  - `src/components/` — Header(서버 컴포넌트), ThemeToggle(`'use client'`), ProductCatalog(목록 화면, `'use client'`. 필터 상태는 주소 쿼리가 원본: `useSearchParams`로 읽고 `window.history.pushState`(선택)·`replaceState`(검색어)로 씀. useState·router.push 쓰지 않음), StatusView(404·에러 공통 화면), BackButton(이전 페이지로), ProductDetail(상세 화면, 서버 컴포넌트), CardSkeleton·CatalogSkeleton(로딩 스켈레톤, `page.tsx`의 Suspense fallback), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
+  - `src/lib/` — products(`getProduct`·`getProductIds`, 데이터 접근은 여기로. Step 6에서 API로 교체), catalogParams(`parseCatalogParams`·`toCatalogSearch`: 주소 쿼리 q·category·sort·instock ↔ 필터 값, 읽을 때 값 검사), format, filterProducts, sortProducts (순수 함수), site(`SITE_NAME`, `formatTitle`) / `src/data/products.ts` (목 데이터) / `src/types/` (공통 타입)
   - import는 `@/` 별칭(= `src/`) 사용
 - 원칙: `page.tsx`·`layout.tsx`는 서버 컴포넌트로 두고, 상태·이벤트가 필요한 부분만 작은 `'use client'` 컴포넌트로 뺀다.
 - 원칙: 스켈레톤은 실제 컴포넌트의 SCSS 클래스를 그대로 써서 크기를 맞춘다(치수를 따로 적지 않음). 바꾼 뒤에는 실제 화면과 영역 크기를 비교해 확인한다.
@@ -106,4 +106,5 @@
 - 2026-10-01: Step 4 시작
   - 4-1 완료: 상품 상세(`lib/products.ts`, ProductDetail + 스토리 7개, `generateMetadata`, SSG 12개). 없는 상품 404에서 Next.js 버그 발견 → `dynamicParams = false`로 우회, 상품 전용 not-found는 보류.
   - 4-1에서 발견(나중에): 홈 화면 axe `heading-order`(h1 다음 바로 h3) → 4-2에서 정리. `/dev/skeleton`도 같은 notFound 버그.
-  - 다음은 4-2 검색·필터·정렬을 URL 쿼리로.
+  - 4-2 완료: 검색·카테고리·정렬·품절 숨기기를 URL 쿼리로(`lib/catalogParams.ts`). 홈 `ƒ`(connection), 필터 변경 시 서버 요청 0. 카드 상품명 h2(heading-order 해결), 상세 이동 경로 카테고리 링크. 빈 `src/pages` 폴더 삭제(Next가 pages 호환 타입을 붙였음).
+  - 다음은 4-3 `loading.tsx`·구간별 `error.tsx`.
