@@ -30,16 +30,17 @@
     - 스토리는 컴포넌트 옆 `*.stories.tsx`. 제어 컴포넌트는 `useArgs`로 조작 가능하게. 새 컴포넌트를 만들면 스토리도 만든다
     - 확인: 빌드 후 정적 서버 + 헤드리스 Chrome으로 모든 스토리 렌더링 + axe 검사(라이트/다크). 첫 로딩이 느리니 고정 대기 대신 렌더 완료를 기다릴 것
 - 구조
-  - `src/app/` — 파일 기반 라우팅. `layout.tsx`(공통 틀·Header), `(catalog)/page.tsx`("/" — 괄호 폴더는 라우트 그룹이라 주소에 안 나타남. `await connection()`으로 요청마다 생성 — 쿼리별 목록을 HTML에 넣기 위해), `(catalog)/loading.tsx`(홈 이동 시 목록 스켈레톤), `products/[id]/page.tsx`(상세: `generateStaticParams` + `dynamicParams = false` + `generateMetadata`, 화면은 ProductDetail)·`loading.tsx`(상세 스켈레톤), `not-found.tsx`(404), `error.tsx`(실행 에러), `global-error.tsx`(레이아웃 에러), `dev/skeleton/`(개발용 스켈레톤 미리보기, production에서 404)
+  - `src/app/` — 파일 기반 라우팅. `layout.tsx`(공통 틀·Header), `(catalog)/page.tsx`("/" — 괄호 폴더는 라우트 그룹이라 주소에 안 나타남. `await connection()`으로 요청마다 생성 — 쿼리별 목록을 HTML에 넣기 위해), `(catalog)/loading.tsx`(홈 이동 시 목록 스켈레톤), `products/[id]/page.tsx`(상세: `generateStaticParams` + `dynamicParams = false` + `generateMetadata`, 화면은 ProductDetail)·`loading.tsx`(상세 스켈레톤), `not-found.tsx`(404), `error.tsx`(기본 실행 에러)·`(catalog)/error.tsx`·`products/[id]/error.tsx`(구간별 에러: 그 자리에 맞는 문구·버튼), `global-error.tsx`(레이아웃 에러), `dev/skeleton/`(개발용 스켈레톤 미리보기, production에서 404)
   - `src/components/ui/` — 기능과 무관한 기본 부품. Button(`Button`=`<button>` / `ButtonLink`=`<a>`, `variant`·`size`), Skeleton(스켈레톤 조각)
   - `src/components/` — Header(서버 컴포넌트), ThemeToggle(`'use client'`), ProductCatalog(목록 화면, `'use client'`. 필터 상태는 주소 쿼리가 원본: `useSearchParams`로 읽고 `window.history.pushState`(선택)·`replaceState`(검색어)로 씀. useState·router.push 쓰지 않음), StatusView(404·에러 공통 화면), BackButton(이전 페이지로), ProductDetail(상세 화면, 서버 컴포넌트), CardSkeleton·CatalogSkeleton·ProductDetailSkeleton(로딩 스켈레톤, Suspense fallback·`loading.tsx`), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
-  - `src/lib/` — products(`getProduct`·`getProductIds`, 데이터 접근은 여기로. Step 6에서 API로 교체), catalogParams(`parseCatalogParams`·`toCatalogSearch`: 주소 쿼리 q·category·sort·instock ↔ 필터 값, 읽을 때 값 검사), format, filterProducts, sortProducts (순수 함수), site(`SITE_NAME`, `formatTitle`) / `src/data/products.ts` (목 데이터) / `src/types/` (공통 타입)
+  - `src/lib/` — products(`getProduct`·`getProductIds`, 데이터 접근은 여기로. Step 6에서 API로 교체), catalogParams(`parseCatalogParams`·`toCatalogSearch`: 주소 쿼리 q·category·sort·instock ↔ 필터 값, 읽을 때 값 검사), format, filterProducts, sortProducts (순수 함수), site(`SITE_NAME`, `formatTitle`), useReportError(에러 화면 공통 기록 훅) / `src/data/products.ts` (목 데이터) / `src/types/` (공통 타입)
   - import는 `@/` 별칭(= `src/`) 사용
 - 원칙: `page.tsx`·`layout.tsx`는 서버 컴포넌트로 두고, 상태·이벤트가 필요한 부분만 작은 `'use client'` 컴포넌트로 뺀다.
 - 원칙: 스켈레톤은 실제 컴포넌트의 SCSS 클래스를 그대로 써서 크기를 맞춘다(치수를 따로 적지 않음). 바꾼 뒤에는 실제 화면과 영역 크기를 비교해 확인한다.
 - 원칙: `loading.tsx`는 하위 폴더 전체에 적용되므로, 모양이 다른 페이지까지 감싸지 않게 둔다(필요하면 라우트 그룹). 추가한 뒤에는 첫 HTML(`<!--$?-->`, `<div hidden>`)과 새로고침 깜빡임을 확인한다.
 - 원칙: 버튼 모양이 필요하면 직접 클래스를 쓰지 말고 `ui/Button`을 쓴다. 페이지 이동은 `ButtonLink`, 화면 안 동작은 `Button`.
-- 원칙: 404·에러처럼 모양이 같은 안내 화면은 `StatusView`를 재사용하고, 각 파일은 문구와 버튼만 정한다. 공통 틀에는 문구를 넣지 않는다.
+- 원칙: 404·에러처럼 모양이 같은 안내 화면은 `StatusView`를 재사용하고, 각 파일은 문구와 버튼만 정한다. 공통 틀에는 문구를 넣지 않는다. 에러 화면은 `useReportError(error)`로 기록한다.
+- 주의: Next.js 에러 경계는 경로(pathname)가 바뀔 때만 풀린다. 같은 경로(쿼리만 다름)로 빠져나오는 버튼은 링크가 아니라 주소 변경 + `retry()`로 만든다.
 - 원칙: 같은 값이 한 파일 안에서 반복되면 그 파일의 상수로, 여러 파일에서 쓰이면 공통 파일(`lib/`, 나중에 `constants/`)로 모은다.
 - 원칙: 페이지를 만들면 metadata도 함께 정한다. 레이아웃에 `title.template: '%s | Shoppr'`가 있으므로 페이지는 `title`만 적는다. 고정 제목은 `metadata` 객체, 주소에 따라 다르면 `generateMetadata`, `'use client'` 파일은 `<title>` 태그.
 - Next.js 16 주의: `error.tsx`의 복구 함수는 `retry`(예전 `reset`). API가 헷갈리면 `node_modules/next/dist/docs/`의 설치 버전 문서를 확인한다.
@@ -67,7 +68,7 @@
   - [x] 3-2 SCSS Module 전환: 디자인 토큰(`_tokens.scss`), mixin(반응형·포커스), CSS 변수 테마(`data-theme`) + 다크 모드 localStorage 저장·깜빡임 방지, `next/font`. Tailwind 제거
   - [x] 3-3 Storybook: 컴포넌트별 `*.stories.tsx`, Controls/Docs 자동 문서, a11y addon, 다크 모드 전환 툴바
   - [x] 3-4 코드 품질 도구: Prettier, Stylelint(SCSS), husky + lint-staged(커밋 전 자동 검사), `.editorconfig`·`.gitattributes`
-- [ ] **Step 4** 라우팅 심화: 상품 상세 완성(`notFound()`, `generateMetadata`로 페이지별 SEO), 검색·필터·정렬을 `searchParams`(URL 쿼리)로 관리, `loading.tsx`·`error.tsx`
+- [x] **Step 4** 라우팅 심화: 상품 상세 완성(`notFound()`, `generateMetadata`로 페이지별 SEO), 검색·필터·정렬을 `searchParams`(URL 쿼리)로 관리, `loading.tsx`·`error.tsx`
 - [ ] **Step 5** 장바구니: Context + `useReducer`(또는 Zustand), localStorage 저장
 
 ### Phase 2. API 연동
@@ -111,4 +112,5 @@
   - 4-2 완료: 검색·카테고리·정렬·품절 숨기기를 URL 쿼리로(`lib/catalogParams.ts`). 홈 `ƒ`(connection), 필터 변경 시 서버 요청 0. 카드 상품명 h2(heading-order 해결), 상세 이동 경로 카테고리 링크. 빈 `src/pages` 폴더 삭제(Next가 pages 호환 타입을 붙였음).
 - 2026-10-03: 4-3a 완료: `loading.tsx` — 홈(`(catalog)` 라우트 그룹으로 이동, 목록 스켈레톤)·상세(`ProductDetailSkeleton` + 스토리 2개). 처음 `app/loading.tsx`로 두었을 때 상세 첫 HTML에 목록 스켈레톤이 들어가 깜빡임 → 라우트 그룹으로 해결. 홈 첫 로딩 1프레임 스켈레톤은 4-2부터 있던 것(page 안 Suspense)으로 확인, Step 6에서 재검토.
   - 새 PC 작업 폴더에서 CRLF 파일 45개(3-4a 이전 체크아웃) 발견 → 다시 꺼내 LF로.
-  - 다음은 4-3b 구간별 `error.tsx`.
+- 2026-10-04: 4-3b 완료: 구간별 `error.tsx`(홈: 다시 시도·검색 조건 초기화 / 상세: 다시 시도·목록으로), `lib/useReportError.ts`(에러 화면 4개 공통, global-error에도 기록 추가). 임시 에러 코드로 검증 후 되돌림. 같은 경로에서 에러 경계가 안 풀리는 문제 발견 → 초기화 버튼을 pushState + retry로. 서버 에러 때 탭 제목 미반영은 Step 6에서 재검토.
+  - **Step 4 완료.** 다음은 Step 5 장바구니.

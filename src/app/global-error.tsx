@@ -3,6 +3,7 @@
 import StatusView from '@/components/StatusView'
 import { Button } from '@/components/ui/Button'
 import { formatTitle } from '@/lib/site'
+import { useReportError } from '@/lib/useReportError'
 import '@/styles/globals.scss'
 import styles from './layout.module.scss'
 
@@ -25,7 +26,10 @@ interface GlobalErrorProps {
   retry: () => void
 }
 
-export default function GlobalError({ retry }: GlobalErrorProps) {
+export default function GlobalError({ error, retry }: GlobalErrorProps) {
+  // Step 4-3b: 다른 에러 화면과 똑같이 에러를 기록한다 (lib/useReportError.ts)
+  useReportError(error)
+
   return (
     <html lang="ko">
       <body>

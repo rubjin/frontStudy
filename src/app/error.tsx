@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
 import StatusView from '@/components/StatusView'
 import { Button, ButtonLink } from '@/components/ui/Button'
 import { formatTitle } from '@/lib/site'
+import { useReportError } from '@/lib/useReportError'
 
 // 에러 페이지 — 페이지를 그리다가 예상하지 못한 에러가 났을 때 (Step 3-1)
 //
@@ -12,6 +12,10 @@ import { formatTitle } from '@/lib/site'
 // - error.tsx가 있으면 그 자리만 이 화면으로 바꿔 끼우고, 헤더(layout)는 그대로 남는다.
 //   → React의 '에러 경계(Error Boundary)'를 Next.js가 파일 이름 규칙으로 만들어 주는 것이다.
 // - Step 6에서 API를 불러오다 실패하는 경우도 이 화면이 받는다.
+//
+// Step 4-3b: 구간별 에러 화면이 생겼다. 가장 가까운 error.tsx가 쓰인다.
+// - 홈 → (catalog)/error.tsx, 상세 → products/[id]/error.tsx
+// - 이 파일은 그 밖의 페이지(404 화면, /dev/...)와, 앞으로 생길 페이지의 기본 에러 화면이다.
 //
 // 'use client'가 꼭 필요한 이유
 // 에러 경계는 브라우저에서 동작하고, '다시 시도' 버튼에 onClick이 있기 때문이다.
@@ -31,10 +35,9 @@ interface ErrorPageProps {
 }
 
 export default function ErrorPage({ error, retry }: ErrorPageProps) {
-  // 에러를 콘솔에 남긴다. 실무에서는 여기서 Sentry 같은 에러 수집 서비스로 보낸다.
-  useEffect(() => {
-    console.error(error)
-  }, [error])
+  // 에러를 콘솔에 남긴다. 실무에서는 Sentry 같은 에러 수집 서비스로 보낸다.
+  // Step 4-3b: 에러 화면이 여러 개가 되어 공통 훅(lib/useReportError.ts)으로 옮겼다. 보내는 곳을 바꿀 때 그 파일만 고친다.
+  useReportError(error)
 
   return (
     // Fragment(<>): <title>과 StatusView를 함께 돌려주려고 감싼다

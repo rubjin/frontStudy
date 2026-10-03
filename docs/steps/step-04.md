@@ -1,6 +1,6 @@
 # Step 4. 라우팅 심화 — 상품 상세 · URL 상태 · 로딩/에러
 
-> 상태: 진행 중 (4-1, 4-2, 4-3a 완료)
+> 상태: 완료 (4-1, 4-2, 4-3a, 4-3b)
 
 ## 목표
 Step 3에서 Next.js로 옮기면서 상세 페이지는 "주소의 id를 보여 주는 뼈대"만 만들었다.
@@ -12,9 +12,9 @@ Step 4에서는 **주소(URL)를 제대로 다루는 법**을 익힌다.
 ## 세부 단계
 - [x] **4-1** 상품 상세 완성: 데이터 함수, `notFound()`, `generateMetadata`, `generateStaticParams`, 상세 화면 컴포넌트
 - [x] **4-2** 검색·카테고리·정렬·품절 숨기기를 `searchParams`(URL 쿼리)로
-- [ ] **4-3** `loading.tsx`(구간 로딩 화면)·구간별 `error.tsx`
+- [x] **4-3** `loading.tsx`(구간 로딩 화면)·구간별 `error.tsx`
   - [x] 4-3a `loading.tsx` — 홈·상세 로딩 화면, 라우트 그룹 `(catalog)`
-  - [ ] 4-3b 구간별 `error.tsx`
+  - [x] 4-3b 구간별 `error.tsx` — 홈·상세 전용 에러 화면, 에러 기록 공통 훅
 
 ---
 
@@ -321,5 +321,106 @@ Step 6~8에서 상품을 API·DB로 받아오면 기다리는 시간이 생기�
 
 ### 알려진 한계 · 다음에 할 일
 - **홈의 첫 HTML**: 목록이 HTML에 들어 있긴 하지만(검색엔진 OK), 스켈레톤 다음 숨긴 `<div hidden>`에 있다가 스크립트로 바꿔 끼운다. 그래서 첫 로딩 때 스켈레톤이 1프레임 보이고, JS를 끄면 스켈레톤만 남는다. 4-2부터 있던 동작이다. `useSearchParams` 대신 서버에서 `searchParams`를 읽어 넘기면 없앨 수 있는지 Step 6(서버에서 데이터 받기)에서 다시 본다.
-- 4-3b: 구간별 `error.tsx`
+- ~~4-3b: 구간별 `error.tsx`~~ → 아래 4-3b
 - 이 작업 폴더는 3-4a(`.gitattributes`) 전에 받아 둔 것이라 파일 45개가 CRLF로 남아 있었다(`git status`에는 안 보임). 해당 파일을 지우고 저장소에서 다시 꺼내 LF로 맞췄다. 다른 PC도 `git ls-files --eol | grep w/crlf`로 확인할 수 있다.
+
+---
+
+## 4-3b. 구간별 `error.tsx` — 어디서 고장 났는지에 맞는 안내
+
+### 왜 필요한가?
+지금까지는 `app/error.tsx` 하나가 모든 에러를 받았다. 문구는 "문제가 발생했습니다", 버튼은 "다시 시도 / 홈으로 가기".
+- **홈에서** 에러가 나면 "홈으로 가기"는 같은 (고장 난) 페이지로 보낼 뿐이다.
+- **상세에서** 에러가 나면 사용자가 원하는 건 "다른 상품 보러 목록으로"다.
+
+어디서 고장 났는지 알면 그 자리에 맞는 문구와 해결 방법을 줄 수 있다.
+
+### 바뀐 구조
+```
+src/app/
+├ layout.tsx               ← 헤더. 아래 어디서 에러가 나도 그대로 남는다
+├ error.tsx                ← 기본 에러 화면 (404 화면, /dev/... 등 나머지)
+├ global-error.tsx         ← layout.tsx 자체가 고장 났을 때 (전체를 대신함)
+├ (catalog)/
+│  ├ error.tsx             ← 새 파일: "상품 목록을 불러오지 못했습니다" — 다시 시도 / 검색 조건 초기화
+│  ├ loading.tsx
+│  └ page.tsx
+└ products/[id]/
+   ├ error.tsx             ← 새 파일: "상품 정보를 불러오지 못했습니다" — 다시 시도 / 목록으로
+   ├ loading.tsx
+   └ page.tsx
+```
+
+### 파일별 설명
+| 파일 | 역할 |
+|---|---|
+| `src/app/(catalog)/error.tsx` (새 파일) | 홈 에러 화면. '검색 조건 초기화'는 주소의 쿼리를 지우고 `retry()` |
+| `src/app/products/[id]/error.tsx` (새 파일) | 상세 에러 화면. '목록으로'는 `ButtonLink` |
+| `src/lib/useReportError.ts` (새 파일) | 에러 기록 훅. 에러 화면 4개가 같이 쓴다 (지금은 `console.error`, 나중에 Sentry 등) |
+| `src/app/error.tsx` | `useEffect(console.error)` → `useReportError`. 어디에 쓰이는지 주석 추가 |
+| `src/app/global-error.tsx` | 에러를 기록하지 않고 있었음 → `useReportError` 추가 |
+
+### 핵심 개념
+
+**1. 가장 가까운 `error.tsx`가 쓰인다 (`loading.tsx`와 같은 규칙)**
+```tsx
+// (catalog) 구간을 Next.js가 감싸는 순서
+<Layout>                                  {/* layout.tsx — 에러 경계 '바깥'이라 안 사라짐 */}
+  <ErrorBoundary fallback={<Error />}>    {/* error.tsx */}
+    <Suspense fallback={<Loading />}>     {/* loading.tsx */}
+      <Page />                            {/* page.tsx — 여기서 난 에러를 위의 error.tsx가 잡음 */}
+    </Suspense>
+  </ErrorBoundary>
+</Layout>
+```
+- 같은 폴더의 `layout.tsx`에서 난 에러는 그 폴더의 `error.tsx`가 못 잡는다(바깥에 있으니까). 루트 레이아웃 에러는 `global-error.tsx`가 맡는다.
+- 에러 경계 = 에러를 그 구간 안에 '가둬 두는 칸막이'. 헤더 같은 바깥 부분은 계속 동작한다.
+
+**2. `retry()` — 다시 받아서 다시 그리기**
+- 서버에 그 구간을 다시 요청해서 그린다. 일시적인 서버·네트워크 문제라면 복구된다.
+- `reset()`도 있지만 다시 받지 않고 다시 그리기만 한다. 대부분은 `retry()`가 맞다 (Next.js 16 문서).
+
+**3. 에러 경계는 '경로가 바뀔 때'만 풀린다 — 확인하다 발견한 문제**
+- '검색 조건 초기화'를 처음에는 `ButtonLink href="/"`로 만들었다. 눌러 보니 **주소만 `/`로 바뀌고 에러 화면이 그대로** 남았다.
+- Next.js는 경로(pathname)가 바뀌면 에러 상태를 지운다. `/?q=...` → `/`는 경로가 같은 `/`라서 '같은 페이지'로 본다.
+- 해결: 링크 대신 `Button` + 직접 두 단계 → ① `history.pushState`로 쿼리 지우기(ProductCatalog와 같은 방식) ② `retry()`
+- "다른 페이지로 이동"이 아니라 "이 화면 안의 동작"이 되었으므로 `Button`이 원칙에도 맞다.
+
+**4. 에러(500)와 없음(404)은 다르다**
+| | 없음 — `not-found.tsx` | 고장 — `error.tsx` |
+|---|---|---|
+| 예 | `/products/999` | 서버·API가 응답하지 않음, 코드 버그 |
+| 사용자에게 | 주소를 확인하세요 | 잠시 후 다시 시도하세요 |
+| 버튼 | 이전 페이지로 / 홈으로 | 다시 시도 / 목록으로 |
+
+**5. 같은 동작은 훅으로 — `useReportError`**
+에러 화면이 4개가 되자 `useEffect(() => console.error(error), [error])`가 반복됐다. 실무에서는 여기서 Sentry 같은 에러 수집 서비스로 보낸다. 훅으로 모아 두면 그때 이 파일 하나만 고친다.
+- 훅 = `use`로 시작하는 함수. 화면은 그리지 않고 React 기능(useEffect 등)을 묶어서 재사용한다.
+
+### 확인 방법
+지금은 상품 데이터가 파일에 있어서 에러가 날 일이 없다. 확인하려면 **임시로** 에러를 던지는 코드를 넣고, 확인 후 되돌린다.
+```tsx
+// 예) (catalog)/page.tsx의 await connection() 아래 — 첫 요청 한 번만 실패 → '다시 시도'로 복구되는지
+const g = globalThis as unknown as Record<string, number>
+g.n = (g.n ?? 0) + 1
+if (g.n <= 1) throw new Error('테스트 에러')
+
+// 예) ProductCatalog.tsx — 검색어가 __boom이면 브라우저에서 실패 → '검색 조건 초기화'로 빠져나오는지
+if (filters.query === '__boom') throw new Error('테스트 에러')
+```
+- 상세는 빌드 때 미리 만들어서(●) 에러를 넣으면 **빌드가 실패**한다. 확인할 때만 `export const dynamic = 'force-dynamic'`을 같이 넣는다.
+- 개발 서버(`npm run dev`)에서는 에러 화면 위에 Next.js 개발용 에러 창이 같이 뜬다. 실제 사용자 화면은 `npm run build` → `npm run start`로 본다.
+
+검증 결과 (production 빌드 + 임시 에러 코드 + headless Chrome, 확인 후 임시 코드 되돌림)
+- 홈 서버 에러: 목록 전용 에러 화면 + 헤더 유지 → '다시 시도'로 상품 12개 복구
+- 목록 브라우저 에러(`?q=__boom`): 목록 전용 에러 화면 → '검색 조건 초기화'로 주소 `/` + 상품 12개 복구 (링크였을 때는 실패 → 수정)
+- 상세 서버 에러: 상세 전용 에러 화면 → '다시 시도'로 상세 복구
+- `/products/999`는 여전히 404 화면·HTTP 404
+- 에러 화면 axe 위반 0 (라이트·다크)
+- 임시 코드를 되돌린 빌드에서 페이지 제목 정상(페이지마다 `<title>` 하나, 404 제목·상태 코드 정상)
+- `tsc`·ESLint·Stylelint·Prettier 통과
+
+### 알려진 한계
+- **서버 쪽 에러일 때 탭 제목**: 에러 화면의 `<title>`보다 페이지의 metadata 제목이 먼저 있어서, 탭 제목이 에러 문구로 바뀌지 않는다(브라우저 쪽 에러일 때는 바뀜). `app/error.tsx`도 같은 방식이었다. Step 6에서 API 에러를 다룰 때 다시 본다.
+- **같은 경로의 앞으로/뒤로 가기**: 에러 난 `/?q=...`에서 초기화한 뒤 뒤로(에러 조건) → 앞으로(`/`)를 누르면, 경로가 같아서 에러 화면이 남는다. '검색 조건 초기화'나 새로고침으로는 빠져나온다. 홈 에러 중 헤더 로고(`/`) 링크도 같은 이유로 에러를 풀지 못한다.
+- 에러 화면은 새 컴포넌트가 아니라 `StatusView` 조합이라 스토리를 새로 만들지 않았다(`Feedback/StatusView` 스토리가 모양을 보여 줌).
