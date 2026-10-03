@@ -6,6 +6,8 @@ import CatalogSkeleton from '@/components/CatalogSkeleton'
 // 홈 = 상품 목록 페이지 — 주소 "/" (Step 3-1)
 //
 // Next.js에서는 app/page.tsx 파일이 곧 "/" 주소의 페이지다. (파일 기반 라우팅)
+// Step 4-3: app/(catalog)/page.tsx로 옮겼다. 괄호 폴더(라우트 그룹)는 주소에 나타나지 않으므로 주소는 그대로 "/"다.
+//           목록 로딩 화면(loading.tsx)을 홈에만 적용하려고 묶었다. 이유는 같은 폴더의 loading.tsx 주석 참고.
 // 이 파일은 서버 컴포넌트로 두고, 상호작용이 필요한 목록 화면은 ProductCatalog('use client')에 맡긴다.
 //
 // Step 4-2: await connection() — 이 페이지는 요청이 올 때마다 서버에서 만든다 (빌드 결과 ○ → ƒ)
@@ -20,7 +22,8 @@ import CatalogSkeleton from '@/components/CatalogSkeleton'
 // <Suspense fallback={...}> (Step 3-2 보강)
 // - 안쪽 컴포넌트가 '아직 준비되지 않았다'고 알리면, 준비될 때까지 fallback(목록 모양의 스켈레톤)을 보여 준다.
 // - 지금은 서버에서 목록을 바로 만들어서 스켈레톤이 보이지 않는다.
-//   Step 6에서 API로 상품을 받아오는 동안 보이게 된다. (Step 4-3 loading.tsx와도 연결)
+//   Step 6에서 API로 상품을 받아오는 동안 보이게 된다.
+//   (다른 페이지에서 홈으로 '이동'할 때의 로딩 화면은 같은 폴더의 loading.tsx가 맡는다 — Step 4-3)
 // - useSearchParams를 쓰는 컴포넌트는 Suspense 안에 두는 것이 Next.js 권장이다.
 export default async function HomePage() {
   await connection()

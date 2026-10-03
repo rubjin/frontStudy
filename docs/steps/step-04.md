@@ -1,6 +1,6 @@
 # Step 4. 라우팅 심화 — 상품 상세 · URL 상태 · 로딩/에러
 
-> 상태: 진행 중 (4-1, 4-2 완료)
+> 상태: 진행 중 (4-1, 4-2, 4-3a 완료)
 
 ## 목표
 Step 3에서 Next.js로 옮기면서 상세 페이지는 "주소의 id를 보여 주는 뼈대"만 만들었다.
@@ -13,6 +13,8 @@ Step 4에서는 **주소(URL)를 제대로 다루는 법**을 익힌다.
 - [x] **4-1** 상품 상세 완성: 데이터 함수, `notFound()`, `generateMetadata`, `generateStaticParams`, 상세 화면 컴포넌트
 - [x] **4-2** 검색·카테고리·정렬·품절 숨기기를 `searchParams`(URL 쿼리)로
 - [ ] **4-3** `loading.tsx`(구간 로딩 화면)·구간별 `error.tsx`
+  - [x] 4-3a `loading.tsx` — 홈·상세 로딩 화면, 라우트 그룹 `(catalog)`
+  - [ ] 4-3b 구간별 `error.tsx`
 
 ---
 
@@ -159,7 +161,7 @@ Step 3까지 검색어·카테고리·정렬·품절 숨기기는 `ProductCatalo
 |---|---|
 | `src/lib/catalogParams.ts` (새 파일) | `parseCatalogParams`: 주소 → 필터 값 (잘못된 값은 기본값으로) · `toCatalogSearch`: 필터 값 → `?q=...` |
 | `src/components/ProductCatalog.tsx` | `useState` 4개 제거 → `useSearchParams`로 읽고 `window.history`로 쓰기 |
-| `src/app/page.tsx` | `await connection()` 추가 → 요청마다 서버에서 만듦 (빌드 결과 `○ /` → `ƒ /`) |
+| `src/app/page.tsx` (4-3a에서 `app/(catalog)/page.tsx`로 이동) | `await connection()` 추가 → 요청마다 서버에서 만듦 (빌드 결과 `○ /` → `ƒ /`) |
 | `src/components/Card.tsx` | 상품명 h3 → h2 (홈의 제목 순서 문제 해결) |
 | `src/components/ProductDetail.tsx` | 이동 경로의 카테고리를 `/?category=...` 링크로 |
 | `src/pages/` (빈 폴더) | 삭제. Vite 시절 남은 빈 폴더라 Git에는 없었지만, Next.js가 Pages Router가 섞인 프로젝트로 보고 타입을 바꿨다 (아래 핵심 개념 6) |
@@ -230,3 +232,94 @@ Next.js는 이 폴더가 있으면 Pages Router가 섞인 프로젝트로 보고
   - 요청이 하나 보였는데 `/products/9?_rsc=…`였다. 검색 결과에 나타난 카드의 상세 페이지를 `Link`가 미리 받아 두는 것(prefetch)이라 정상
 - axe 홈 라이트·다크 위반 0 (heading-order 해결), 콘솔 에러 0
 - Storybook Card·ProductDetail·Skeletons 렌더링·axe 통과
+
+---
+
+## 4-3a. `loading.tsx` — 페이지를 기다리는 동안의 화면
+
+### 왜 필요한가?
+4-2에서 홈을 요청마다 서버에서 만드는 페이지(`ƒ`)로 바꿨다. 그래서 상세에서 **'목록으로'를 누르면 서버 응답을 기다려야** 한다.
+- 지금까지는 그동안 **아무 반응 없이 상세 화면에 멈춰** 있었다. 눌렸는지 알 수 없어서 또 누르게 된다.
+- `loading.tsx`가 있으면 누르는 **즉시** 목록 스켈레톤이 뜨고, 응답이 오면 실제 목록으로 바뀐다.
+
+> 퍼블리셔 관점: 링크를 눌렀는데 화면이 그대로면 "고장 났나?" 싶다. 버튼 눌림 상태(`:active`)를 주는 것과 같은 이유로, 페이지 이동에도 "눌렸어요" 신호가 필요하다.
+
+### 바뀐 구조
+```
+src/app/
+├ layout.tsx                ← 헤더 (로딩 중에도 그대로, 계속 누를 수 있음)
+├ (catalog)/                ← 라우트 그룹: 주소에 안 나타남 → 여전히 "/"
+│  ├ page.tsx               ← 홈 (app/page.tsx에서 이동, 내용 그대로)
+│  └ loading.tsx            ← 홈 로딩 화면 = CatalogSkeleton
+└ products/[id]/
+   ├ page.tsx
+   └ loading.tsx            ← 상세 로딩 화면 = ProductDetailSkeleton
+```
+
+### 파일별 설명
+| 파일 | 역할 |
+|---|---|
+| `src/app/(catalog)/loading.tsx` (새 파일) | 홈 로딩 화면. `CatalogSkeleton`을 그대로 쓴다 |
+| `src/app/(catalog)/page.tsx` | `app/page.tsx`에서 **이동만** (주석 추가). 주소는 그대로 `/` |
+| `src/app/products/[id]/loading.tsx` (새 파일) | 상세 로딩 화면 |
+| `src/components/ProductDetailSkeleton.tsx` (새 파일) | 상세 화면 스켈레톤. `ProductDetail.module.scss`의 클래스를 그대로 써서 크기를 맞춤 |
+| `src/components/ProductDetail.module.scss` | 정사각형 사진 자리 규칙을 `.initial, .mediaSkeleton`으로 묶음 (이미지 없는 상품과 스켈레톤이 공유) |
+| `src/components/Skeletons.stories.tsx` | `Detail`, `DetailCompare`(스켈레톤과 실제 상세를 위아래로) 스토리 추가 |
+| `src/app/layout.tsx`, `CatalogSkeleton.tsx` | 주석의 경로만 수정 |
+
+### 핵심 개념
+
+**1. `loading.tsx` = 자동 `<Suspense>`**
+```tsx
+// Next.js가 파일 이름 규칙으로 만들어 주는 구조
+<Layout>                              {/* layout.tsx — 그대로 유지 */}
+  <Suspense fallback={<Loading />}>   {/* loading.tsx */}
+    <Page />                          {/* page.tsx */}
+  </Suspense>
+</Layout>
+```
+- Step 3-2에서 `page.tsx` 안에 직접 쓴 `<Suspense fallback={<CatalogSkeleton />}>`와 같은 원리다.
+- 차이: `page.tsx` 안의 Suspense는 **페이지 안의 일부**(ProductCatalog)를 기다리고, `loading.tsx`는 **페이지 전체**(다른 주소로 이동)를 기다린다.
+- 로딩 화면은 링크가 화면에 보일 때 **미리 받아 둔다(prefetch)**. 그래서 서버가 느려도 누르는 즉시 보인다.
+
+**2. 가장 가까운 `loading.tsx`가 쓰이고, 하위 폴더 전체에 적용된다**
+처음엔 `app/loading.tsx`에 두었다. 그랬더니 **상세 페이지와 404까지** 감싸서 문제가 생겼다.
+- 상세 페이지의 첫 HTML에 **목록 모양 스켈레톤**이 먼저 들어가고, 실제 상세 내용은 숨겨진 채(`<div hidden>`) 뒤따라와서 스크립트가 바꿔 끼웠다.
+- 새로고침하면 목록 스켈레톤이 **한 프레임 번쩍** → 상세 화면. JS를 끄면 목록 스켈레톤만 남았다.
+- 작업 전에는 상세 HTML에 내용이 바로 들어 있었으므로, 이번 작업이 만든 문제였다.
+
+**3. 라우트 그룹 `(폴더)` — 주소는 그대로, 파일만 묶기**
+- 괄호로 감싼 폴더는 **주소에 나타나지 않는다.** `app/(catalog)/page.tsx` → 여전히 `/`
+- 홈과 그 로딩 화면만 `(catalog)`에 넣어서, 목록 스켈레톤이 **홈에만** 적용되게 했다.
+- 결과: 상세·404의 첫 HTML은 작업 전과 같이 내용이 바로 들어가고, 깜빡임도 사라졌다.
+- 쓰임새: 같은 주소 체계 안에서 "이 페이지들만 같은 로딩·레이아웃을 쓰게" 묶을 때. (나중에 `(shop)`, `(auth)`처럼 구역 나누기)
+
+**4. 상세 스켈레톤 — 사진 자리는 맞출 수 없다**
+- 글자·버튼은 `ProductDetail.module.scss` 클래스를 그대로 써서 위치가 **완전히 같다**.
+- 사진은 상품마다 비율이 달라서(4:3, 세로, 정사각형) 미리 알 수 없다 → '이미지 없는 상품'과 같은 **정사각형** 자리를 보여 준다.
+- 그래서 모바일(한 칸 배치)에서는 사진 비율만큼 아래 내용이 내려가거나 올라간다. 화면 전체가 한 번에 바뀌는 순간이라 읽던 내용이 밀리지는 않는다.
+- `loading.tsx`는 props를 받지 않아서(어떤 상품인지 모름) 사진 비율을 알려 줄 방법이 없다. 정사각형이 가장 무난한 선택이다.
+
+**5. 상세 로딩 화면은 지금 거의 안 보인다**
+상세 페이지는 빌드 때 미리 만들어 두고(`●`), 목록 카드의 링크가 페이지를 통째로 미리 받아 둔다. 느린 네트워크에서 직접 이동시켜도 로딩 화면 없이 바로 바뀌었다.
+Step 6~8에서 상품을 API·DB로 받아오면 기다리는 시간이 생기고, 그때부터 쓰인다. 지금 만들어 두는 이유는 "주소마다 맞는 로딩 화면"이라는 구조를 먼저 잡기 위해서다.
+
+### 확인 방법
+1. `npm run build` → `ƒ /`, `● /products/...` (전과 같음)
+2. `npm run start` → 상품 상세에서 개발자 도구 Network를 **Slow 4G**로 바꾸고 '목록으로' → 누르자마자 목록 스켈레톤
+3. 상세 페이지에서 새로고침 → 목록 스켈레톤이 번쩍이지 않는지
+4. Storybook `Product/Skeletons` → `Detail Compare`에서 스켈레톤과 실제 상세의 글자 줄·버튼 위치 비교
+
+검증 결과 (production 빌드 + headless Chrome)
+- '목록으로' 클릭 0.2초 뒤(지연 3초 네트워크) 목록 스켈레톤 표시 — 1280·390px
+- 첫 HTML: `/products/3`·404는 로딩 경계 없이 내용 바로(작업 전과 같음). `app/loading.tsx`였을 때는 목록 스켈레톤 + 숨긴 내용이었음
+- 첫 로딩 깜빡임(화면 그리기 전 프레임에 스켈레톤이 있는지): 상세·404 없음 / 홈 1프레임
+  - 홈의 1프레임은 `loading.tsx`를 빼고 빌드해도 똑같았다. 4-2의 `page.tsx` 안 Suspense(useSearchParams) 때문에 생기던 것 → 아래 "알려진 한계"
+- 상세 스켈레톤 vs 실제(Storybook `DetailCompare`): 1280·390px 모두 이동 경로·카테고리·상품명·평점·가격·재고·버튼 크기 같음. 사진 자리만 다름(정사각형 vs 4:3), 390px에서는 그만큼(89px) 아래 내용 위치가 다름
+- Storybook 스토리 38개 × 라이트/다크 렌더링 정상, axe 위반 0
+- `tsc`·ESLint·Stylelint·Prettier 통과
+
+### 알려진 한계 · 다음에 할 일
+- **홈의 첫 HTML**: 목록이 HTML에 들어 있긴 하지만(검색엔진 OK), 스켈레톤 다음 숨긴 `<div hidden>`에 있다가 스크립트로 바꿔 끼운다. 그래서 첫 로딩 때 스켈레톤이 1프레임 보이고, JS를 끄면 스켈레톤만 남는다. 4-2부터 있던 동작이다. `useSearchParams` 대신 서버에서 `searchParams`를 읽어 넘기면 없앨 수 있는지 Step 6(서버에서 데이터 받기)에서 다시 본다.
+- 4-3b: 구간별 `error.tsx`
+- 이 작업 폴더는 3-4a(`.gitattributes`) 전에 받아 둔 것이라 파일 45개가 CRLF로 남아 있었다(`git status`에는 안 보임). 해당 파일을 지우고 저장소에서 다시 꺼내 LF로 맞췄다. 다른 PC도 `git ls-files --eol | grep w/crlf`로 확인할 수 있다.

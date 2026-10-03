@@ -15,7 +15,7 @@ import styles from './layout.module.scss'
 //
 // Next.js App Router의 규칙
 // - src/app/ 안의 '폴더 구조 = 주소'다. react-router의 <Routes>/<Route>를 직접 쓰지 않는다.
-//     app/page.tsx                 → "/"
+//     app/(catalog)/page.tsx       → "/"  (괄호 폴더 = 라우트 그룹, 주소에 안 나타남. Step 4-3)
 //     app/products/[id]/page.tsx   → "/products/3"  ([id]가 react-router의 :id)
 //     app/not-found.tsx            → 없는 주소일 때
 // - layout.tsx는 페이지가 바뀌어도 다시 만들어지지 않고 유지된다. → 헤더처럼 공통 부분을 둔다.

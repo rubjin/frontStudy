@@ -75,12 +75,18 @@
   object-fit: contain;
 }
 
+// 정사각형 사진 자리 — 이미지 없는 상품(.initial)과 로딩 스켈레톤(.mediaSkeleton, Step 4-3)이 같이 쓴다
+// 선택자를 묶어 두면 크기를 바꿀 때 한 곳만 고치면 되고, 스켈레톤이 저절로 따라온다
+.initial,
+.mediaSkeleton {
+  width: 100%;
+  aspect-ratio: 1;
+}
+
 // 이미지 없는 상품: 정사각형 자리에 첫 글자
 .initial {
   @include flex-center;
   @include text(6xl);
-  width: 100%;
-  aspect-ratio: 1;
   font-weight: $font-weight-bold;
   color: var(--color-thumb-text);
   opacity: 0.5;

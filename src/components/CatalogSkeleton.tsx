@@ -8,7 +8,9 @@ import gridStyles from './CardGrid.module.scss'
 
 // 상품 목록 화면 전체의 스켈레톤 (Step 3-2 보강)
 //
-// 어디에 쓰나? → app/page.tsx의 <Suspense fallback={<CatalogSkeleton />}>
+// 어디에 쓰나?
+// - app/(catalog)/page.tsx의 <Suspense fallback={<CatalogSkeleton />}>
+// - app/(catalog)/loading.tsx (Step 4-3): 다른 페이지에서 홈으로 이동할 때
 // - Step 4: 검색·필터를 URL(useSearchParams)로 옮기면 Next.js가 ProductCatalog를 Suspense로 감싸라고 요구한다.
 //   (정적 페이지에서 useSearchParams를 Suspense 없이 쓰면 빌드가 실패한다)
 //   그때 URL을 읽기 전까지 이 스켈레톤이 보인다.

@@ -30,13 +30,14 @@
     - 스토리는 컴포넌트 옆 `*.stories.tsx`. 제어 컴포넌트는 `useArgs`로 조작 가능하게. 새 컴포넌트를 만들면 스토리도 만든다
     - 확인: 빌드 후 정적 서버 + 헤드리스 Chrome으로 모든 스토리 렌더링 + axe 검사(라이트/다크). 첫 로딩이 느리니 고정 대기 대신 렌더 완료를 기다릴 것
 - 구조
-  - `src/app/` — 파일 기반 라우팅. `layout.tsx`(공통 틀·Header), `page.tsx`("/", `await connection()`으로 요청마다 생성 — 쿼리별 목록을 HTML에 넣기 위해), `products/[id]/page.tsx`(상세: `generateStaticParams` + `dynamicParams = false` + `generateMetadata`, 화면은 ProductDetail), `not-found.tsx`(404), `error.tsx`(실행 에러), `global-error.tsx`(레이아웃 에러), `dev/skeleton/`(개발용 스켈레톤 미리보기, production에서 404)
+  - `src/app/` — 파일 기반 라우팅. `layout.tsx`(공통 틀·Header), `(catalog)/page.tsx`("/" — 괄호 폴더는 라우트 그룹이라 주소에 안 나타남. `await connection()`으로 요청마다 생성 — 쿼리별 목록을 HTML에 넣기 위해), `(catalog)/loading.tsx`(홈 이동 시 목록 스켈레톤), `products/[id]/page.tsx`(상세: `generateStaticParams` + `dynamicParams = false` + `generateMetadata`, 화면은 ProductDetail)·`loading.tsx`(상세 스켈레톤), `not-found.tsx`(404), `error.tsx`(실행 에러), `global-error.tsx`(레이아웃 에러), `dev/skeleton/`(개발용 스켈레톤 미리보기, production에서 404)
   - `src/components/ui/` — 기능과 무관한 기본 부품. Button(`Button`=`<button>` / `ButtonLink`=`<a>`, `variant`·`size`), Skeleton(스켈레톤 조각)
-  - `src/components/` — Header(서버 컴포넌트), ThemeToggle(`'use client'`), ProductCatalog(목록 화면, `'use client'`. 필터 상태는 주소 쿼리가 원본: `useSearchParams`로 읽고 `window.history.pushState`(선택)·`replaceState`(검색어)로 씀. useState·router.push 쓰지 않음), StatusView(404·에러 공통 화면), BackButton(이전 페이지로), ProductDetail(상세 화면, 서버 컴포넌트), CardSkeleton·CatalogSkeleton(로딩 스켈레톤, `page.tsx`의 Suspense fallback), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
+  - `src/components/` — Header(서버 컴포넌트), ThemeToggle(`'use client'`), ProductCatalog(목록 화면, `'use client'`. 필터 상태는 주소 쿼리가 원본: `useSearchParams`로 읽고 `window.history.pushState`(선택)·`replaceState`(검색어)로 씀. useState·router.push 쓰지 않음), StatusView(404·에러 공통 화면), BackButton(이전 페이지로), ProductDetail(상세 화면, 서버 컴포넌트), CardSkeleton·CatalogSkeleton·ProductDetailSkeleton(로딩 스켈레톤, Suspense fallback·`loading.tsx`), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
   - `src/lib/` — products(`getProduct`·`getProductIds`, 데이터 접근은 여기로. Step 6에서 API로 교체), catalogParams(`parseCatalogParams`·`toCatalogSearch`: 주소 쿼리 q·category·sort·instock ↔ 필터 값, 읽을 때 값 검사), format, filterProducts, sortProducts (순수 함수), site(`SITE_NAME`, `formatTitle`) / `src/data/products.ts` (목 데이터) / `src/types/` (공통 타입)
   - import는 `@/` 별칭(= `src/`) 사용
 - 원칙: `page.tsx`·`layout.tsx`는 서버 컴포넌트로 두고, 상태·이벤트가 필요한 부분만 작은 `'use client'` 컴포넌트로 뺀다.
 - 원칙: 스켈레톤은 실제 컴포넌트의 SCSS 클래스를 그대로 써서 크기를 맞춘다(치수를 따로 적지 않음). 바꾼 뒤에는 실제 화면과 영역 크기를 비교해 확인한다.
+- 원칙: `loading.tsx`는 하위 폴더 전체에 적용되므로, 모양이 다른 페이지까지 감싸지 않게 둔다(필요하면 라우트 그룹). 추가한 뒤에는 첫 HTML(`<!--$?-->`, `<div hidden>`)과 새로고침 깜빡임을 확인한다.
 - 원칙: 버튼 모양이 필요하면 직접 클래스를 쓰지 말고 `ui/Button`을 쓴다. 페이지 이동은 `ButtonLink`, 화면 안 동작은 `Button`.
 - 원칙: 404·에러처럼 모양이 같은 안내 화면은 `StatusView`를 재사용하고, 각 파일은 문구와 버튼만 정한다. 공통 틀에는 문구를 넣지 않는다.
 - 원칙: 같은 값이 한 파일 안에서 반복되면 그 파일의 상수로, 여러 파일에서 쓰이면 공통 파일(`lib/`, 나중에 `constants/`)로 모은다.
@@ -51,7 +52,8 @@
 - 참고: 사용자가 `npm run dev`(localhost:3000)를 켜 두는 경우가 많다. Next.js 16은 같은 폴더에서 dev 서버를 두 개 못 띄우므로, 검증은 `npm run build` 후 `next start -p <다른 포트>`로 하거나 켜진 3000 서버를 읽기 전용으로 쓴다. 파일을 임시로 바꾸면 사용자 화면에도 반영된다.
 - 참고: 회사 네트워크 — npm 저장소는 연결되지만 이미지 사이트(Unsplash·Pexels·Wikimedia·Picsum)는 회사 SSL 검사 인증서 때문에 Node는 `SELF_SIGNED_CERT_IN_CHAIN`, curl은 오류 35로 실패한다. 인증서 검사를 끄지 말 것(`NODE_TLS_REJECT_UNAUTHORIZED=0` 금지). 필요하면 사용자에게 브라우저로 받아 달라고 하거나, 동의를 받아 회사 루트 인증서를 `NODE_EXTRA_CA_CERTS`로 지정한다. (2026-09-30 사용자는 샘플 이미지 유지 선택)
 - 줄바꿈: `.gitattributes`(`* text=auto eol=lf`)로 저장소·작업 폴더 모두 LF(Windows `core.autocrlf=true`여도). `.editorconfig`는 UTF-8·LF·스페이스 2칸·파일 끝 빈 줄
-- 참고: 이 PC에는 Python이 없다. 파일 일괄 수정은 Node 스크립트나 편집 도구로 한다.
+- 참고: PC마다 환경이 다르다(Python이 없는 PC가 있음). 파일 일괄 수정은 Node 스크립트나 편집 도구로 한다.
+- 참고: 새로 받은/오래된 작업 폴더 — ① 3-4a 전에 받은 폴더는 CRLF 파일이 남아 Prettier 검사가 실패한다: `git ls-files --eol | grep w/crlf`로 확인, 변경 없는 파일이면 지우고 `git checkout --`으로 다시 꺼낸다. ② `PageProps` 타입은 빌드 때 생기므로 `tsc` 전에 `npm run build`(또는 `npx next typegen`). ③ Node 22.13·npm 11.1인 PC는 `npm ci`가 lock 불일치로 실패 → `npm install` 후 바뀐 `package-lock.json`(libc 메타데이터뿐)은 되돌린다.
 
 ## 로드맵
 > 2026-09-29: 실무에서 많이 쓰는 구성으로 방향 전환. Vite → **Next.js**, JS → **TypeScript**(원래 Step 9 → 앞당김), Tailwind → **SCSS Module**, **Storybook** 추가.
@@ -107,4 +109,6 @@
   - 4-1 완료: 상품 상세(`lib/products.ts`, ProductDetail + 스토리 7개, `generateMetadata`, SSG 12개). 없는 상품 404에서 Next.js 버그 발견 → `dynamicParams = false`로 우회, 상품 전용 not-found는 보류.
   - 4-1에서 발견(나중에): 홈 화면 axe `heading-order`(h1 다음 바로 h3) → 4-2에서 정리. `/dev/skeleton`도 같은 notFound 버그.
   - 4-2 완료: 검색·카테고리·정렬·품절 숨기기를 URL 쿼리로(`lib/catalogParams.ts`). 홈 `ƒ`(connection), 필터 변경 시 서버 요청 0. 카드 상품명 h2(heading-order 해결), 상세 이동 경로 카테고리 링크. 빈 `src/pages` 폴더 삭제(Next가 pages 호환 타입을 붙였음).
-  - 다음은 4-3 `loading.tsx`·구간별 `error.tsx`.
+- 2026-10-03: 4-3a 완료: `loading.tsx` — 홈(`(catalog)` 라우트 그룹으로 이동, 목록 스켈레톤)·상세(`ProductDetailSkeleton` + 스토리 2개). 처음 `app/loading.tsx`로 두었을 때 상세 첫 HTML에 목록 스켈레톤이 들어가 깜빡임 → 라우트 그룹으로 해결. 홈 첫 로딩 1프레임 스켈레톤은 4-2부터 있던 것(page 안 Suspense)으로 확인, Step 6에서 재검토.
+  - 새 PC 작업 폴더에서 CRLF 파일 45개(3-4a 이전 체크아웃) 발견 → 다시 꺼내 LF로.
+  - 다음은 4-3b 구간별 `error.tsx`.
