@@ -49,3 +49,10 @@
   font-weight: $font-weight-bold;
   letter-spacing: -0.025em; // 제목용 글자는 자간을 살짝 좁히면 단단해 보인다
 }
+
+// 오른쪽 버튼 묶음: 장바구니 · 다크 모드 (Step 5-1)
+.actions {
+  display: flex;
+  align-items: center;
+  gap: space(1);
+}

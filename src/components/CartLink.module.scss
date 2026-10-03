@@ -1,0 +1,30 @@
+@use 'styles' as *;
+
+// 헤더 장바구니 링크 + 개수 배지 (Step 5-1)
+
+// 배지를 아이콘 오른쪽 위에 겹쳐 놓기 위한 기준점
+.link {
+  position: relative;
+}
+
+// 숫자 배지: 아이콘 버튼의 오른쪽 위 모서리에 걸쳐 놓는다
+.badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  // 한 자리 숫자일 때 동그라미, 두 자리부터 옆으로 늘어나는 알약 모양
+  min-width: to-rem(18);
+  height: to-rem(18);
+  padding: 0 to-rem(4);
+  border-radius: $radius-full;
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: to-rem(11);
+  font-weight: $font-weight-bold;
+  line-height: to-rem(18);
+  text-align: center;
+  // 모서리에 반쯤 걸치게: 자기 크기의 절반만큼 오른쪽 위로
+  transform: translate(35%, -35%);
+  // 숫자 폭이 같게 (1과 8의 폭 차이로 배지가 들썩이지 않게)
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,24 @@
+@use 'styles' as *;
+
+// 장바구니 담기 버튼 + 알림 문구 (Step 5-1)
+//
+// 상세 화면의 버튼 줄(ProductDetail .actions, 가로 flex)에 들어간다: [장바구니 담기] [목록으로]
+// 알림 문구는 버튼 사이가 아니라 버튼 줄 '아래'에 나와야 한다.
+//
+// display: contents — 이 div 상자를 없는 것처럼 하고, 안의 버튼·문구를 부모(.actions)의 flex 항목으로 올린다.
+// → 버튼은 '목록으로'와 같은 줄에, 문구는 아래 order·flex-basis로 맨 뒤 새 줄에 놓을 수 있다.
+// (div는 의미 없는 태그라 display: contents를 써도 접근성 정보가 사라지지 않는다. button·ul 같은 태그에는 쓰지 않는다)
+.root {
+  display: contents;
+}
+
+// 알림 문구
+// - order: 1 → 형제들(order 0)보다 뒤로, flex-basis: 100% → 한 줄을 통째로 차지해서 다음 줄로 내려간다
+// - 비어 있을 때 display: none으로 숨기지 않는다. 숨겼다가 보이게 하면 스크린리더에는 영역이 '새로 생긴' 것처럼 되어
+//   읽지 않는 경우가 있다. (빈 <p>는 높이가 0이라 숨기지 않아도 티가 나지 않는다)
+.message {
+  order: 1;
+  flex-basis: 100%;
+  @include text(sm);
+  color: var(--color-text-secondary);
+}

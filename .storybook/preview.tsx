@@ -1,5 +1,6 @@
 import type { Preview } from '@storybook/nextjs-vite'
 import { withThemeByDataAttribute } from '@storybook/addon-themes'
+import { CartProvider } from '../src/components/CartProvider'
 // 실제 사이트(layout.tsx)와 같은 폰트·전역 스타일을 불러온다
 // → 스토리에서 보이는 모양 = 실제 사이트의 모양
 import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css'
@@ -17,6 +18,14 @@ const preview: Preview = {
   tags: ['autodocs'],
 
   decorators: [
+    // 장바구니 상태 (Step 5-1)
+    // 실제 사이트는 layout.tsx가 CartProvider로 감싼다. 담기 버튼·헤더 장바구니 링크처럼 useCart()를 쓰는 컴포넌트가
+    // 스토리에서도 동작하도록 모든 스토리를 감싼다. 스토리마다 새 Provider라 장바구니는 스토리끼리 섞이지 않는다.
+    (Story) => (
+      <CartProvider>
+        <Story />
+      </CartProvider>
+    ),
     // 다크 모드 전환 (addon-themes)
     // 실제 사이트처럼 <html data-theme="dark">를 붙였다 뗐다 한다.
     // → _themes.scss의 [data-theme='dark'] 변수가 그대로 적용되어, 스토리마다 다크 모드용 코드를 따로 쓸 필요가 없다.

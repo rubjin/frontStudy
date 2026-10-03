@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
+import { CartProvider } from '@/components/CartProvider'
 import Header from '@/components/Header'
 import { SITE_NAME, formatTitle } from '@/lib/site'
 import { themeInitScript } from '@/lib/theme'
@@ -79,8 +80,12 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>
-        <Header />
-        <main className={styles.main}>{children}</main>
+        {/* 장바구니 상태 (Step 5-1): 헤더(개수)와 페이지(담기 버튼·장바구니 화면)가 함께 써야 해서 둘을 모두 감싼다.
+            CartProvider는 클라이언트 컴포넌트지만, children으로 넣은 Header·페이지는 서버 컴포넌트 그대로다. */}
+        <CartProvider>
+          <Header />
+          <main className={styles.main}>{children}</main>
+        </CartProvider>
       </body>
     </html>
   )

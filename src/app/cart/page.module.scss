@@ -1,0 +1,9 @@
+@use 'styles' as *;
+
+// 장바구니 페이지 (Step 5-1)
+
+.title {
+  margin-bottom: space(6);
+  @include text(2xl);
+  font-weight: $font-weight-bold;
+}

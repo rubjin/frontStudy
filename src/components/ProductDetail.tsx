@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import AddToCartButton from '@/components/AddToCartButton'
 import { ButtonLink } from '@/components/ui/Button'
 import { toCatalogSearch } from '@/lib/catalogParams'
 import { formatPrice } from '@/lib/format'
@@ -13,7 +14,7 @@ import styles from './ProductDetail.module.scss'
 // → 페이지와 분리해 두면 Storybook에서 품절·이미지 없음·세로 사진 같은 상태를 데이터만 바꿔 확인할 수 있다.
 //
 // 서버 컴포넌트다 ('use client' 없음). 상태·이벤트가 없어서 브라우저로 보낼 JS가 필요 없다.
-// (Step 5에서 '장바구니 담기' 버튼이 생기면 그 버튼만 작은 클라이언트 컴포넌트로 뺀다)
+// Step 5-1: '장바구니 담기' 버튼(AddToCartButton)만 작은 클라이언트 컴포넌트로 넣었다. 이 컴포넌트는 서버 컴포넌트 그대로다.
 //
 // props
 // - product: 보여 줄 상품
@@ -105,7 +106,8 @@ function ProductDetail({ product }: ProductDetailProps) {
           </p>
 
           <div className={styles.actions}>
-            {/* 장바구니 담기 버튼은 Step 5에서 추가한다 */}
+            {/* 장바구니 담기 (Step 5-1) — 주요 행동이라 primary, 목록으로보다 앞에 */}
+            <AddToCartButton product={product} />
             <ButtonLink href="/" variant="secondary">
               목록으로
             </ButtonLink>
