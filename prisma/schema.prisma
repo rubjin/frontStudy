@@ -1,0 +1,51 @@
+// Prisma 스키마 — DB 테이블의 '설계도' (Step 8-1)
+//
+// 여기 적은 model 하나가 DB의 테이블 하나가 된다. 필드 = 열(column).
+// 이 파일을 고친 뒤 npm run db:migrate 를 실행하면
+//   ① 바뀐 내용을 SQL로 만든 마이그레이션 파일(prisma/migrations/...)이 생기고 ② DB에 적용되고
+//   ③ 타입이 붙은 DB 클라이언트(src/generated/prisma)가 다시 만들어진다.
+//
+// TypeScript의 interface Product(types/product.ts)와 비슷해 보이지만,
+// 이쪽은 '데이터가 어떻게 저장되는지'(열 이름·타입·기본값·색인)를, 저쪽은 '화면이 어떤 모양을 쓰는지'를 정한다.
+// 둘을 이어 주는 변환은 lib/products.ts의 toProduct()가 한다.
+
+// 생성기: 이 스키마로 TypeScript DB 클라이언트를 만든다
+// - prisma-client: Prisma 7의 새 생성기. 결과를 node_modules가 아니라 우리 폴더(output)에 만든다
+// - src/generated/prisma는 생성물이라 커밋하지 않는다(.gitignore). npm install 때 postinstall로 다시 만든다
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+// 데이터 원천: SQLite (파일 하나로 된 DB. 설치할 서버가 필요 없어 학습·개발에 좋다)
+// 접속 주소(DATABASE_URL)는 prisma.config.ts와 lib/db.ts가 환경 변수에서 읽는다
+// 배포(Step 11)에서는 서버가 파일을 저장할 수 없는 환경이 많아 Postgres로 바꾼다 — 이 provider와 주소만 바뀐다
+datasource db {
+  provider = "sqlite"
+}
+
+model Product {
+  // @id: 기본 키(행마다 다른 고유 번호). @default(autoincrement()): 새 행마다 1씩 늘려 자동으로 붙인다
+  id       Int    @id @default(autoincrement())
+  name     String
+  /// 가격(원). 돈은 소수 오차가 없게 정수로 저장한다
+  price    Int
+  category String
+  /// 평점 0~5
+  rating   Float  @default(0)
+  /// 재고 수량. 0이면 품절
+  stock    Int    @default(0)
+
+  // 대표 이미지 — 화면 타입(ProductImage { src, width, height })을 열 세 개로 나눠 저장한다
+  // ?: 비어 있어도 되는 열 (이미지가 없는 상품)
+  imageSrc    String?
+  imageWidth  Int?
+  imageHeight Int?
+
+  // 언제 만들고 고쳤는지 — 관리 화면(8-3)에서 쓴다. @updatedAt: 고칠 때마다 Prisma가 자동으로 지금 시각을 넣는다
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 색인(index): 책의 찾아보기처럼, 카테고리로 거르는 조회를 빠르게 한다
+  @@index([category])
+}

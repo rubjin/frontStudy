@@ -37,3 +37,8 @@ storybook-static
 
 # 환경 변수 (Step 6-1) — 개인 설정·비밀 값(나중에 DB 비밀번호 등)은 커밋하지 않는다
 .env*.local
+
+# Prisma (Step 8-1) — 생성된 DB 클라이언트(npm install 때 다시 만듦)와 SQLite DB 파일
+/src/generated/
+/prisma/*.db
+/prisma/*.db-journal

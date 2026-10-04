@@ -25,5 +25,7 @@ export default defineConfig([
     'storybook-static/**',
     // MSW 서비스 워커 (Step 6-4) — 라이브러리가 생성하는 파일
     '.storybook/public/mockServiceWorker.js',
+    // Prisma가 만든 DB 클라이언트 (Step 8-1) — 생성물
+    'src/generated/**',
   ]),
 ])

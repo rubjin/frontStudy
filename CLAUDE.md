@@ -57,6 +57,8 @@
 - Next.js 16 주의: `error.tsx`의 복구 함수는 `retry`(예전 `reset`). API가 헷갈리면 `node_modules/next/dist/docs/`의 설치 버전 문서를 확인한다.
 - Next.js 16.3.6 버그: page 안에서 `notFound()`를 부르면 404 화면이 서버 HTML에 안 들어간다(빈 `<html id="__next_error__">` → lang 없음·다크 모드 풀림). [#99287](https://github.com/vercel/next.js/issues/99287). 동적 라우트는 `dynamicParams = false`로 우회. 404 검증은 상태 코드뿐 아니라 HTML(`<html lang="ko">`)과 다크 모드까지 확인. Next를 올리면 다시 확인할 것
 - 스텝별 설명: `docs/steps/`
+- DB: **Prisma 7 + SQLite** (`prisma/schema.prisma`, `prisma.config.ts`, DB 파일 `prisma/dev.db`는 커밋 안 함). 새 작업 폴더에서는 `npm install`(클라이언트 생성) 후 `npm run db:setup`(마이그레이션 + 시드). 스키마 변경은 `npm run db:migrate`, 다시 시작 `db:reset`, 보기 `db:studio`. 생성된 클라이언트는 `src/generated/prisma`(커밋 안 함, `@/generated/prisma/client`). 서버 코드는 `lib/db.ts`의 `prisma`만 쓴다
+- 주의: `npx prisma init`은 AI 도구용 skills 파일(.claude/skills 등)까지 만든다. 다시 실행하지 말고, 했다면 지운다
 - 실행: `npm run dev` / 빌드: `npm run build` / 린트: `npm run lint` / 타입 검사: `npx tsc --noEmit` / 포맷: `npm run format`(고치기)·`npm run format:check`(검사)
 - 코드 모양: **Prettier**(`prettier.config.mjs`: 세미콜론 없음, 작은따옴표, `printWidth` 120). 코드를 쓰거나 고친 뒤 `npm run format` 실행. `*.md`와 `package-lock.json`은 제외(`.prettierignore`). 표처럼 줄 맞춘 부분만 윗줄에 단독 `// prettier-ignore`. ESLint는 `eslint-config-prettier`로 모양 규칙을 끔(배열 마지막)
 - SCSS 검사: **Stylelint**(`stylelint.config.mjs`, `npm run lint:css`). 색 값(hex·이름·rgb/hsl)은 `_tokens`·`_themes`에서만, `rem` 직접 입력은 `_functions`에서만 허용, `font-size`·`line-height` px 금지, 중첩 3단계까지, CSS Module 클래스는 camelCase. 규칙을 꺼야 하면 그 줄만 `// stylelint-disable-next-line 규칙 -- 이유`
@@ -142,3 +144,5 @@
   - 7-2 완료: 목록을 `useQuery(productQueries.list)` + `keepPreviousData`로(걸러내기·정렬은 API). 홈 page는 `searchParams` → `prefetchQuery`(서버용 queryFn) → `HydrationBoundary` → 첫 HTML에 목록·첫 화면 요청 0. 검색 300ms debounce(`lib/useDebouncedValue`), 바뀌는 중 흐리게·`aria-busy`. `ui/InlineError` 공통화(장바구니·목록).
   - 7-3 완료: 나눠 받기 — API `?page=&size=`(`parsePaging`, `PRODUCTS_PAGE_SIZE` 8) + 응답 `nextPage`, `productQueries.list`를 `infiniteQueryOptions`로, 홈 `prefetchInfiniteQuery`(첫 페이지), 화면 `useInfiniteQuery` + '더 보기 (8 / 12)' 버튼(무한 스크롤 대신, 접근성), 더 불러온 뒤 새 첫 상품으로 포커스, 더 보기 실패는 목록 유지 + InlineError.
   - **Step 7 완료. Phase 2(API 연동) 완료.** 다음은 Step 8 (DB 연동, Prisma).
+- 2026-10-04: Step 8 시작. 세부: 8-1 Prisma 설정 / 8-2 데이터 계층 DB 교체 / 8-3 관리 화면 CRUD(Server Actions)
+  - 8-1 완료: Prisma 7.10.0(latest 태그가 RC라 안정판 고정) + SQLite(`@prisma/adapter-better-sqlite3`). `prisma/schema.prisma`(Product), 마이그레이션 `init`, `prisma/seed.ts`(목 데이터 upsert), `prisma.config.ts`, `lib/db.ts`, `.env`(커밋, 기본값만). `prisma init`이 만든 AI skills 파일들은 삭제.
