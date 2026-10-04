@@ -1,6 +1,6 @@
 # Step 5. 장바구니 — Context + useReducer
 
-> 상태: 진행 중 (5-1, 5-2 완료)
+> 상태: 진행 중 (5-1 ~ 5-3 완료)
 
 ## 목표
 지금까지의 상태(검색어·필터)는 **한 화면 안에서만** 쓰였다. 장바구니는 다르다.
@@ -16,7 +16,7 @@
 ## 세부 단계
 - [x] **5-1** 장바구니 상태 기본: reducer + Context Provider + `useCart`, 상세 '장바구니 담기', 헤더 개수 배지, 최소 `/cart`
 - [x] **5-2** 장바구니 페이지 완성: 수량 +/−, 삭제, 합계, 사진
-- [ ] **5-3** localStorage 저장: 새로고침 유지, 하이드레이션 불일치 처리, 다른 탭과 동기화
+- [x] **5-3** localStorage 저장: 새로고침 유지, 하이드레이션 불일치 처리, 다른 탭과 동기화
 - [ ] **5-4** 마무리: 목록 카드에서 바로 담기, 담기 알림, 재고 한도 안내
 
 ---
@@ -208,3 +208,93 @@ export type CartAction =
 - 저장된 장바구니를 불러오면 "담은 뒤 재고가 줄어 수량 > 재고" "품절된 상품"이 생길 수 있다 → 5-3에서 불러올 때 정리
 - 상세의 담기 버튼은 `disabled`라 마지막 클릭에 포커스가 튕긴다 → 5-4
 - 주문하기 버튼은 Step 9(주문 기능)에서
+
+---
+
+## 5-3. localStorage 저장
+
+### 목표
+새로고침하거나 탭을 닫았다 열어도 장바구니가 남게 한다. 그 과정에서 생기는 세 가지 문제를 다룬다.
+1. **하이드레이션 불일치** — 서버는 localStorage를 볼 수 없다
+2. **'비어 있음'과 '아직 모름'의 구분** — 불러오기 전에 '비어 있음'이 번쩍이는 문제
+3. **저장된 값을 믿지 않기** — 예전에 저장한 값(판매 종료·재고 감소), 다른 탭의 변경
+
+### 흐름
+```
+서버 HTML           : 배지 없음, /cart는 스켈레톤("불러오는 중")      ← 서버는 장바구니를 모른다
+브라우저 첫 화면     : 서버와 똑같이 그림 (hydrated = false)          ← 하이드레이션 불일치 없음
+useEffect (화면 붙은 뒤): localStorage 읽기 → 정리(sanitize) → dispatch({ type: 'replace' }) + hydrated = true
+다시 그림           : 배지 3, /cart 목록
+이후 state가 바뀔 때마다 : localStorage에 저장
+다른 탭에서 바뀌면    : storage 이벤트 → 다시 읽기 → replace
+```
+
+### 파일별 설명
+| 파일 | 역할 |
+|---|---|
+| `src/lib/cartStorage.ts` (새 파일) | `CART_STORAGE_KEY`(`'shoppr-cart'`), `loadCartItems()`(JSON 파싱 + 버전·모양 검사, 실패하면 `[]`), `saveCartItems()`(같은 값이면 안 씀). 저장 형식 `{"version":1,"items":[...]}` |
+| `src/lib/cart.ts` | action `replace`(통째로 바꾸기), `sanitizeCartItems(items, products)`(없는 상품·품절·중복 제거, 재고 초과는 재고만큼) |
+| `src/components/CartProvider.tsx` | 불러오기·storage 이벤트(useEffect) / 저장(useEffect) / `hydrated` 값 제공 / `persist` prop |
+| `src/components/CartSkeleton.tsx` (새 파일) | 불러오기 전 `/cart` 화면. CartContents의 실제 클래스 사용 |
+| `src/components/CartContents.tsx` | `hydrated`가 false면 스켈레톤 |
+| `src/components/CartContents.module.scss` | `.thumbFill`(스켈레톤용) |
+| `.storybook/preview.tsx`, `CartContents.stories.tsx` | `persist={false}`, `Loading` 스토리 추가 |
+| `src/components/CartLink.tsx` | 주석만 |
+
+### 핵심 개념
+
+**1. 하이드레이션 불일치 — 왜 처음부터 저장된 값으로 그리지 않나**
+- 하이드레이션: 서버가 보낸 HTML에 React가 이벤트를 연결하면서, **브라우저에서 그린 첫 화면이 서버 HTML과 같은지** 확인하는 과정.
+- 서버는 사용자의 localStorage를 볼 수 없으니 항상 "0개"로 그린다. 브라우저가 `useReducer(..., () => localStorage에서 읽기)`로 처음부터 "3개"를 그리면 서버(0)와 달라서 **경고 + 그 부분을 버리고 다시 그림**.
+- 그래서 첫 화면은 서버와 똑같이(빈 장바구니) 그리고, `useEffect`(화면이 붙은 **뒤**에 브라우저에서만 실행)에서 불러온다.
+- 다크 모드(3-2)는 `<head>` 스크립트로 해결했다. 그건 **CSS(속성 하나)**라 React가 그리기 전에 바꿔도 되지만, 장바구니는 **React가 그리는 내용(숫자·목록)**이라 같은 방법을 못 쓴다.
+
+**2. '비어 있음' ≠ '아직 모름' — `hydrated`**
+- 불러오기 전 `items`는 `[]`다. 이걸 그대로 쓰면 `/cart`를 새로고침할 때마다 "장바구니가 비어 있습니다"가 번쩍인다.
+- `hydrated`(불러왔는지)를 Context로 함께 주고, false인 동안은 스켈레톤을 보여 준다. 서버 HTML에도 스켈레톤이 들어간다.
+- 저장도 `hydrated` 뒤에만 한다. 안 그러면 첫 렌더의 빈 `[]`로 저장된 값을 **덮어써 버린다.**
+- `useEffect` 안의 `setHydrated(true)`는 ESLint `react-hooks/set-state-in-effect`에 걸린다. 보통은 "렌더 중에 계산하라"는 좋은 경고지만, 여기는 **브라우저에서만 알 수 있는 값**을 하이드레이션 뒤에 반영하는 의도된 경우라 그 줄만 이유를 적고 끈다.
+
+**3. 저장된 값은 믿지 않는다**
+- localStorage는 개발자 도구로 누구나 고칠 수 있고, 예전 버전 코드가 저장한 값일 수도 있다.
+  - `loadCartItems`: JSON이 깨졌거나, 버전이 다르거나, 배열이 아니면 `[]`. 항목은 `productId`·`quantity`가 정수이고 `quantity >= 1`인 것만(**타입 가드** `value is CartItem`).
+  - `sanitizeCartItems`: 지금 상품 데이터에 맞춘다 — 없는 상품·품절은 빼고, 재고를 넘으면 재고만큼, 같은 상품이 두 번이면 처음 것만.
+- 저장 형식에 `version`을 넣었다. 나중에 형식을 바꾸면 예전 값을 알아보고 버리거나 옮길 수 있다.
+- localStorage 접근은 `try...catch` — 사생활 보호 모드·저장 공간 부족에서 에러가 나도 장바구니는 이번 방문 동안 그대로 동작(`lib/theme.ts`와 같은 방식).
+
+**4. 다른 탭과 맞추기 — `storage` 이벤트**
+- 탭 A에서 localStorage를 바꾸면 **같은 사이트의 다른 탭들**에 `storage` 이벤트가 온다(바꾼 탭 자신에게는 안 온다).
+- 받으면 다시 읽어서 `replace`. 탭 B의 배지·목록이 바로 바뀐다. `localStorage.clear()`면 `event.key`가 `null`.
+- 받은 값을 저장 effect가 다시 저장하려 할 때 같은 문자열이면 쓰지 않는다(`saveCartItems`) — 탭끼리 주고받는 낭비 방지.
+- `useEffect`의 정리 함수(`return () => removeEventListener`)로 연결을 끊는다.
+
+**5. Storybook에서는 저장하지 않는다 — `persist={false}`**
+스토리는 모두 같은 주소(= 같은 localStorage)다. 저장하면 `Together`에서 담은 상품이 다른 스토리에 나타나 결과가 매번 달라진다.
+
+**6. 스켈레톤 크기 맞추기에서 배운 것**
+`.heading`·`.summaryRow`는 `display: flex`다. flex 안에 `<Skeleton>`을 바로 넣으면 조각 자체가 flex 항목이 되어 높이가 조각 높이(0.8em)로 줄어든다. `<span>`으로 감싸면 span이 글자 줄 높이를 가진다. 처음엔 목록이 13.6px, 요약 상자가 11.2px 낮았는데 실제 화면과 측정해 비교해서 찾았다.
+
+### 확인 방법
+1. `npm run build` → `○ /cart` 그대로(정적). `curl localhost:3000/cart` → "장바구니를 불러오는 중" 있음, "비어 있음" 없음
+2. 상세에서 담기 → 새로고침 → 배지 유지. `/cart` 새로고침 → '비어 있음'이 번쩍이지 않음
+3. 개발자 도구 Application → Local Storage → `shoppr-cart` 값 확인
+4. 탭 두 개: 한쪽에서 담기·삭제 → 다른 쪽 배지·목록이 바로 바뀜
+5. `shoppr-cart` 값을 이상하게 고치고 새로고침 → 정리된 장바구니
+6. 콘솔에 하이드레이션 경고 없음
+
+검증 결과 (production 빌드 + headless Chrome, 2026-10-04)
+- 서버 HTML: 스켈레톤 O, '비어 있음' X. `/cart` 처음 열기·새로고침 모두 화면에 나타난 문구 기록(MutationObserver)에 '비어 있음' 없음
+- 상세에서 담고 다른 상세를 새로 열기 → `장바구니 2 개`, 저장값 `{"version":1,"items":[{"productId":2,"quantity":2},{"productId":1,"quantity":1}]}`
+- 탭 B에서 담기 → 탭 A 배지 4개·목록 3줄 / 탭 A에서 삭제 → 탭 B 배지 2개 / 탭 B에서 `clear()` → 탭 A 비어 있음
+- `[스마트워치 9개, 품절 스피커, 없는 999, 헤드폰 1, 헤드폰 중복, productId 'x', 수량 0]` → 스마트워치 5개(재고)·헤드폰 1개만, 정리된 값으로 다시 저장
+- 깨진 JSON · version 2 · 배열 → 빈 장바구니, 에러 없음
+- 스켈레톤 vs 실제(1280·390px): 줄 높이 129/123px, 목록 시작 위치, 요약 상자 높이, 썸네일 폭 모두 같음
+- `/cart` axe 라이트·다크 위반 0, 콘솔 에러·경고(하이드레이션 포함) 0
+- Storybook 스토리 47개 × 라이트/다크 렌더링 정상·axe 위반 0
+- `tsc`·ESLint·Stylelint·Prettier 통과
+
+### 알려진 한계 · 다음에 할 일
+- 상세의 담기 버튼은 불러오기 전 잠깐 '장바구니 담기'였다가, 이미 재고만큼 담겨 있으면 '최대 수량'으로 바뀐다(드묾). 5-4에서 버튼을 정리할 때 함께 본다.
+- 불러올 때 수량이 줄거나 상품이 빠져도 사용자에게 알려 주지 않는다. 실제 쇼핑몰은 "재고가 바뀌어 수량을 조정했습니다" 같은 안내를 띄운다 → 필요하면 5-4.
+- 스켈레톤은 2줄 고정이라 담긴 상품이 1개나 3개 이상이면 불러온 순간 높이가 바뀐다.
+- 로그인 사용자의 장바구니를 서버에 저장(여러 기기에서 같은 장바구니)은 Step 9.

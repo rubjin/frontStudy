@@ -21,8 +21,10 @@ const preview: Preview = {
     // 장바구니 상태 (Step 5-1)
     // 실제 사이트는 layout.tsx가 CartProvider로 감싼다. 담기 버튼·헤더 장바구니 링크처럼 useCart()를 쓰는 컴포넌트가
     // 스토리에서도 동작하도록 모든 스토리를 감싼다. 스토리마다 새 Provider라 장바구니는 스토리끼리 섞이지 않는다.
+    // persist={false} (Step 5-3): localStorage에 저장하지 않는다. 스토리들은 같은 주소(=같은 localStorage)라서
+    // 저장하면 한 스토리에서 담은 상품이 다른 스토리에 나타난다.
     (Story) => (
-      <CartProvider>
+      <CartProvider persist={false}>
         <Story />
       </CartProvider>
     ),

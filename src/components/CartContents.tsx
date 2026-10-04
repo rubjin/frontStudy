@@ -7,6 +7,7 @@ import clsx from 'clsx'
 import { useCart } from './CartProvider'
 import { Button, ButtonLink } from './ui/Button'
 import { Close, Minus, Plus } from './icons'
+import CartSkeleton from './CartSkeleton'
 import { products } from '@/data/products'
 import { formatPrice } from '@/lib/format'
 import { getCartLines, getCartTotal } from '@/lib/cart'
@@ -36,12 +37,16 @@ import styles from './CartContents.module.scss'
 //    삭제 버튼을 누르면 그 버튼이 줄과 함께 사라진다 → 포커스가 body로 튕긴다(2와 같은 문제).
 //    → 삭제 뒤에는 목록 제목('담은 상품')으로, 마지막 상품을 지웠으면 '비어 있음' 문구로 포커스를 옮긴다.
 //      제목·문구는 원래 포커스를 받지 않는 요소라 tabIndex={-1}을 준다. (-1: Tab 순서에는 안 들어가고 코드로만 포커스 가능)
+//
+// 5-3: 저장된 장바구니를 불러오기 전(hydrated = false)에는 스켈레톤(CartSkeleton)
+//   서버 HTML과 브라우저 첫 화면에서는 장바구니가 비었는지 '아직 모른다'. 이때 '비어 있음'을 보여 주면
+//   상품이 담겨 있어도 새로고침할 때마다 '비어 있음'이 번쩍인다. → '모름' 상태를 따로 그린다.
 
 // 썸네일 칸의 실제 표시 크기 (CartContents.module.scss .thumb와 맞춘다) — next/image가 알맞은 크기의 파일을 고르는 데 쓴다
 const THUMB_SIZES = '96px'
 
 function CartContents() {
-  const { items, setQuantity, removeItem } = useCart()
+  const { items, setQuantity, removeItem, hydrated } = useCart()
   // 알림 문구 (role="status"). 처음엔 비어 있다
   const [message, setMessage] = useState('')
 
@@ -92,7 +97,9 @@ function CartContents() {
         {message}
       </p>
 
-      {lines.length === 0 ? (
+      {!hydrated ? (
+        <CartSkeleton />
+      ) : lines.length === 0 ? (
         // 빈 장바구니: 다음에 할 일(상품 보러 가기)을 함께 안내한다
         <div className={styles.empty}>
           <p ref={emptyRef} tabIndex={-1} className={styles.focusTarget}>

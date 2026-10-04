@@ -1,7 +1,7 @@
-import type { CartState } from '@/types/cart'
+import type { CartItem, CartState } from '@/types/cart'
 import type { Product } from '@/types/product'
 
-// 장바구니 규칙 — reducer와 계산 함수 (Step 5-1, 5-2에서 수량 변경·삭제·합계 추가)
+// 장바구니 규칙 — reducer와 계산 함수 (Step 5-1, 5-2에서 수량 변경·삭제·합계, 5-3에서 불러오기 추가)
 //
 // reducer란?
 // - (지금 상태, 할 일) → 다음 상태 를 돌려주는 '순수 함수'.
@@ -19,7 +19,7 @@ import type { Product } from '@/types/product'
 //   React는 '이전 값과 다른 객체인지'(참조)로 바뀌었는지 판단하기 때문이다.
 // - 바꿀 게 없으면 받은 state를 그대로 돌려준다. → React가 '안 바뀜'으로 보고 다시 그리지 않는다.
 
-// 할 일(action) 목록 — 5-3에서 불러오기가 추가된다
+// 할 일(action) 목록
 // type 값으로 구분하는 이 모양을 '구별된 유니온(discriminated union)'이라 한다.
 // switch (action.type)에서 'add'로 들어가면 TypeScript가 action에 productId·maxQuantity가 있다는 것을 안다.
 // (5-2) 새 action을 추가하면 아래 switch에서 case를 빠뜨렸을 때 TypeScript가 알려 준다. (반환 타입이 CartState라서
@@ -44,6 +44,12 @@ export type CartAction =
       // 장바구니에서 빼기 (5-2)
       type: 'remove'
       productId: number
+    }
+  | {
+      // 통째로 바꾸기 (5-3) — localStorage에서 불러올 때, 다른 탭에서 바뀐 장바구니를 받을 때
+      // items는 sanitizeCartItems로 정리된 값을 넘긴다
+      type: 'replace'
+      items: CartItem[]
     }
 
 export const initialCartState: CartState = { items: [] }
@@ -95,7 +101,29 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
       if (items.length === state.items.length) return state
       return { items }
     }
+
+    case 'replace':
+      return { items: action.items }
   }
+}
+
+// 저장해 둔 장바구니를 지금 상품 데이터에 맞게 정리한다 (5-3)
+//
+// 왜 필요한가? localStorage의 값은 '예전에 저장한 것'이다. 그 사이에
+// - 상품이 판매 종료되어 목록에서 사라졌을 수 있고 → 뺀다
+// - 재고가 줄었을 수 있고(5개 담았는데 지금 재고 3개) → 재고만큼으로 줄인다
+// - 품절(재고 0)됐을 수 있다 → 뺀다
+// - 사용자가 개발자 도구로 값을 고쳤을 수도 있다(같은 상품이 두 번) → 처음 것만 남긴다
+// reducer의 규칙(1 ~ 재고)을 '불러온 값'에도 똑같이 적용하는 것이다. 이 정리를 거쳐야 화면의 버튼 상태·합계가 맞는다.
+export function sanitizeCartItems(items: CartItem[], products: Product[]): CartItem[] {
+  // Set: 중복 없는 값 모음. '이미 넣은 상품 id'를 기억하는 데 쓴다
+  const seen = new Set<number>()
+  return items.flatMap(({ productId, quantity }) => {
+    const product = products.find((p) => p.id === productId)
+    if (!product || product.stock < 1 || seen.has(productId)) return []
+    seen.add(productId)
+    return [{ productId, quantity: Math.min(quantity, product.stock) }]
+  })
 }
 
 // ─── 계산 함수 (state에서 값을 '꺼내 보는' 함수, selector라고도 부른다) ───

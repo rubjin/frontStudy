@@ -18,7 +18,8 @@ import styles from './CartLink.module.scss'
 //   번역 도구·음성 제어("장바구니 클릭")에 더 안전하다.
 //
 // 하이드레이션: 서버는 항상 빈 장바구니(0개)로 그린다. 브라우저도 처음엔 0개로 시작해서 결과가 같다.
-// (Step 5-3에서 localStorage 값을 불러오면 '서버 0개 / 브라우저 3개'가 달라지는 문제를 다룬다)
+// (Step 5-3) 저장된 장바구니는 CartProvider가 하이드레이션 '뒤'에 불러온다 → 그때 배지가 나타난다.
+// 처음부터 저장된 개수로 그리면 서버 HTML(0개)과 달라 하이드레이션 불일치가 난다. (CartProvider 주석 참고)
 function CartLink() {
   const { count } = useCart()
 

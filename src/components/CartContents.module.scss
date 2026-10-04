@@ -1,6 +1,6 @@
 @use 'styles' as *;
 
-// 장바구니 화면 (Step 5-1 최소 버전 → 5-2에서 완성)
+// 장바구니 화면 (Step 5-1 최소 버전 → 5-2에서 완성. 5-3 CartSkeleton도 이 클래스들을 쓴다)
 //
 // 큰 화면(lg 이상): [ 담은 상품 목록 | 주문 요약(오른쪽 고정 폭, sticky) ]
 // 작은 화면: 목록 아래에 주문 요약
@@ -88,6 +88,12 @@ $thumb-size-mobile: to-rem(72);
 
 .image {
   object-fit: cover;
+}
+
+// 스켈레톤이 썸네일 자리를 꽉 채우도록 (Step 5-3, CartSkeleton. Card의 .thumbFill과 같은 방식)
+.thumbFill {
+  position: absolute;
+  inset: 0;
 }
 
 .info {
