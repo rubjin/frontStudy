@@ -4,7 +4,8 @@ import { ALL_CATEGORIES } from '@/lib/filterProducts'
 import { DEFAULT_FILTERS, type CatalogFilters } from '@/lib/catalogParams'
 import type { SortValue } from '@/lib/sortProducts'
 import { simulateNetwork } from '@/lib/mockNetwork'
-import type { Prisma, Product as ProductRow } from '@/generated/prisma/client'
+import { Prisma, type Product as ProductRow } from '@/generated/prisma/client'
+import type { ProductInput } from '@/lib/productInput'
 import type { Product } from '@/types/product'
 import type { ProductListResponse } from '@/types/api'
 
@@ -132,4 +133,42 @@ export async function getProduct(id: string): Promise<Product | undefined> {
 export async function getProductIds(): Promise<string[]> {
   const rows = await prisma.product.findMany({ select: { id: true }, orderBy: { id: 'asc' } })
   return rows.map((row) => String(row.id))
+}
+
+// ─── 쓰기 (Step 8-3, 관리 화면의 Server Actions에서 쓴다) ─────────────────
+// 입력값은 부르는 쪽(actions.ts)에서 productInputSchema로 검사를 마친 값이다.
+// 새 상품은 이미지 없이 만든다(이미지 올리기는 아직 없음 → 카드에 상품명 첫 글자). 수정은 이미지 열을 건드리지 않는다.
+
+// 추가 — id는 DB가 자동으로 붙인다(autoincrement)
+export async function createProduct(input: ProductInput): Promise<Product> {
+  await simulateNetwork()
+  return toProduct(await prisma.product.create({ data: input }))
+}
+
+// 레코드가 없을 때 Prisma가 던지는 에러인지 (P2025: Record to update/delete not found)
+function isNotFoundError(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025'
+}
+
+// 수정 — 없는 상품이면 undefined (다른 탭에서 먼저 지운 경우 등)
+export async function updateProduct(id: number, input: ProductInput): Promise<Product | undefined> {
+  await simulateNetwork()
+  try {
+    return toProduct(await prisma.product.update({ where: { id }, data: input }))
+  } catch (error) {
+    if (isNotFoundError(error)) return undefined
+    throw error
+  }
+}
+
+// 삭제 — 지웠으면 true, 이미 없으면 false
+export async function deleteProduct(id: number): Promise<boolean> {
+  await simulateNetwork()
+  try {
+    await prisma.product.delete({ where: { id } })
+    return true
+  } catch (error) {
+    if (isNotFoundError(error)) return false
+    throw error
+  }
 }

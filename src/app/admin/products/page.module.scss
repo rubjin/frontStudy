@@ -1,0 +1,90 @@
+@use 'styles' as *;
+
+// 상품 관리 목록·추가·수정 페이지 공통 (Step 8-3)
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: space(4);
+  margin-bottom: space(4);
+}
+
+.title {
+  @include text(2xl);
+  font-weight: $font-weight-bold;
+}
+
+// 결과 문구 (비어 있으면 높이 0)
+.done {
+  margin-bottom: space(4);
+  color: var(--color-primary-text);
+  font-weight: $font-weight-medium;
+
+  &:empty {
+    margin-bottom: 0;
+  }
+}
+
+// 좁은 화면에서는 표만 가로로 스크롤 (페이지 전체가 옆으로 밀리지 않게)
+// position: relative — 표 안의 sr-only 글자(position: absolute)의 기준을 이 상자로 잡는다.
+// 없으면 sr-only가 스크롤 상자를 빠져나가 페이지 기준으로 놓여, 390px 화면에서 페이지 전체가 510px로 늘어났다(8-3 검증에서 발견)
+.tableWrap {
+  position: relative;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: $radius-lg;
+  background-color: var(--color-surface);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  @include text(sm);
+  white-space: nowrap;
+
+  th,
+  td {
+    padding: space(3) space(4);
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+  }
+
+  thead th {
+    color: var(--color-text-muted);
+    font-weight: $font-weight-medium;
+  }
+
+  tbody th {
+    font-weight: $font-weight-medium;
+  }
+
+  tbody tr:last-child > * {
+    border-bottom: 0;
+  }
+}
+
+// 숫자 열은 오른쪽 정렬 + 같은 폭 숫자 (자릿수 맞춰 비교하기 쉽게)
+.table .number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.link {
+  border-radius: $radius-md;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.rowActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: space(2);
+}

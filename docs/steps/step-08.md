@@ -1,6 +1,6 @@
 # Step 8. DB 연동 — Prisma + SQLite, 상품 관리(CRUD)
 
-> 상태: 진행 중 (8-1, 8-2 완료)
+> 상태: 완료 (2026-10-04)
 
 ## 목표
 지금까지 상품 데이터는 코드 파일(`src/data/products.ts`)이었다. 바꾸려면 코드를 고쳐 다시 배포해야 한다. 실제 서비스는 데이터가 **DB**에 있고, 관리자가 화면에서 추가·수정·삭제한다.
@@ -12,7 +12,7 @@
 ## 세부 단계
 - [x] **8-1** Prisma + SQLite 설치, 스키마·마이그레이션·시드, DB 클라이언트(`lib/db.ts`)
 - [x] **8-2** 데이터 계층을 DB로 교체 (읽기). 교체 전후 API 결과 비교
-- [ ] **8-3** 상품 관리 화면 — Server Actions로 추가·수정·삭제, 입력값 검사, 캐시 갱신
+- [x] **8-3** 상품 관리 화면 — Server Actions로 추가·수정·삭제, 입력값 검사, 캐시 갱신
 
 ---
 
@@ -131,3 +131,71 @@ npm run db:studio      # 가격을 바꿔 보고 API·홈·상세 비교
 - DB에서 2번 가격을 1,000원으로 바꾸면: API `1000`, 홈 HTML `₩1,000`, 상세 HTML `₩329,000`(정적, 옛 값) → 시드로 되돌림
 - 화면 회귀: 첫 HTML 8개 + 더 보기, 첫 화면 요청 0, 더 보기·포커스·뒤로·필터 정상, 장바구니 요청·삭제·새 상품, axe 라이트·다크 0
 - `tsc`·ESLint·Prettier 통과
+
+---
+
+## 8-3. 상품 관리 화면 — Server Actions로 추가·수정·삭제
+
+### 화면
+| 주소 | 내용 |
+|---|---|
+| `/admin/products` | 상품 표(번호·상품명·카테고리·가격·재고) + 행마다 수정·삭제, 위에 '상품 추가'. 저장 뒤 결과 문구(`?done=created\|updated\|deleted`) |
+| `/admin/products/new` | 추가 폼 |
+| `/admin/products/3/edit` | 수정 폼 (지금 값이 채워져 있음). 없는 id는 404 |
+
+### 파일별 설명
+| 파일 | 역할 |
+|---|---|
+| `src/app/admin/layout.tsx` (새 파일) | 관리 화면 전체의 '열어도 되는지' 검사(요청마다 — `await connection()`). 막히면 StatusView 안내. `robots: noindex` |
+| `src/lib/admin.ts` (새 파일) | `isAdminEnabled()` — 임시 규칙: 개발 모드는 열림, 배포 빌드는 `ADMIN_ENABLED=1`일 때만. Step 9에서 로그인 검사로 교체 |
+| `src/app/admin/products/actions.ts` (새 파일) | Server Actions `createProductAction`·`updateProductAction`·`deleteProductAction`. 권한 검사 → 입력값 검사(zod) → DB → `revalidatePath` → `redirect` |
+| `src/lib/productInput.ts` (새 파일) | 입력 규칙(`productInputSchema`, zod)과 칸별 에러 문구 변환(`toFieldErrors`). 빈 숫자 칸 처리, 조사 자동 선택(`가격을`/`재고를`) |
+| `src/lib/products.ts` | 쓰기 함수 `createProduct`·`updateProduct`·`deleteProduct` 추가. 없는 상품(Prisma `P2025`)은 에러 대신 `undefined`/`false` |
+| `src/app/admin/products/page.tsx`·`page.module.scss` (새 파일) | 관리 목록(표). 좁은 화면에서는 표만 가로 스크롤 |
+| `src/app/admin/products/new/page.tsx`, `[id]/edit/page.tsx` (새 파일) | 추가·수정 페이지. 수정은 `updateProductAction.bind(null, id)` |
+| `src/components/ProductForm.tsx`·`.module.scss`·`.stories.tsx` (새 파일) | `useActionState` 폼. 칸별 에러(`aria-invalid`·`aria-describedby`), 에러 요약(`role="alert"`), 첫 잘못된 칸 포커스, '저장 중…'(`aria-disabled`). 카테고리는 `datalist` |
+| `src/components/DeleteProductButton.tsx` (새 파일) | `confirm`으로 한 번 더 묻고 `useTransition`으로 삭제 액션 실행 |
+| `src/app/products/[id]/page.tsx` | `dynamicParams = true`(빌드 뒤 추가한 상품도 열리게), 없는 상품 탭 제목 |
+| `src/styles/_tokens.scss`·`_themes.scss` | `$red` 팔레트, `--color-danger`(라이트 red-600 / 다크 red-400) |
+| `package.json` | `zod`(dependencies) |
+
+### 핵심 개념
+
+**Server Action** — `'use server'` 파일의 async 함수. `<form action={함수}>`로 넣으면 제출할 때 서버에서 실행된다. API 주소와 fetch 코드를 직접 만들지 않아도 되고, JS가 아직 없어도 일반 폼 제출로 동작한다.
+- 대신 **누구나 직접 호출할 수 있는 서버 입구**다. 화면(페이지)을 막아도 액션은 따로 호출된다 → 함수 안에서 ① 권한 ② 입력값을 반드시 다시 검사한다.
+- 우리 화면의 폼에서 데이터를 바꿀 때는 Server Action, 외부에서 부르는 공개 API·브라우저가 읽는 데이터는 Route Handler(Step 6).
+
+**입력값 검사는 서버에서 (zod)** — 브라우저 검사(`required`, `min`)는 개발자 도구로 지우거나 직접 요청하면 우회된다. 화면 검사 = 안내, 서버 검사 = 규칙. 폼은 `noValidate`로 브라우저 말풍선을 끄고 서버가 돌려준 문구를 칸 아래에 같은 모양으로 보여 준다.
+
+**useActionState** (React 19) — `[state, formAction, isPending] = useActionState(액션, 처음 상태)`. 액션이 돌려준 값(에러)이 다음 state가 된다. React 19는 제출 뒤 폼을 초기화하므로, 에러일 때 입력값(`values`)을 돌려받아 다시 채운다.
+
+**revalidatePath** — 저장한 뒤 그 데이터를 보여 주는 페이지의 캐시를 버린다. 8-2에서 발견한 '상세(●, 빌드 때 생성)가 옛 가격 그대로' 문제가 이것으로 해결된다. 다음 요청 때 새 데이터로 다시 만든다.
+
+**bind로 id 묶기** — `updateProductAction.bind(null, 3)`: 첫 인자를 미리 채운 함수. 다만 이 값도 요청에 실려 오가므로 바꿔 보낼 수 있다 → 안전은 bind가 아니라 함수 안 권한 검사가 지킨다.
+
+**권한 검사는 요청마다** — layout에 `await connection()`이 없으면 `/admin/products/new`처럼 요청 정보를 안 쓰는 페이지는 빌드 때 미리 만들어지고, 검사도 빌드 때 한 번만 돈다.
+
+### 있었던 일
+- layout에서 막힐 때 처음엔 `notFound()`를 썼는데 Next.js 16.3.6 버그(#99287)가 재현됨(빈 `<html id="__next_error__">`) → StatusView 안내로.
+- 상세 `dynamicParams`를 true로 돌렸다. 지금 구성(같은 폴더의 `loading.tsx`)에서는 버그가 재현되지 않고 404 화면이 정상 HTML로 나온다. 대신 상태 코드는 200(soft 404, 스트리밍을 먼저 시작하므로). `noindex`가 붙어 검색에는 안 나온다. 진짜 404는 Step 9의 `proxy.ts`에서.
+- 390px에서 관리 목록 페이지 전체가 510px로 늘어남 → 표 머리글의 `sr-only`(`position: absolute`)가 스크롤 상자를 빠져나간 것. `.tableWrap`에 `position: relative`.
+- 폼을 거치지 않고 칸이 빠진 요청을 보내면 zod 기본 영어 문구가 나옴 → `z.string({ error })`. '재고을(를)' 같은 조사 → 받침으로 고르는 `withParticle`.
+
+### 확인 방법
+```bash
+npm run dev                   # 개발 모드는 관리 화면이 열려 있다 → localhost:3000/admin/products
+# 배포 빌드로 확인 (DB를 복사해 쓰면 개발 DB가 안전하다)
+npm run build
+cp prisma/dev.db /tmp/test.db
+DATABASE_URL="file:/tmp/test.db" ADMIN_ENABLED=1 npx next start -p 3100
+```
+
+검증 결과 (production 빌드 + 복사한 DB, 2026-10-04)
+- 추가: 빈 값·음수 가격 제출 → 요약 "입력값을 확인해 주세요 (3개)", 칸별 문구 3개, 첫 칸 포커스, 입력값 유지 → 올바른 값 → 목록으로 이동 + "상품을 추가했습니다." + 13행
+- 빌드 뒤 추가한 상품 상세 `/products/15` 200 + 이미지 없는 화면, API 카테고리 검색에도 나옴
+- 수정: 2번 가격 1,000원 → 상세(●) `₩329,000` → `₩1,000` (**revalidatePath로 갱신**) → 되돌림
+- 삭제: 확인 창 취소 → 그대로, 확인 → "상품을 삭제했습니다." + 12행, 그 상세는 404 화면(`lang="ko"`, 상태 200)
+- 없는 상품 수정 주소 404, 390px 페이지 가로 넘침 없음(표만 스크롤)
+- `ADMIN_ENABLED` 없이: 관리 페이지 3개 모두 안내 화면. **액션 직접 호출**(curl): 추가 → "권한이 없습니다", 삭제 → 거부(500), DB 변화 없음
+- axe: 관리 목록·폼 에러 상태·새 상품 상세 라이트/다크 0. Storybook 63개 스토리 렌더링 + axe 라이트/다크 0
+- `tsc`·ESLint·Stylelint·Prettier 통과

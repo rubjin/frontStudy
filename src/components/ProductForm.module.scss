@@ -1,0 +1,75 @@
+@use 'styles' as *;
+
+// 상품 추가·수정 폼 (Step 8-3)
+
+.form {
+  display: grid;
+  gap: space(5);
+  max-width: to-rem(480);
+}
+
+// 에러 요약 / 폼 전체 문구
+.summary {
+  padding: space(3) space(4);
+  border: 1px solid var(--color-danger);
+  border-radius: $radius-md;
+  color: var(--color-danger);
+  font-weight: $font-weight-medium;
+}
+
+.field {
+  display: grid;
+  gap: space(1);
+}
+
+.label {
+  @include text(sm);
+  font-weight: $font-weight-medium;
+}
+
+// 입력칸 + 단위('원')
+.control {
+  display: flex;
+  align-items: center;
+  gap: space(2);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: space(2) space(3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: $radius-md;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+
+  &:focus {
+    border-color: transparent;
+    @include focus-ring;
+  }
+
+  // 잘못된 칸 — 색만이 아니라 아래 문구로도 알린다(색을 구분하기 어려운 사용자)
+  &[aria-invalid='true'] {
+    border-color: var(--color-danger);
+  }
+}
+
+.suffix {
+  color: var(--color-text-muted);
+}
+
+.hint {
+  @include text(xs);
+  color: var(--color-text-muted);
+}
+
+.error {
+  @include text(sm);
+  color: var(--color-danger);
+}
+
+.actions {
+  display: flex;
+  gap: space(3);
+  margin-top: space(2);
+}

@@ -44,6 +44,12 @@ $gray: (
   950: #030712,
 );
 
+// 빨강 — 에러 문구·잘못 입력한 칸 (Step 8-3)
+$red: (
+  400: #f87171,
+  600: #dc2626,
+);
+
 // map.get($gray, 900): 맵(키-값 묶음)에서 값을 꺼내는 Sass 내장 함수
 // 사용 예) color: palette($gray, 900)
 @function palette($scale, $step) {
