@@ -5,14 +5,19 @@ import CartSkeleton from './CartSkeleton'
 import { CartProvider } from './CartProvider'
 import type { CartItem } from '@/types/cart'
 import { toRem } from '@/lib/units'
+import { productsLoading, productsNetworkError, productsServerError } from '@/mocks/handlers'
 
-// 장바구니 화면 스토리 (Step 5-2, 5-3에서 Loading 추가)
+// 장바구니 화면 스토리 (Step 5-2, 5-3에서 Loading 추가, 6-4에서 API 상태 추가)
 //
 // 상품이 담긴 상태를 보여 주려면 장바구니에 처음부터 상품이 있어야 한다.
 // → 스토리마다 CartProvider에 initialItems를 넘겨 감싼다. (preview.tsx의 전역 CartProvider보다 안쪽이라 이쪽이 쓰인다.
 //    Context는 '가장 가까운 Provider'의 값을 꺼내기 때문)
 // 버튼을 눌러 수량을 바꾸거나 삭제하면 헤더 링크 배지(CartLink)도 함께 바뀐다.
 // persist={false}: localStorage에 저장하지 않는다 (preview.tsx 주석 참고)
+//
+// (6-4) CartContents는 상품 정보를 /api/products?ids=... 로 받는다(Step 6-3).
+// Storybook에는 Next.js 서버가 없으므로 MSW(src/mocks/handlers.ts)가 요청을 가로채 응답한다.
+// 아래 Fetching·ServerError·NetworkError는 상품 API 응답만 바꿔 끼운 스토리다.
 
 // 상품 id: 1 무선 헤드폰(재고 12) · 2 스마트워치(재고 5) · 4 기계식 키보드(재고 23)
 const filled: CartItem[] = [
@@ -59,6 +64,21 @@ export const Filled: Story = {
 /** 재고만큼 담음 — + 버튼 비활성, '재고 5개까지' 안내 */
 export const AtMaxQuantity: Story = {
   parameters: { cartItems: [{ productId: 2, quantity: 5 }] },
+}
+
+/** 상품 정보를 받는 중 (Step 6-4) — API 응답이 오지 않는 상태 (MSW delay('infinite')) */
+export const Fetching: Story = {
+  parameters: { cartItems: filled, msw: { handlers: { products: productsLoading } } },
+}
+
+/** API 서버 오류 500 (Step 6-4) — 안내 + 다시 시도 */
+export const ServerError: Story = {
+  parameters: { cartItems: filled, msw: { handlers: { products: productsServerError } } },
+}
+
+/** 네트워크 끊김 (Step 6-4) — '네트워크 연결을 확인해 주세요.' */
+export const NetworkError: Story = {
+  parameters: { cartItems: filled, msw: { handlers: { products: productsNetworkError } } },
 }
 
 /** 불러오는 중 (Step 5-3) — 저장된 장바구니를 읽기 전, 서버 HTML과 브라우저 첫 화면 */

@@ -9,3 +9,6 @@ package-lock.json
 # 코드 예시 안의 JS까지 고쳐서(예: 줄 앞에 ; 추가) 설명용 코드가 어색해진다.
 # 문서는 사람이 읽기 좋은 모양을 직접 유지한다.
 *.md
+
+# MSW가 만드는 서비스 워커 파일 (Step 6-4) — npx msw init이 생성·갱신한다. 사람이 고치지 않는다
+.storybook/public/mockServiceWorker.js

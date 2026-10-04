@@ -1,5 +1,7 @@
 import type { Preview } from '@storybook/nextjs-vite'
 import { withThemeByDataAttribute } from '@storybook/addon-themes'
+import { mswLoader } from 'msw-storybook-addon/csf3'
+import { handlers } from '../src/mocks/handlers'
 import { CartProvider } from '../src/components/CartProvider'
 import { ToastProvider } from '../src/components/ui/Toast'
 // 실제 사이트(layout.tsx)와 같은 폰트·전역 스타일을 불러온다
@@ -14,6 +16,10 @@ import '../src/styles/globals.scss'
 // - decorators: 모든 스토리를 감싸는 포장지
 // - parameters: 애드온·프레임워크 옵션
 const preview: Preview = {
+  // MSW (Step 6-4): 스토리를 그리기 '전'에 서비스 워커를 켠다(loader = 스토리 전에 실행되는 준비 단계)
+  // → 컴포넌트의 fetch('/api/...')를 src/mocks/handlers.ts가 가로채 응답한다. Next.js 서버 없이도 API가 있는 것처럼 동작
+  loaders: [mswLoader()],
+
   // tags: ['autodocs'] — 모든 컴포넌트에 Docs(문서) 페이지를 자동으로 만든다.
   // 스토리 + props 타입(TypeScript) + JSDoc 주석을 읽어서 props 표와 예시를 만든다.
   tags: ['autodocs'],
@@ -45,6 +51,10 @@ const preview: Preview = {
   ],
 
   parameters: {
+    // 모든 스토리의 기본 API 응답 (src/mocks/handlers.ts). 스토리에서 키 단위로 덮어쓴다
+    //   예) parameters: { msw: { handlers: { products: productsServerError } } } → 상품 API만 500
+    msw: { handlers },
+
     // Next.js App Router 기준으로 next/navigation(useRouter 등)을 흉내 낸다
     nextjs: { appDirectory: true },
 

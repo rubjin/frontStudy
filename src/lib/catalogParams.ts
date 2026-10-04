@@ -63,6 +63,17 @@ export function parseCatalogParams(
   }
 }
 
+// 'ids' 쿼리 읽기 (Step 6-1 API용, 6-4 MSW 목킹도 같이 쓴다)
+// '1,2,x,3' → [1, 2, 3] — 정수가 아닌 값은 버리고 최대 maxCount개. 키가 없으면(null) undefined
+export function parseIdList(value: string | null, maxCount = 100): number[] | undefined {
+  if (value === null) return undefined
+  return value
+    .split(',')
+    .map(Number)
+    .filter((id) => Number.isInteger(id))
+    .slice(0, maxCount)
+}
+
 // 필터 값 → 주소 쿼리 문자열 (쓰기). 예) '?q=%EB%AC%B4%EC%84%A0&sort=rating', 모두 기본값이면 ''
 //
 // URLSearchParams: 쿼리 문자열을 만들어 주는 브라우저 내장 도구.

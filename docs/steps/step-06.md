@@ -1,6 +1,6 @@
 # Step 6. API 연동 — Route Handler 목 API, 서버 vs 클라이언트에서 데이터 받기
 
-> 상태: 진행 중 (6-1 ~ 6-3 완료)
+> 상태: 완료 (2026-10-04)
 
 ## 목표
 지금까지 상품 데이터는 `data/products.ts` 파일을 **화면 코드가 직접 import**했다. 브라우저 코드(`'use client'`)도 import해서 상품 데이터 전체가 자바스크립트 번들에 들어 있었다. 실제 서비스는 데이터가 서버(API·DB)에 있고, 화면은 그것을 **요청해서 받아야** 한다.
@@ -15,7 +15,7 @@
 - [x] **6-1** Route Handler 목 API: `/api/products`(검색·필터·정렬·ids), `/api/products/[id]`, `/api/categories`. 서버 전용 데이터 계층, 지연·실패 흉내
 - [x] **6-2** 목록: 서버 컴포넌트에서 데이터 받기 + Suspense 스트리밍. 브라우저 번들에서 상품 데이터 빼기
 - [x] **6-3** 장바구니: 클라이언트에서 fetch — 로딩·에러·재시도, 요청 취소(AbortController)
-- [ ] **6-4** Storybook: MSW로 API 흉내 (fetch하는 컴포넌트의 스토리)
+- [x] **6-4** Storybook: MSW로 API 흉내 (fetch하는 컴포넌트의 스토리)
 
 ---
 
@@ -228,3 +228,72 @@ CartProvider가 재고 확인에 실패하면 저장된 값을 정리하지 않�
 - **워터폴**: CartContents는 CartProvider가 끝난 뒤(hydrated)에야 요청을 시작한다. 지연 1.5초면 1.5 + 1.5 = **약 3.7초** 뒤에 목록이 보인다.
 - → 요청 결과를 **주소(키)별로 저장해 두고 나눠 쓰는 캐시**가 있으면 둘 다 해결된다. 그게 TanStack Query다(7-1).
 - Storybook의 장바구니 스토리는 API 서버가 없어 실패 화면이 된다 → 6-4 MSW
+
+---
+
+## 6-4. Storybook — MSW로 API 흉내
+
+### 왜 필요한가?
+Storybook은 Next.js 서버 없이 컴포넌트만 띄운다. 6-3부터 `CartContents`가 `/api/products`를 fetch하므로, Storybook에서는 받을 곳이 없어 항상 실패 화면이 된다.
+
+**MSW(Mock Service Worker)**는 브라우저의 **서비스 워커**(페이지와 네트워크 사이에서 요청을 가로챌 수 있는 브라우저 기능)로 `fetch` 요청을 가로채, 우리가 정한 응답을 돌려준다.
+- 컴포넌트 코드는 그대로다. "Storybook이면 가짜 데이터" 같은 분기를 컴포넌트에 넣지 않는다.
+- 서버 오류·네트워크 끊김·끝나지 않는 로딩을 스토리마다 원하는 대로 만든다(실제 서버로는 재현이 어렵다).
+- Step 10 테스트(Vitest·Playwright)에서도 같은 핸들러를 쓴다.
+
+### 파일별 설명
+| 파일 | 역할 |
+|---|---|
+| `src/mocks/handlers.ts` (새 파일) | `handlers`(기본: products·categories) + 상황별 `productsLoading`·`productsServerError`·`productsNetworkError`. 응답 타입은 `types/api.ts`, 걸러내기·정렬은 실제 API와 같은 순수 함수 |
+| `.storybook/public/mockServiceWorker.js` (생성) | `npx msw init .storybook/public --save`. 사이트의 `public/`이 아니라 Storybook 전용 폴더 → 실제 배포에 섞이지 않음 |
+| `.storybook/main.ts` | `staticDirs`에 `./public` 추가 |
+| `.storybook/preview.tsx` | `loaders: [mswLoader()]`(스토리 그리기 전에 워커 시작), `parameters.msw.handlers` 기본값 |
+| `src/components/CartContents.stories.tsx` | `Fetching`·`ServerError`·`NetworkError` 스토리 (상품 API만 바꿔 끼움) |
+| `src/lib/catalogParams.ts` | `parseIdList` — API와 MSW가 같이 쓰도록 route.ts에서 옮김 |
+| `package.json` | `msw`·`msw-storybook-addon`(dev), `msw.workerDirectory` |
+| `.prettierignore`·`eslint.config.mjs` | 생성 파일(워커) 제외 |
+
+### 핵심 개념
+
+**1. 핸들러 = "이 주소로 요청이 오면 이렇게 답한다"**
+```ts
+http.get('/api/products/:id', ({ params }) => HttpResponse.json(product))   // :id = Next.js의 [id]
+HttpResponse.json(body, { status: 500 })   // 서버 오류
+HttpResponse.error()                       // 응답 없음 = 네트워크 끊김 (fetch가 reject)
+await delay('infinite')                    // 영원히 기다림 = 로딩 화면 고정
+```
+
+**2. 키 이름별 묶음으로 덮어쓰기**
+`preview.tsx`에 `msw: { handlers: { products, categories } }`를 깔고, 스토리는 `msw: { handlers: { products: productsServerError } }`처럼 **바꿀 키만** 적는다. 카테고리 API는 기본값 그대로.
+
+**3. 목은 진짜와 같은 규칙으로**
+목 응답이 실제 API와 다르면 Storybook에서는 되는데 실제로는 깨진다. 그래서 응답은 `types/api.ts` 타입으로 검사하고, 걸러내기·정렬·`ids` 해석은 실제 API와 **같은 함수**를 import했다. (`lib/products.ts`는 `server-only`라 브라우저에서 못 쓰므로, 그 안쪽의 순수 함수들을 직접 조합)
+
+**4. 워커 파일 위치**
+`public/`에 두면 `next build` 결과에도 `/mockServiceWorker.js`가 생겨 실제 사이트에 섞인다. `.storybook/public`에 두고 Storybook `staticDirs`에만 추가했다. `package.json`의 `msw.workerDirectory`가 이 위치를 기억해서, msw를 업데이트하면 워커 파일도 같이 갱신된다.
+
+### 확인 방법
+1. `npm run storybook` → `Cart/CartContents`: Filled(목록) · Fetching(스켈레톤) · ServerError · NetworkError
+2. 개발자 도구 콘솔에 `[MSW] Mocking enabled.` (워커가 켜짐)
+
+검증 결과 (2026-10-04)
+- Storybook 빌드 결과에 `mockServiceWorker.js` 포함, Next 빌드 결과(`.next/static`)·`public/`에는 없음
+- Filled: 목록 3줄·배지 6개 / Fetching: "장바구니를 불러오는 중입니다." / ServerError: "잠시 후 다시 시도해 주세요." / NetworkError: "네트워크 연결을 확인해 주세요." / AtMaxQuantity·Empty 정상
+- 스토리 55개 × 라이트/다크 렌더링 정상·axe 위반 0
+- `tsc`·ESLint·Prettier 통과
+
+---
+
+## Step 6 정리
+| 배운 것 | 어디에 |
+|---|---|
+| Route Handler로 API 만들기, 상태 코드·실패 응답 통일 | `app/api/**/route.ts`, `lib/apiResponse.ts` |
+| 서버 전용 데이터 계층 (`server-only`) | `lib/products.ts` |
+| 서버 컴포넌트에서 데이터 받기 + Suspense 스트리밍 + `Promise.all` | `(catalog)/page.tsx` |
+| 클라이언트 fetch: `response.ok`, 로딩·에러·다시 시도·취소 | `lib/api.ts`, `useCartProducts` |
+| 느린 서버·실패 흉내 (환경 변수) | `lib/mockNetwork.ts` |
+| 브라우저에서 API 흉내 (MSW) | `src/mocks/handlers.ts`, Storybook |
+
+### Step 7에서 풀 문제
+- `/cart`에서 같은 요청 2번 + 워터폴(지연 1.5초 → 3.7초)
+- 목록 필터는 아직 받아 둔 전체 상품을 브라우저에서 거른다. 상품이 많아지면 서버에 '걸러서·나눠서' 달라고 해야 한다 → 검색 debounce, 더 보기

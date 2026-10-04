@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server'
 import { getProducts } from '@/lib/products'
-import { parseCatalogParams } from '@/lib/catalogParams'
+import { parseCatalogParams, parseIdList } from '@/lib/catalogParams'
 import { serverErrorResponse } from '@/lib/apiResponse'
 import type { ProductListResponse } from '@/types/api'
 
@@ -15,23 +15,10 @@ import type { ProductListResponse } from '@/types/api'
 //
 // 쿼리 (목록 화면 주소와 같은 이름 — lib/catalogParams.ts를 그대로 쓴다)
 //   ?q=무선 &category=오디오 &sort=price-asc|price-desc|rating &instock=1
-//   ?ids=1,2,5   이 상품들만 (장바구니, Step 6-3)
+//   ?ids=1,2,5   이 상품들만 (장바구니, Step 6-3). 정수만, 최대 100개 — 아주 긴 목록으로 서버를 괴롭히는 요청을 막는다
 // 응답: { items: Product[], total: number }  (types/api.ts)
 //
 // 예) curl 'http://localhost:3000/api/products?category=오디오&sort=rating'
-
-// ids는 최대 몇 개까지 받을지. 아주 긴 목록으로 서버를 괴롭히는 요청을 막는다
-const MAX_IDS = 100
-
-// '1,2,x,3' → [1, 2, 3] (정수가 아닌 값은 버린다. 주소 값은 믿지 않는다 — Step 4-2)
-function parseIds(value: string | null): number[] | undefined {
-  if (value === null) return undefined
-  return value
-    .split(',')
-    .map(Number)
-    .filter((id) => Number.isInteger(id))
-    .slice(0, MAX_IDS)
-}
 
 // NextRequest: 웹 표준 Request에 Next.js가 편의 기능을 더한 것. nextUrl.searchParams로 쿼리를 바로 읽는다
 export async function GET(request: NextRequest) {
@@ -39,7 +26,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl
     // null: 카테고리를 검사하지 않는다 → 없는 카테고리는 결과 0개 (카테고리 목록을 먼저 조회하지 않아도 된다)
     const filters = parseCatalogParams(searchParams, null)
-    const data: ProductListResponse = await getProducts({ filters, ids: parseIds(searchParams.get('ids')) })
+    const data: ProductListResponse = await getProducts({ filters, ids: parseIdList(searchParams.get('ids')) })
     // Response.json(): 객체를 JSON 문자열로 바꾸고 Content-Type: application/json 헤더를 붙여 준다
     return Response.json(data)
   } catch (error) {

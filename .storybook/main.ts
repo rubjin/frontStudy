@@ -30,7 +30,9 @@ const config: StorybookConfig = {
   },
 
   // public 폴더를 그대로 제공 → '/images/products/1.jpg' 같은 경로가 Storybook에서도 열린다
-  staticDirs: ['../public'],
+  // ./public (Step 6-4): MSW 서비스 워커(mockServiceWorker.js). 사이트의 public/에 두면 실제 배포에도 섞여 나가므로
+  //   Storybook 전용 폴더에 따로 둔다. (npx msw init .storybook/public 으로 생성, package.json의 msw.workerDirectory)
+  staticDirs: ['../public', './public'],
 
   // Vite 설정 덧붙이기
   // Next.js의 sassOptions.loadPaths(next.config.ts)와 같은 설정을 Storybook(Vite)에도 해 준다.

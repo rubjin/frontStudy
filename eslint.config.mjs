@@ -17,5 +17,13 @@ export default defineConfig([
   ...nextTs,
   ...storybook.configs['flat/recommended'],
   prettier,
-  globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts', 'storybook-static/**']),
+  globalIgnores([
+    '.next/**',
+    'out/**',
+    'build/**',
+    'next-env.d.ts',
+    'storybook-static/**',
+    // MSW 서비스 워커 (Step 6-4) — 라이브러리가 생성하는 파일
+    '.storybook/public/mockServiceWorker.js',
+  ]),
 ])

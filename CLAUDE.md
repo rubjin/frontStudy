@@ -27,6 +27,7 @@
   - 폰트: Pretendard dynamic subset (`pretendard` 패키지 CSS를 layout에서 import). `_fonts.scss`의 `'Pretendard Fallback'`(맑은 고딕 + `size-adjust`, 실측값)으로 폰트 교체 때 레이아웃 이동 방지. 폰트 스택은 `fonts.$font-family-base`
   - 컴포넌트 문서화: **Storybook 10** (`@storybook/nextjs-vite`). `npm run storybook`(6006) / `npm run build-storybook`
     - `.storybook/main.ts`: Sass loadPaths를 Next 설정과 같게(`viteFinal`), `staticDirs: public` / `preview.tsx`: 전역 CSS·폰트, `withThemeByDataAttribute`(html data-theme), `autodocs`, `a11y: { test: 'todo' }`
+    - API(`/api`)는 MSW로 흉내(`src/mocks/handlers.ts`, preview의 `mswLoader`). 스토리별 상황은 `parameters: { msw: { handlers: { products: productsServerError } } }`처럼 키만 덮어쓴다. 워커는 `.storybook/public`(사이트 public 아님)
     - 스토리는 컴포넌트 옆 `*.stories.tsx`. 제어 컴포넌트는 `useArgs`로 조작 가능하게. 새 컴포넌트를 만들면 스토리도 만든다
     - 확인: 빌드 후 정적 서버 + 헤드리스 Chrome으로 모든 스토리 렌더링 + axe 검사(라이트/다크). 첫 로딩이 느리니 고정 대기 대신 렌더 완료를 기다릴 것
 - 구조
@@ -34,7 +35,7 @@
   - `src/components/ui/` — 기능과 무관한 기본 부품. Button(`Button`=`<button>` / `ButtonLink`=`<a>`, `variant`·`size`), Skeleton(스켈레톤 조각), Toast(`ToastProvider`·`useToast().showToast({ message, action })`, layout에서 CartProvider 바깥)
   - `src/components/` — Header(서버 컴포넌트), ThemeToggle(`'use client'`), ProductCatalog(목록 화면, `'use client'`. 상품·카테고리는 props(page의 `CatalogData`가 서버에서 받음). 필터 상태는 주소 쿼리가 원본: `useSearchParams`로 읽고 `window.history.pushState`(선택)·`replaceState`(검색어)로 씀. useState·router.push 쓰지 않음), StatusView(404·에러 공통 화면), BackButton(이전 페이지로), ProductDetail(상세 화면, 서버 컴포넌트), CartProvider(`useReducer` + Context, `useCart()` 훅. layout에서 Header·main을 감쌈. localStorage 저장·불러오기·탭 동기화, `hydrated`. 스토리에서는 `persist={false}` + `initialItems`로 담긴 상태 재현), AddToCartButton·CardAddButton(상세·카드 담기 버튼, 공통 훅 `useAddToCart`)·CartLink·CartContents(`useCart` 쓰는 작은 `'use client'`), CartSkeleton(장바구니 불러오기 전), useCartProducts(장바구니 상품 정보 클라이언트 fetch), CardSkeleton·CatalogSkeleton·ProductDetailSkeleton(로딩 스켈레톤, Suspense fallback·`loading.tsx`), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
   - `src/app/api/` — Route Handler(목 API): `products`(목록, 쿼리 q·category·sort·instock·ids), `products/[id]`, `categories`. 응답 타입은 `types/api.ts`, 실패는 `{ error: { message } }`(`lib/apiResponse.ts`)
-  - `src/lib/` — products(서버 전용 데이터 계층 `import 'server-only'`: `getProducts`·`getProduct`·`getCategories`·`getProductIds`. 서버 컴포넌트는 이것을 직접, 브라우저는 `/api`로), mockNetwork(`MOCK_API_DELAY_MS`·`MOCK_API_ERROR_RATE` 환경 변수로 지연·실패 흉내, 빌드 중엔 꺼짐), catalogParams(`parseCatalogParams`·`toCatalogSearch`: 주소 쿼리 q·category·sort·instock ↔ 필터 값, 읽을 때 값 검사), format, filterProducts, sortProducts (순수 함수), site(`SITE_NAME`, `formatTitle`), useReportError(에러 화면 공통 기록 훅), api(브라우저용 `fetchJson`·`ApiError`·`fetchProductsByIds` — fetch는 여기로), cartStorage(장바구니 localStorage 읽기·쓰기, 값 검사), cart(`cartReducer`(add·setQuantity·remove·replace)·`sanitizeCartItems`·`getCartCount`·`getCartLines`·`getCartTotal` 등 순수 함수. 장바구니 규칙은 여기에만) / `src/data/products.ts` (목 데이터) / `src/types/` (공통 타입)
+  - `src/lib/` — products(서버 전용 데이터 계층 `import 'server-only'`: `getProducts`·`getProduct`·`getCategories`·`getProductIds`. 서버 컴포넌트는 이것을 직접, 브라우저는 `/api`로), mockNetwork(`MOCK_API_DELAY_MS`·`MOCK_API_ERROR_RATE` 환경 변수로 지연·실패 흉내, 빌드 중엔 꺼짐), catalogParams(`parseCatalogParams`·`toCatalogSearch`: 주소 쿼리 q·category·sort·instock ↔ 필터 값, 읽을 때 값 검사), format, filterProducts, sortProducts (순수 함수), site(`SITE_NAME`, `formatTitle`), useReportError(에러 화면 공통 기록 훅), api(브라우저용 `fetchJson`·`ApiError`·`fetchProductsByIds` — fetch는 여기로), cartStorage(장바구니 localStorage 읽기·쓰기, 값 검사), cart(`cartReducer`(add·setQuantity·remove·replace)·`sanitizeCartItems`·`getCartCount`·`getCartLines`·`getCartTotal` 등 순수 함수. 장바구니 규칙은 여기에만) / `src/data/products.ts` (목 데이터 — `lib/products.ts`(서버)와 `src/mocks`(MSW)만 import) / `src/mocks/` (MSW 핸들러) / `src/types/` (공통 타입)
   - import는 `@/` 별칭(= `src/`) 사용
 - 원칙: `page.tsx`·`layout.tsx`는 서버 컴포넌트로 두고, 상태·이벤트가 필요한 부분만 작은 `'use client'` 컴포넌트로 뺀다.
 - 원칙: 스켈레톤은 실제 컴포넌트의 SCSS 클래스를 그대로 써서 크기를 맞춘다(치수를 따로 적지 않음). 바꾼 뒤에는 실제 화면과 영역 크기를 비교해 확인한다.
@@ -81,7 +82,7 @@
 - [x] **Step 5** 장바구니: Context + `useReducer`(또는 Zustand), localStorage 저장
 
 ### Phase 2. API 연동
-- [ ] **Step 6** Next.js Route Handler(`app/api`)로 목 API 만들기 → 서버 컴포넌트에서 fetch vs 클라이언트에서 fetch 비교. 로딩·에러·빈 상태 처리. (MSW는 Storybook·테스트용 목킹에 사용)
+- [x] **Step 6** Next.js Route Handler(`app/api`)로 목 API 만들기 → 서버 컴포넌트에서 fetch vs 클라이언트에서 fetch 비교. 로딩·에러·빈 상태 처리. (MSW는 Storybook·테스트용 목킹에 사용)
 - [ ] **Step 7** TanStack Query 도입: 캐싱, 검색 debounce, 페이지네이션 또는 무한 스크롤
 
 ### Phase 3. 백엔드 맛보기
@@ -133,3 +134,5 @@
   - 6-1 완료: `app/api/products`(쿼리 = 목록 주소와 같음, `ids`)·`products/[id]`(404)·`categories`. `lib/products.ts` 서버 전용(`server-only`) + `getProducts`·`getCategories`, `lib/mockNetwork.ts`(지연·실패 환경 변수), `lib/apiResponse.ts`, `types/api.ts`.
   - 6-2 완료: 홈 `CatalogData`(async 서버 컴포넌트, `Promise.all`)를 Suspense 안에 → 지연 시 스켈레톤 먼저 스트리밍(171ms → 목록 1637ms). `ProductCatalog`는 `products`·`categories` props. 실패 시 `(catalog)/error.tsx` + retry 복구 확인.
   - 6-3 완료: 장바구니는 브라우저에서 fetch — `lib/api.ts`(`fetchJson`·`ApiError`·`fetchProductsByIds`), `useCartProducts`(안 물어본 id만, AbortController, 다시 시도, 파생 상태). CartProvider 재고 확인도 API로(실패 시 저장값 유지). 브라우저 JS에서 상품 데이터 0. 발견: 같은 요청 2번 + 워터폴(지연 1.5초 → 3.7초) → Step 7.
+  - 6-4 완료: MSW — `src/mocks/handlers.ts`(키별 Record, 상황별 loading·500·network error), `.storybook/public/mockServiceWorker.js`(사이트 public에 안 둠), preview `mswLoader` + `parameters.msw.handlers`. CartContents 스토리 Fetching·ServerError·NetworkError.
+  - **Step 6 완료.**
