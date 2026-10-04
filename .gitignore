@@ -34,3 +34,6 @@ next-env.d.ts
 # Storybook
 storybook-static
 *storybook.log
+
+# 환경 변수 (Step 6-1) — 개인 설정·비밀 값(나중에 DB 비밀번호 등)은 커밋하지 않는다
+.env*.local

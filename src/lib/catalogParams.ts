@@ -44,9 +44,11 @@ const SORT_VALUES = new Set<string>(SORT_OPTIONS.map((option) => option.value))
 //
 // params: URLSearchParams — 브라우저의 useSearchParams()가 돌려주는 값과 같은 모양 (get으로 꺼낸다)
 // categories: 허용할 카테고리 목록
+//   null이면 검사하지 않고 그대로 쓴다 (Step 6-1, API용). API는 없는 카테고리를 '결과 0개'로 답하면 되므로
+//   카테고리 목록을 먼저 조회할 필요가 없다. (화면은 빈 화면 대신 '전체'를 보여 주는 게 친절해서 검사한다)
 export function parseCatalogParams(
   params: Pick<URLSearchParams, 'get'>,
-  categories: readonly string[],
+  categories: readonly string[] | null,
 ): CatalogFilters {
   const sort = params.get(KEYS.sort) ?? ''
   const category = params.get(KEYS.category) ?? ''
@@ -54,7 +56,7 @@ export function parseCatalogParams(
   return {
     // ?? : 왼쪽이 null(키가 없음)이면 오른쪽 값을 쓴다
     query: params.get(KEYS.query) ?? DEFAULT_FILTERS.query,
-    category: categories.includes(category) ? category : DEFAULT_FILTERS.category,
+    category: category && (categories === null || categories.includes(category)) ? category : DEFAULT_FILTERS.category,
     // SORT_VALUES로 검사했으므로 SortValue라고 알려 준다 (as: 타입 단언)
     sort: SORT_VALUES.has(sort) ? (sort as SortValue) : DEFAULT_FILTERS.sort,
     hideSoldOut: params.get(KEYS.hideSoldOut) === '1',
