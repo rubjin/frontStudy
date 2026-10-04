@@ -1,6 +1,6 @@
 # Step 6. API 연동 — Route Handler 목 API, 서버 vs 클라이언트에서 데이터 받기
 
-> 상태: 진행 중 (6-1, 6-2 완료)
+> 상태: 진행 중 (6-1 ~ 6-3 완료)
 
 ## 목표
 지금까지 상품 데이터는 `data/products.ts` 파일을 **화면 코드가 직접 import**했다. 브라우저 코드(`'use client'`)도 import해서 상품 데이터 전체가 자바스크립트 번들에 들어 있었다. 실제 서비스는 데이터가 서버(API·DB)에 있고, 화면은 그것을 **요청해서 받아야** 한다.
@@ -14,7 +14,7 @@
 ## 세부 단계
 - [x] **6-1** Route Handler 목 API: `/api/products`(검색·필터·정렬·ids), `/api/products/[id]`, `/api/categories`. 서버 전용 데이터 계층, 지연·실패 흉내
 - [x] **6-2** 목록: 서버 컴포넌트에서 데이터 받기 + Suspense 스트리밍. 브라우저 번들에서 상품 데이터 빼기
-- [ ] **6-3** 장바구니: 클라이언트에서 fetch — 로딩·에러·재시도, 요청 취소(AbortController)
+- [x] **6-3** 장바구니: 클라이언트에서 fetch — 로딩·에러·재시도, 요청 취소(AbortController)
 - [ ] **6-4** Storybook: MSW로 API 흉내 (fetch하는 컴포넌트의 스토리)
 
 ---
@@ -160,3 +160,71 @@ MOCK_API_ERROR_RATE=0.6 npx next start -p 3100  # '다시 시도'를 몇 번 누
 ### 남은 것
 - 상품 데이터가 아직 브라우저 JS 묶음에 있다 — layout의 `CartProvider`와 `CartContents`가 데이터 파일을 import하기 때문 → 6-3
 - 필터를 바꿀 때 서버에 묻지 않고 받아 둔 전체 상품을 브라우저에서 거른다. 상품이 많아지면 서버에 걸러 달라고 해야 한다 → Step 7
+
+---
+
+## 6-3. 장바구니 — 클라이언트에서 fetch
+
+### 왜 장바구니는 브라우저에서 받나?
+장바구니에 **어떤 상품이 들었는지는 브라우저의 localStorage에만** 있다. 서버는 무엇을 보내야 할지 모른다. 그래서 브라우저가 `/api/products?ids=2,5`로 직접 요청한다(Next.js 문서: Storage API에 의존하는 데이터는 클라이언트 fetch).
+
+### 서버 컴포넌트 vs 클라이언트 fetch 비교
+| | 서버 컴포넌트 (6-2 목록) | 클라이언트 fetch (6-3 장바구니) |
+|---|---|---|
+| 데이터 받는 곳 | 서버: `lib/products` 직접 호출 | 브라우저: `fetch('/api/...')` |
+| 첫 HTML | 내용이 들어 있음 (검색엔진 OK) | 스켈레톤만 (내용은 JS 실행 후) |
+| 기다리는 방법 | `await` + Suspense가 스켈레톤 | 로딩 상태를 직접 계산해서 스켈레톤 |
+| 실패 | `error.tsx`가 잡음 | 직접 잡아서 안내 + 다시 시도 |
+| 요청 취소 | 필요 없음 | `AbortController` (화면 떠남·조건 바뀜) |
+| 비밀 값(DB 비밀번호 등) | 쓸 수 있음 | 절대 안 됨 (브라우저에 다 보임) |
+| 언제 쓰나 | 대부분의 화면 데이터 | 브라우저만 아는 값(localStorage·위치·입력 중인 값)에 따라 달라지는 데이터 |
+
+### 파일별 설명
+| 파일 | 역할 |
+|---|---|
+| `src/lib/api.ts` (새 파일) | 브라우저용 `fetchJson`(`response.ok` 검사, 실패 문구 꺼내기, 네트워크 끊김 → status 0) + `ApiError` + `fetchProductsByIds` |
+| `src/components/useCartProducts.ts` (새 파일) | 장바구니 id들의 상품 정보. 아직 안 물어본 id만 요청, `AbortController`, 다시 시도, 상태는 계산(파생) |
+| `src/components/CartContents.tsx`·`.module.scss` | 데이터 파일 import 제거 → `useCartProducts`. 로딩 = 스켈레톤, 실패 = `role="alert"` 안내 + 다시 시도(받은 뒤 제목으로 포커스) |
+| `src/components/CartProvider.tsx` | 데이터 파일 import 제거 → 저장값의 재고 확인을 `fetchProductsByIds`로. 실패하면 저장값 그대로 사용. 5-3의 eslint 예외 주석 삭제 |
+
+### 핵심 개념
+
+**1. fetch는 404·500이어도 에러를 던지지 않는다**
+`fetch`가 실패(reject)하는 건 서버에 **닿지도 못했을 때**(네트워크 끊김)뿐이다. 404·500은 "응답은 받았음"이라 성공으로 끝난다. 그래서 `response.ok`(200번대인지)를 꼭 검사해야 하는데, 컴포넌트마다 쓰면 빠뜨린다 → `lib/api.ts`의 `fetchJson`에서 한 번에 처리하고 `ApiError(status, message)`를 던진다.
+
+**2. 직접 fetch할 때 챙길 것 4가지** (`useCartProducts`)
+1. 로딩 — 아직 안 받은 id가 있으면 `'loading'`
+2. 에러 — 실패를 기억하고 '다시 시도'(`attempt`를 올려 effect 재실행)
+3. 취소 — `AbortController`. effect 정리 함수에서 `abort()` → 화면을 떠났거나 조건이 바뀐 뒤 늦게 온 응답이 화면을 덮어쓰지 않는다
+4. 중복 요청 막기 — 이미 물어본 id(`checkedIds`)는 다시 안 묻는다. 수량 변경·삭제로는 요청이 안 나간다
+- 로딩·에러 상태를 `setLoading(true/false)`로 켜고 끄지 않고 **계산**한다("안 받은 id가 있으면 로딩"). 끄는 걸 빠뜨리는 버그가 없고, effect 안에서 state를 바로 바꾸지 않아 ESLint 경고도 없다.
+
+**3. 브라우저 번들에서 데이터가 빠졌다**
+이제 `data/products.ts`를 import하는 곳은 서버 전용 `lib/products.ts`뿐이다. 빌드 결과 `.next/static/chunks/*.js`에 상품명이 든 파일 **0개**(6-2까지는 1개).
+
+**4. 실패해도 장바구니는 지킨다**
+CartProvider가 재고 확인에 실패하면 저장된 값을 정리하지 않고 그대로 쓴다. 장바구니가 통째로 사라지는 것보다 낫고, 재고 한도는 담기·수량 변경 때 reducer가 다시 검사한다.
+
+**5. 다시 시도 후 포커스**
+'다시 시도' 버튼은 누르면 스켈레톤으로 바뀌며 사라진다(5-2의 사라지는 버튼 문제) → 응답이 와서 목록이 그려진 뒤 '담은 상품' 제목으로 포커스를 옮긴다.
+
+### 확인 방법
+1. 빌드 후 `grep -l "버티컬 무선 마우스" .next/static/chunks/*.js` → 없음
+2. 상품을 담고 `/cart` 새로고침 → 개발자 도구 Network에 `/api/products?ids=...`
+3. `MOCK_API_DELAY_MS=1500` → 스켈레톤 → 목록 / `MOCK_API_ERROR_RATE=1` → 실패 안내
+4. 개발자 도구 Network → Offline → '다시 시도' → "네트워크 연결을 확인해 주세요."
+
+검증 결과 (production 빌드 + headless Chrome, 2026-10-04)
+- 상품명이 든 브라우저 JS 파일: 1개 → **0개**
+- 정상: `/cart` 목록·합계(₩717,000)·배지 3개, 콘솔 0
+- 지연 1.5초: 스켈레톤("장바구니를 불러오는 중입니다.") → 목록
+- 실패 100%: 안내 + 다시 시도, axe 라이트·다크 위반 0
+- 요청 가로채기로 처음 2번 실패(500 / 네트워크 끊김) → 각각 "잠시 후 다시 시도해 주세요." / "네트워크 연결을 확인해 주세요." → 다시 시도 → 목록, 포커스 `H2 담은 상품 2`
+- 5-3 검증 다시 실행: 새로고침 유지·탭 동기화·잘못된 값 정리·스켈레톤 크기 일치·콘솔 0
+- `tsc`·ESLint 통과
+
+### 발견한 문제 → Step 7에서
+- **같은 요청이 두 번**: `/cart`를 열면 `/api/products?ids=2,5`가 2번 나간다(CartProvider 재고 확인 + CartContents 표시용). 서로 결과를 나눠 쓰지 못한다.
+- **워터폴**: CartContents는 CartProvider가 끝난 뒤(hydrated)에야 요청을 시작한다. 지연 1.5초면 1.5 + 1.5 = **약 3.7초** 뒤에 목록이 보인다.
+- → 요청 결과를 **주소(키)별로 저장해 두고 나눠 쓰는 캐시**가 있으면 둘 다 해결된다. 그게 TanStack Query다(7-1).
+- Storybook의 장바구니 스토리는 API 서버가 없어 실패 화면이 된다 → 6-4 MSW

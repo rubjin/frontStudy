@@ -3,12 +3,12 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, useState, type ReactNode } from 'react'
 import { cartReducer, getCartCount, getQuantityInCart, initialCartState, sanitizeCartItems } from '@/lib/cart'
 import { CART_STORAGE_KEY, loadCartItems, saveCartItems } from '@/lib/cartStorage'
-import { products } from '@/data/products'
+import { fetchProductsByIds } from '@/lib/api'
 import { useToast } from './ui/Toast'
 import type { Product } from '@/types/product'
 import type { CartItem } from '@/types/cart'
 
-// 장바구니 상태를 사이트 전체에 나눠 주는 컴포넌트 + useCart 훅 (Step 5-1, 5-2 수량 변경·삭제, 5-3 localStorage 저장)
+// 장바구니 상태를 사이트 전체에 나눠 주는 컴포넌트 + useCart 훅 (Step 5-1, 5-2 수량 변경·삭제, 5-3 localStorage 저장, 6-3 API로 재고 확인)
 //
 // 왜 Context가 필요한가? — props 전달(드릴링) 문제
 // - 장바구니 숫자는 헤더(CartLink)에, 담기 버튼은 상세 페이지(AddToCartButton)에, 목록은 /cart 페이지에 있다.
@@ -93,38 +93,52 @@ export function CartProvider({ children, initialItems, persist = true }: CartPro
   useEffect(() => {
     if (!persist) return
 
-    // 저장된 값을 꺼내 지금 상품 데이터에 맞게 정리(판매 종료·재고 감소·품절)한 뒤 통째로 바꾼다
-    // (상품 데이터는 지금 목 데이터 파일. Step 6에서 API로 바뀐다)
-    // 돌려주는 값: 정리하면서 바뀐 것이 있었는지
-    const restore = () => {
-      const saved = loadCartItems()
-      const items = sanitizeCartItems(saved, products)
-      dispatch({ type: 'replace', items })
-      // 정리 전후를 문자열로 비교 — 항목 수나 수량이 하나라도 다르면 true
-      return JSON.stringify(saved) !== JSON.stringify(items)
-    }
+    // 저장된 값을 꺼내 지금 상품 정보에 맞게 정리(판매 종료·재고 감소·품절)한 뒤 통째로 바꾼다
+    // (Step 6-3) 지금 상품 정보는 API(/api/products?ids=...)로 받는다. 예전엔 목 데이터 파일을 import했다
+    //   → 브라우저 JS 번들에서 상품 데이터가 빠졌다. 대신 '받는 동안'(hydrated = false)이 조금 길어진다(/cart는 스켈레톤)
+    // AbortController: Provider가 사라지면(개발 모드의 StrictMode는 일부러 한 번 붙였다 뗀다) 진행 중인 요청을 취소한다
+    const controller = new AbortController()
+    const saved = loadCartItems()
 
-    // 처음 불러올 때만 알린다. 다른 탭에서 받은 값(storage 이벤트)은 그 탭이 이미 정리·저장한 값이다
-    if (restore()) {
-      showToast({
-        message: '재고가 바뀐 상품이 있어 장바구니 수량을 조정했습니다.',
-        action: { href: '/cart', label: '장바구니 보기' },
+    fetchProductsByIds(
+      saved.map((item) => item.productId),
+      controller.signal,
+    )
+      .then((latest) => {
+        if (controller.signal.aborted) return
+        const items = sanitizeCartItems(saved, latest)
+        // fetch 응답을 받은 '뒤'(비동기)에 state를 바꾸므로 5-3 때의 eslint 예외 주석이 필요 없어졌다
+        dispatch({ type: 'replace', items })
+        setHydrated(true)
+        // 정리 전후를 문자열로 비교 — 항목 수나 수량이 하나라도 다르면 알린다
+        // 처음 불러올 때만 알린다. 다른 탭에서 받은 값(storage 이벤트)은 그 탭이 이미 정리·저장한 값이다
+        if (JSON.stringify(saved) !== JSON.stringify(items)) {
+          showToast({
+            message: '재고가 바뀐 상품이 있어 장바구니 수량을 조정했습니다.',
+            action: { href: '/cart', label: '장바구니 보기' },
+          })
+        }
       })
-    }
-    // useEffect 안에서 state를 바꾸면 한 번 더 그려진다. 여기서는 의도한 것이다:
-    // 서버와 같은 첫 화면(빈 장바구니) → 저장된 값을 반영한 두 번째 화면. 위 dispatch와 묶여 한 번에 다시 그려진다.
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 하이드레이션 뒤 저장소 값을 반영하는 의도된 갱신
-    setHydrated(true)
+      .catch(() => {
+        if (controller.signal.aborted) return
+        // 확인 실패(서버 오류·네트워크): 정리하지 못한 저장값을 그대로 쓴다. 장바구니를 통째로 잃는 것보다 낫다.
+        // 재고 한도는 담기·수량 변경 때 reducer가 다시 검사하고, /cart 화면은 자기 요청의 실패를 따로 보여 준다
+        dispatch({ type: 'replace', items: saved })
+        setHydrated(true)
+      })
 
     // storage 이벤트: '다른 탭'에서 localStorage를 바꾸면 이 탭에 알려 준다. (바꾼 탭 자신에게는 오지 않는다)
     // → 탭 A에서 담으면 탭 B의 헤더 배지도 바뀐다.
     function handleStorage(event: StorageEvent) {
       // key가 null이면 localStorage.clear()로 전부 지워진 것. 그때도 다시 읽는다(→ 빈 장바구니)
-      if (event.key === CART_STORAGE_KEY || event.key === null) restore()
+      if (event.key === CART_STORAGE_KEY || event.key === null) dispatch({ type: 'replace', items: loadCartItems() })
     }
     window.addEventListener('storage', handleStorage)
     // 정리 함수: Provider가 사라질 때 이벤트 연결을 끊는다 (안 끊으면 사라진 컴포넌트에 계속 알림이 간다)
-    return () => window.removeEventListener('storage', handleStorage)
+    return () => {
+      controller.abort()
+      window.removeEventListener('storage', handleStorage)
+    }
     // showToast는 ToastProvider가 useCallback으로 고정한 함수라 바뀌지 않는다 → 이 effect는 처음 한 번만 실행된다
   }, [persist, showToast])
 

@@ -8,7 +8,7 @@ import { useCart } from './CartProvider'
 import { Button, ButtonLink } from './ui/Button'
 import { Close, Minus, Plus } from './icons'
 import CartSkeleton from './CartSkeleton'
-import { products } from '@/data/products'
+import { useCartProducts } from './useCartProducts'
 import { formatPrice } from '@/lib/format'
 import { getCartLines, getCartTotal } from '@/lib/cart'
 import type { Product } from '@/types/product'
@@ -18,7 +18,7 @@ import styles from './CartContents.module.scss'
 //
 // 장바구니 state에는 상품 id와 수량만 있다(types/cart.ts). 이름·가격·사진은 상품 데이터에서 찾아서 보여 준다.
 // → 가격이 바뀌어도 장바구니에는 항상 지금 가격이 나온다.
-// (지금은 목 데이터 파일을 넘긴다. Step 6에서 API로 바뀌면 getCartLines에 넘기는 목록만 바꾼다)
+// (Step 6-3) 상품 정보는 API(/api/products?ids=...)로 받는다 — useCartProducts. getCartLines에 넘기는 목록만 바뀌었다
 //
 // 5-2에서 추가한 것
 // - 상품 사진, 단가, 소계(단가 × 수량), 주문 요약(상품 수, 총 금액)
@@ -41,12 +41,21 @@ import styles from './CartContents.module.scss'
 // 5-3: 저장된 장바구니를 불러오기 전(hydrated = false)에는 스켈레톤(CartSkeleton)
 //   서버 HTML과 브라우저 첫 화면에서는 장바구니가 비었는지 '아직 모른다'. 이때 '비어 있음'을 보여 주면
 //   상품이 담겨 있어도 새로고침할 때마다 '비어 있음'이 번쩍인다. → '모름' 상태를 따로 그린다.
+//
+// 6-3: 상품 정보를 브라우저에서 받는다 → 화면 상태가 4가지
+//   불러오기 전·상품 정보 받는 중 → 스켈레톤 / 실패 → 안내 + 다시 시도 / 비어 있음 / 목록
+//   '다시 시도'를 누르면 그 버튼이 스켈레톤으로 바뀌며 사라진다(포커스 튕김) → 받은 뒤 목록 제목으로 포커스를 옮긴다.
 
 // 썸네일 칸의 실제 표시 크기 (CartContents.module.scss .thumb와 맞춘다) — next/image가 알맞은 크기의 파일을 고르는 데 쓴다
 const THUMB_SIZES = '96px'
 
 function CartContents() {
   const { items, setQuantity, removeItem, hydrated } = useCart()
+  // 담긴 상품들의 정보 (Step 6-3). 장바구니를 불러온 뒤(hydrated)에만 요청한다
+  const { products, status, error, retry } = useCartProducts(
+    items.map((item) => item.productId),
+    hydrated,
+  )
   // 알림 문구 (role="status"). 처음엔 비어 있다
   const [message, setMessage] = useState('')
 
@@ -54,9 +63,9 @@ function CartContents() {
   // useRef: 다시 그려도 유지되는 상자. .current에 실제 DOM 요소가 들어온다
   const headingRef = useRef<HTMLHeadingElement>(null)
   const emptyRef = useRef<HTMLParagraphElement>(null)
-  // '방금 삭제했다' 표시. 화면을 다시 그릴 필요는 없는 값이라 state가 아니라 ref에 둔다
+  // '다음에 다시 그려지면 포커스를 옮겨라' 표시 (삭제·다시 시도 뒤). 화면을 다시 그릴 필요는 없는 값이라 state가 아니라 ref
   // (state에 두면 이 값을 바꿀 때마다 다시 그려진다)
-  const focusAfterRemoveRef = useRef(false)
+  const pendingFocusRef = useRef(false)
 
   // useId: 서버·브라우저에서 같은 고유 id를 만든다. 제목과 영역을 aria-labelledby로 잇는 데 쓴다
   // (id를 직접 'cart-items'처럼 적으면 같은 컴포넌트가 두 번 나올 때(Storybook Docs 등) 겹친다)
@@ -68,14 +77,15 @@ function CartContents() {
   const total = getCartTotal(lines)
   const totalQuantity = lines.reduce((sum, line) => sum + line.quantity, 0)
 
-  // 삭제 후 포커스 옮기기
+  // 삭제·다시 시도 후 포커스 옮기기
   // removeItem을 부른 직후에는 아직 화면이 바뀌기 전이다. 다시 그려진 '뒤'에 실행되는 useEffect에서 옮긴다.
+  // 다시 시도는 응답이 와서 목록이 그려질 때까지(status가 'success') 기다렸다가 옮긴다.
   useEffect(() => {
-    if (!focusAfterRemoveRef.current) return
-    focusAfterRemoveRef.current = false
+    if (!pendingFocusRef.current || status === 'loading') return
+    pendingFocusRef.current = false
     // ?? : 앞의 값이 null이면 뒤의 값. 목록 제목이 없으면(빈 장바구니) 빈 문구로
     ;(headingRef.current ?? emptyRef.current)?.focus()
-  }, [items])
+  }, [items, status])
 
   function changeQuantity(product: Product, next: number) {
     // aria-disabled 버튼은 클릭이 막히지 않으므로 여기서 거른다 (reducer도 막지만, 알림 문구가 바뀌지 않게)
@@ -84,8 +94,13 @@ function CartContents() {
     setMessage(`${product.name} 수량 ${next}개`)
   }
 
+  function retryLoad() {
+    pendingFocusRef.current = true
+    retry()
+  }
+
   function remove(product: Product) {
-    focusAfterRemoveRef.current = true
+    pendingFocusRef.current = true
     removeItem(product.id)
     setMessage(`${product.name}, 장바구니에서 삭제했습니다.`)
   }
@@ -97,8 +112,16 @@ function CartContents() {
         {message}
       </p>
 
-      {!hydrated ? (
+      {!hydrated || status === 'loading' ? (
         <CartSkeleton />
+      ) : status === 'error' ? (
+        // 실패 안내 (Step 6-3). role="alert": 나타나는 즉시 스크린리더가 읽는다 (status보다 급한 알림)
+        <div role="alert" className={styles.error}>
+          <p className={styles.errorTitle}>장바구니 상품 정보를 불러오지 못했습니다.</p>
+          {/* 네트워크 끊김(status 0)은 할 일이 다르므로 그 문구를 보여 준다 */}
+          <p>{error?.status === 0 ? error.message : '잠시 후 다시 시도해 주세요.'}</p>
+          <Button onClick={retryLoad}>다시 시도</Button>
+        </div>
       ) : lines.length === 0 ? (
         // 빈 장바구니: 다음에 할 일(상품 보러 가기)을 함께 안내한다
         <div className={styles.empty}>
