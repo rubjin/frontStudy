@@ -32,8 +32,8 @@
 - 구조
   - `src/app/` — 파일 기반 라우팅. `layout.tsx`(공통 틀·Header), `(catalog)/page.tsx`("/" — 괄호 폴더는 라우트 그룹이라 주소에 안 나타남. `await connection()`으로 요청마다 생성 — 쿼리별 목록을 HTML에 넣기 위해), `(catalog)/loading.tsx`(홈 이동 시 목록 스켈레톤), `products/[id]/page.tsx`(상세: `generateStaticParams` + `dynamicParams = false` + `generateMetadata`, 화면은 ProductDetail)·`loading.tsx`(상세 스켈레톤), `not-found.tsx`(404), `error.tsx`(기본 실행 에러)·`(catalog)/error.tsx`·`products/[id]/error.tsx`(구간별 에러: 그 자리에 맞는 문구·버튼), `global-error.tsx`(레이아웃 에러), `cart/page.tsx`(장바구니, 내용은 CartContents), `dev/skeleton/`(개발용 스켈레톤 미리보기, production에서 404)
   - `src/components/ui/` — 기능과 무관한 기본 부품. Button(`Button`=`<button>` / `ButtonLink`=`<a>`, `variant`·`size`), Skeleton(스켈레톤 조각)
-  - `src/components/` — Header(서버 컴포넌트), ThemeToggle(`'use client'`), ProductCatalog(목록 화면, `'use client'`. 필터 상태는 주소 쿼리가 원본: `useSearchParams`로 읽고 `window.history.pushState`(선택)·`replaceState`(검색어)로 씀. useState·router.push 쓰지 않음), StatusView(404·에러 공통 화면), BackButton(이전 페이지로), ProductDetail(상세 화면, 서버 컴포넌트), CartProvider(`useReducer` + Context, `useCart()` 훅. layout에서 Header·main을 감쌈), AddToCartButton·CartLink·CartContents(`useCart` 쓰는 작은 `'use client'`), CardSkeleton·CatalogSkeleton·ProductDetailSkeleton(로딩 스켈레톤, Suspense fallback·`loading.tsx`), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
-  - `src/lib/` — products(`getProduct`·`getProductIds`, 데이터 접근은 여기로. Step 6에서 API로 교체), catalogParams(`parseCatalogParams`·`toCatalogSearch`: 주소 쿼리 q·category·sort·instock ↔ 필터 값, 읽을 때 값 검사), format, filterProducts, sortProducts (순수 함수), site(`SITE_NAME`, `formatTitle`), useReportError(에러 화면 공통 기록 훅), cart(`cartReducer`·`getCartCount` 등 순수 함수. 장바구니 규칙은 여기에만) / `src/data/products.ts` (목 데이터) / `src/types/` (공통 타입)
+  - `src/components/` — Header(서버 컴포넌트), ThemeToggle(`'use client'`), ProductCatalog(목록 화면, `'use client'`. 필터 상태는 주소 쿼리가 원본: `useSearchParams`로 읽고 `window.history.pushState`(선택)·`replaceState`(검색어)로 씀. useState·router.push 쓰지 않음), StatusView(404·에러 공통 화면), BackButton(이전 페이지로), ProductDetail(상세 화면, 서버 컴포넌트), CartProvider(`useReducer` + Context, `useCart()` 훅. layout에서 Header·main을 감쌈. 스토리에서는 `initialItems`로 담긴 상태 재현), AddToCartButton·CartLink·CartContents(`useCart` 쓰는 작은 `'use client'`), CardSkeleton·CatalogSkeleton·ProductDetailSkeleton(로딩 스켈레톤, Suspense fallback·`loading.tsx`), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
+  - `src/lib/` — products(`getProduct`·`getProductIds`, 데이터 접근은 여기로. Step 6에서 API로 교체), catalogParams(`parseCatalogParams`·`toCatalogSearch`: 주소 쿼리 q·category·sort·instock ↔ 필터 값, 읽을 때 값 검사), format, filterProducts, sortProducts (순수 함수), site(`SITE_NAME`, `formatTitle`), useReportError(에러 화면 공통 기록 훅), cart(`cartReducer`(add·setQuantity·remove)·`getCartCount`·`getCartLines`·`getCartTotal` 등 순수 함수. 장바구니 규칙은 여기에만) / `src/data/products.ts` (목 데이터) / `src/types/` (공통 타입)
   - import는 `@/` 별칭(= `src/`) 사용
 - 원칙: `page.tsx`·`layout.tsx`는 서버 컴포넌트로 두고, 상태·이벤트가 필요한 부분만 작은 `'use client'` 컴포넌트로 뺀다.
 - 원칙: 스켈레톤은 실제 컴포넌트의 SCSS 클래스를 그대로 써서 크기를 맞춘다(치수를 따로 적지 않음). 바꾼 뒤에는 실제 화면과 영역 크기를 비교해 확인한다.
@@ -41,6 +41,9 @@
 - 원칙: 버튼 모양이 필요하면 직접 클래스를 쓰지 말고 `ui/Button`을 쓴다. 페이지 이동은 `ButtonLink`, 화면 안 동작은 `Button`.
 - 원칙: 404·에러처럼 모양이 같은 안내 화면은 `StatusView`를 재사용하고, 각 파일은 문구와 버튼만 정한다. 공통 틀에는 문구를 넣지 않는다. 에러 화면은 `useReportError(error)`로 기록한다.
 - 원칙: 장바구니에는 `productId`·`quantity`만 저장하고, 이름·가격은 상품 데이터에서 찾는다. 규칙(재고 한도 등)은 reducer에 두고, 버튼의 비활성화는 이유를 보여 주는 역할.
+- 원칙: 누르는 중에 비활성화되거나 사라지는 버튼은 포커스가 body로 튕기지 않게 한다 — 비활성화는 `aria-disabled`(클릭은 직접 막기), 사라지면 `tabIndex={-1}` 대상으로 `focus()` 이동.
+- 참고: axe로 다크 모드를 검사할 때는 `data-theme`을 바꾼 뒤 색 전환(300ms)이 끝날 때까지 기다린다. 바로 재면 중간 색으로 대비 위반이 잘못 나온다.
+- 참고: 헤드리스 Chrome(puppeteer)이 `libatk-1.0.so.0` 등이 없어 안 뜨면 Codespace에 apt로 의존성 설치(libatk1.0-0 libatk-bridge2.0-0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libxkbcommon0 libatspi2.0-0 libasound2t64). puppeteer는 scratchpad에 설치
 - 주의: Next.js 에러 경계는 경로(pathname)가 바뀔 때만 풀린다. 같은 경로(쿼리만 다름)로 빠져나오는 버튼은 링크가 아니라 주소 변경 + `retry()`로 만든다.
 - 원칙: 같은 값이 한 파일 안에서 반복되면 그 파일의 상수로, 여러 파일에서 쓰이면 공통 파일(`lib/`, 나중에 `constants/`)로 모은다.
 - 원칙: 페이지를 만들면 metadata도 함께 정한다. 레이아웃에 `title.template: '%s | Shoppr'`가 있으므로 페이지는 `title`만 적는다. 고정 제목은 `metadata` 객체, 주소에 따라 다르면 `generateMetadata`, `'use client'` 파일은 `<title>` 태그.
@@ -117,4 +120,5 @@
   - **Step 4 완료.**
 - 2026-10-04: Step 5 시작 (Context + useReducer 선택 — 기본기 우선, Zustand는 비교 대상). 세부: 5-1 기본 / 5-2 장바구니 페이지 / 5-3 localStorage / 5-4 마무리
   - 5-1 완료: `lib/cart.ts` reducer, `CartProvider`·`useCart`, 상세 담기 버튼(재고 한도·`role="status"` 알림), 헤더 `CartLink` 배지, 최소 `/cart`, Storybook 전역 CartProvider 데코레이터 + `Cart.stories.tsx`.
-  - 다음은 5-2 장바구니 페이지 완성(수량 +/−, 삭제, 합계).
+  - 5-2 완료: `/cart` 완성 — 사진·수량 −/+·소계·삭제·주문 요약. reducer에 `setQuantity`(1~재고, 0이어도 삭제 안 함)·`remove`, `getCartLines`·`getCartTotal`. 끝에 닿은 버튼은 `aria-disabled`(포커스 유지), 삭제 뒤 제목/빈 문구로 포커스 이동. `CartProvider initialItems`(스토리용), `CartContents.stories.tsx`.
+  - 다음은 5-3 localStorage 저장(새로고침 유지, 하이드레이션 불일치, 다른 탭 동기화, 불러올 때 재고 초과·없는 상품 정리).

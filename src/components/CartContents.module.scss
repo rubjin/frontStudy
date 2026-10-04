@@ -1,19 +1,98 @@
 @use 'styles' as *;
 
-// 장바구니 목록 (Step 5-1, 최소 버전 — 5-2에서 다듬는다)
+// 장바구니 화면 (Step 5-1 최소 버전 → 5-2에서 완성)
+//
+// 큰 화면(lg 이상): [ 담은 상품 목록 | 주문 요약(오른쪽 고정 폭, sticky) ]
+// 작은 화면: 목록 아래에 주문 요약
+
+$thumb-size: to-rem(96); // CartContents.tsx의 THUMB_SIZES와 맞춘다
+$thumb-size-mobile: to-rem(72);
+
+.layout {
+  display: grid;
+  gap: space(8);
+
+  @include mq(lg) {
+    grid-template-columns: 1fr to-rem(320);
+    align-items: start; // 주문 요약이 목록 높이만큼 늘어나지 않게 (sticky가 동작하려면 필요)
+  }
+}
+
+// 코드로 포커스를 옮기는 요소(목록 제목, 빈 장바구니 문구)
+// 키보드로 삭제했을 때는 :focus-visible이 켜져서 '포커스가 여기로 왔다'는 테두리가 보인다
+.focusTarget {
+  border-radius: $radius-md;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+// '담은 상품 2' 제목
+// (포커스 대상이라 TSX에서 .focusTarget과 함께 쓴다)
+.heading {
+  display: flex;
+  align-items: center;
+  gap: space(2);
+  margin-bottom: space(4);
+  @include text(lg);
+  font-weight: $font-weight-semibold;
+}
+
+// 제목 옆 숫자 (상품 종류 수)
+.headingCount {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
 
 .list {
   border-top: 1px solid var(--color-border);
 }
 
-// 한 줄: 상품명 ……… 가격 × 수량
+// ─── 한 줄 ───────────────────────────────────────────────
+// grid-template-areas: 칸에 이름을 붙여 배치를 '그림처럼' 적는다.
+// 모바일:
+//   [사진] [상품명·단가    ] [삭제]
+//   [사진] [수량 −1+] [소계    ]
+// sm 이상: [사진] [상품명·단가] [수량] [소계] [삭제] 한 줄
 .item {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: space(2);
+  display: grid;
+  grid-template-areas:
+    'thumb info info remove'
+    'thumb quantity subtotal subtotal';
+  grid-template-columns: $thumb-size-mobile auto 1fr auto;
+  gap: space(2) space(4);
+  align-items: center;
   padding: space(4) 0;
   border-bottom: 1px solid var(--color-border);
+
+  @include mq(sm) {
+    grid-template-areas: 'thumb info quantity subtotal remove';
+    grid-template-columns: $thumb-size 1fr auto to-rem(112) auto;
+  }
+}
+
+.thumb {
+  @include flex-center;
+  position: relative; // fill 이미지의 기준점
+  grid-area: thumb;
+  align-self: start;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: $radius-lg;
+  background: linear-gradient(to bottom right, var(--color-thumb-from), var(--color-thumb-to));
+  color: var(--color-text-muted);
+  @include text(2xl);
+  font-weight: $font-weight-bold;
+}
+
+.image {
+  object-fit: cover;
+}
+
+.info {
+  grid-area: info;
+  min-width: 0; // grid 칸 안에서 긴 상품명이 칸을 밀어내지 않고 줄바꿈되게
 }
 
 .name {
@@ -29,12 +108,104 @@
   }
 }
 
-.meta {
-  color: var(--color-text-secondary);
+.price {
+  margin-top: space(1);
+  @include text(sm);
+  color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
 }
 
-// 빈 장바구니 안내
+// 수량 조절 + 재고 안내
+.quantityArea {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: space(1);
+  grid-area: quantity;
+}
+
+// [−] 2 [+]
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: space(1);
+}
+
+.quantity {
+  min-width: space(8); // 숫자가 1 → 10으로 바뀌어도 버튼이 움직이지 않게
+  text-align: center;
+  font-weight: $font-weight-medium;
+  font-variant-numeric: tabular-nums; // 숫자 폭을 같게 (금액·수량이 바뀔 때 글자가 흔들리지 않게)
+}
+
+.hint {
+  @include text(xs);
+  color: var(--color-text-muted);
+}
+
+.subtotal {
+  grid-area: subtotal;
+  justify-self: end;
+  font-weight: $font-weight-semibold;
+  font-variant-numeric: tabular-nums;
+}
+
+.remove {
+  grid-area: remove;
+  justify-self: end;
+}
+
+// ─── 주문 요약 ───────────────────────────────────────────
+.summary {
+  padding: space(6);
+  border: 1px solid var(--color-border);
+  border-radius: $radius-xl;
+  background-color: var(--color-surface);
+
+  @include mq(lg) {
+    position: sticky;
+    top: calc(#{$header-height} + #{space(6)}); // sticky 헤더 아래에 붙도록
+  }
+}
+
+.summaryTitle {
+  margin-bottom: space(4);
+  @include text(lg);
+  font-weight: $font-weight-semibold;
+}
+
+.summaryList {
+  display: grid;
+  gap: space(2);
+  margin-bottom: space(6);
+}
+
+// 한 줄: 이름 ……… 값
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+
+  // 총 금액 줄 위에 구분선
+  &:last-child {
+    padding-top: space(3);
+    border-top: 1px solid var(--color-border);
+  }
+}
+
+.total {
+  @include text(xl);
+  font-weight: $font-weight-bold;
+  color: var(--color-text);
+}
+
+.continue {
+  width: 100%;
+}
+
+// ─── 빈 장바구니 ─────────────────────────────────────────
 .empty {
   display: flex;
   flex-direction: column;

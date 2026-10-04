@@ -5,7 +5,7 @@ import { cartReducer, getCartCount, getQuantityInCart, initialCartState } from '
 import type { Product } from '@/types/product'
 import type { CartItem } from '@/types/cart'
 
-// 장바구니 상태를 사이트 전체에 나눠 주는 컴포넌트 + useCart 훅 (Step 5-1)
+// 장바구니 상태를 사이트 전체에 나눠 주는 컴포넌트 + useCart 훅 (Step 5-1, 5-2에서 수량 변경·삭제 추가)
 //
 // 왜 Context가 필요한가? — props 전달(드릴링) 문제
 // - 장바구니 숫자는 헤더(CartLink)에, 담기 버튼은 상세 페이지(AddToCartButton)에, 목록은 /cart 페이지에 있다.
@@ -38,19 +38,31 @@ interface CartContextValue {
   getQuantity: (productId: number) => number
   /** 1개 담기. 재고만큼 담았으면 아무 일도 일어나지 않는다 */
   addItem: (product: Product) => void
+  /** 수량 바꾸기 (5-2). 1 ~ 재고 사이로 맞춰진다. 0으로 해도 삭제되지 않는다 → removeItem */
+  setQuantity: (product: Product, quantity: number) => void
+  /** 장바구니에서 빼기 (5-2) */
+  removeItem: (productId: number) => void
 }
 
 // createContext(기본값): Provider 밖에서 꺼냈을 때 받을 값. null로 두고 useCart에서 실수를 알려 준다
 const CartContext = createContext<CartContextValue | null>(null)
 
+// props
+// - children:     감쌀 화면 (layout의 Header·main)
+// - initialItems: 처음부터 담겨 있을 상품 (5-2). Storybook에서 '상품이 담긴 장바구니'를 보여 줄 때 쓴다.
+//                 사이트(layout)에서는 넘기지 않는다 → 빈 장바구니로 시작. (5-3에서 localStorage 값으로 시작하게 바뀐다)
 interface CartProviderProps {
   children: ReactNode
+  initialItems?: CartItem[]
 }
 
-export function CartProvider({ children }: CartProviderProps) {
+export function CartProvider({ children, initialItems }: CartProviderProps) {
   // useReducer(reducer, 처음 상태) → [지금 상태, 할 일을 보내는 함수]
   // dispatch({ type: 'add', ... })를 부르면 React가 cartReducer(state, action)을 실행하고, 결과로 다시 그린다
-  const [state, dispatch] = useReducer(cartReducer, initialCartState)
+  //
+  // (5-2) 세 번째 인자: 처음 상태를 '만드는 함수'(초기화 함수). useReducer(reducer, 재료, 재료 → 처음 상태)
+  // 처음 한 번만 실행되므로, initialItems가 나중에 바뀌어도 state를 덮어쓰지 않는다. (useState(() => ...)와 같은 원리)
+  const [state, dispatch] = useReducer(cartReducer, initialItems, (items) => (items ? { items } : initialCartState))
 
   // useMemo: state가 바뀔 때만 value 객체를 새로 만든다.
   // Context는 value가 '다른 객체'가 되면 useCart()를 쓰는 모든 컴포넌트를 다시 그린다.
@@ -62,6 +74,9 @@ export function CartProvider({ children }: CartProviderProps) {
       getQuantity: (productId) => getQuantityInCart(state, productId),
       // 컴포넌트는 상품만 넘기고, reducer가 알아야 할 값(id, 재고)은 여기서 꺼내 action으로 만든다
       addItem: (product) => dispatch({ type: 'add', productId: product.id, maxQuantity: product.stock }),
+      setQuantity: (product, quantity) =>
+        dispatch({ type: 'setQuantity', productId: product.id, quantity, maxQuantity: product.stock }),
+      removeItem: (productId) => dispatch({ type: 'remove', productId }),
     }),
     [state],
   )

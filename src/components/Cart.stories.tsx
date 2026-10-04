@@ -5,7 +5,7 @@ import CartContents from './CartContents'
 import { products } from '@/data/products'
 import { toRem } from '@/lib/units'
 
-// 장바구니 스토리 (Step 5-1)
+// 장바구니 스토리 (Step 5-1. 장바구니 화면 스토리는 5-2에서 CartContents.stories.tsx로 옮김)
 //
 // 모든 스토리는 .storybook/preview.tsx에서 CartProvider로 감싸져 있다. (스토리마다 빈 장바구니로 시작)
 // '함께 동작' 스토리에서 담기 버튼을 누르면 헤더 배지와 목록이 같이 바뀌는 것 = Context로 state를 나눠 쓰는 모습
@@ -49,18 +49,6 @@ export const SoldOut: Story = {
 /** 헤더 링크 단독 (빈 장바구니: 배지 없음) */
 export const LinkOnly: Story = {
   render: () => <CartLink />,
-}
-
-/** 빈 장바구니 화면 */
-export const EmptyCart: Story = {
-  render: () => <CartContents />,
-  decorators: [
-    (Story) => (
-      <div style={{ width: toRem(480) }}>
-        <Story />
-      </div>
-    ),
-  ],
 }
 
 /** 담기 버튼 · 헤더 배지 · 장바구니 목록이 같은 state를 쓴다. 버튼을 눌러 세 곳이 함께 바뀌는지 확인 */
