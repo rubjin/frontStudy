@@ -4,6 +4,10 @@
 
 .card {
   position: relative; // 늘린 링크(::after)와 품절 오버레이의 기준점
+  // (Step 5-4) 세로 flex: 담기 버튼을 margin-top: auto로 카드 맨 아래에 붙인다
+  // → 상품명이 두 줄인 카드가 섞여도 같은 줄 카드들의 버튼 높이가 맞는다
+  display: flex;
+  flex-direction: column;
   height: 100%;
   padding: space(6);
   border: 1px solid var(--color-border);
@@ -23,7 +27,9 @@
 
   // 안쪽 링크에 키보드 포커스가 오면 카드 전체에 테두리를 그린다
   // :has() — '이런 자식을 가진 부모'를 고르는 선택자. JS 없이 부모 스타일을 바꿀 수 있다.
-  &:has(:focus-visible) {
+  // (Step 5-4) .link로 좁힘 — 담기 버튼에 포커스가 갔을 때 카드 전체에 테두리가 생기면
+  // '카드(상세 링크)'에 포커스가 있는 것처럼 보인다. 버튼은 자기 포커스 테두리를 따로 그린다
+  &:has(.link:focus-visible) {
     @include focus-ring;
   }
 
@@ -129,6 +135,7 @@
 
 .meta {
   display: flex;
+  margin-bottom: space(4); // 아래 담기 버튼과의 간격 (Step 5-4)
   align-items: baseline; // 크기가 다른 글자(가격, 평점)의 밑줄을 맞춘다
   justify-content: space-between;
 }
@@ -142,4 +149,12 @@
 .rating {
   @include text(sm);
   color: var(--color-text-muted);
+}
+
+// 담기 버튼 (Step 5-4, CardAddButton)
+.cartButton {
+  position: relative;
+  z-index: 1; // 카드 전체를 덮는 링크(.link::after)보다 위에 올라와야 눌린다
+  width: 100%;
+  margin-top: auto; // 세로 flex에서 남는 공간을 위쪽 여백으로 → 카드 맨 아래에 붙는다
 }

@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useReducer, useState, ty
 import { cartReducer, getCartCount, getQuantityInCart, initialCartState, sanitizeCartItems } from '@/lib/cart'
 import { CART_STORAGE_KEY, loadCartItems, saveCartItems } from '@/lib/cartStorage'
 import { products } from '@/data/products'
+import { useToast } from './ui/Toast'
 import type { Product } from '@/types/product'
 import type { CartItem } from '@/types/cart'
 
@@ -41,6 +42,8 @@ import type { CartItem } from '@/types/cart'
 //    → /cart는 이 동안 "장바구니가 비어 있습니다" 대신 스켈레톤을 보여 준다(CartContents). 안 그러면 잠깐 '비어 있음'이 번쩍인다.
 // 3) 불러온 뒤에는 state가 바뀔 때마다 저장한다. (불러오기 전에 저장하면 빈 값으로 덮어써 버리므로 hydrated 뒤에만)
 // 4) 다른 탭에서 바꾸면 storage 이벤트로 받아서 이 탭에도 반영한다.
+// 5) (5-4) 불러온 값이 정리(sanitize)로 바뀌었으면(재고 감소·품절·판매 종료) 토스트로 알린다.
+//    말없이 수량이 줄어 있으면 사용자는 '내가 잘못 눌렀나?' 한다. → 그래서 ToastProvider가 CartProvider 바깥에 있다(layout.tsx)
 
 // 컴포넌트들이 useCart()로 받는 값
 interface CartContextValue {
@@ -84,6 +87,7 @@ export function CartProvider({ children, initialItems, persist = true }: CartPro
 
   // 저장된 장바구니를 불러왔는지. 저장소를 안 쓰면(persist=false) 불러올 것이 없으니 처음부터 true
   const [hydrated, setHydrated] = useState(!persist)
+  const { showToast } = useToast()
 
   // ① 불러오기 + ④ 다른 탭과 맞추기 — 화면이 붙은 뒤 한 번 실행 (useEffect는 브라우저에서만 실행된다)
   useEffect(() => {
@@ -91,9 +95,22 @@ export function CartProvider({ children, initialItems, persist = true }: CartPro
 
     // 저장된 값을 꺼내 지금 상품 데이터에 맞게 정리(판매 종료·재고 감소·품절)한 뒤 통째로 바꾼다
     // (상품 데이터는 지금 목 데이터 파일. Step 6에서 API로 바뀐다)
-    const restore = () => dispatch({ type: 'replace', items: sanitizeCartItems(loadCartItems(), products) })
+    // 돌려주는 값: 정리하면서 바뀐 것이 있었는지
+    const restore = () => {
+      const saved = loadCartItems()
+      const items = sanitizeCartItems(saved, products)
+      dispatch({ type: 'replace', items })
+      // 정리 전후를 문자열로 비교 — 항목 수나 수량이 하나라도 다르면 true
+      return JSON.stringify(saved) !== JSON.stringify(items)
+    }
 
-    restore()
+    // 처음 불러올 때만 알린다. 다른 탭에서 받은 값(storage 이벤트)은 그 탭이 이미 정리·저장한 값이다
+    if (restore()) {
+      showToast({
+        message: '재고가 바뀐 상품이 있어 장바구니 수량을 조정했습니다.',
+        action: { href: '/cart', label: '장바구니 보기' },
+      })
+    }
     // useEffect 안에서 state를 바꾸면 한 번 더 그려진다. 여기서는 의도한 것이다:
     // 서버와 같은 첫 화면(빈 장바구니) → 저장된 값을 반영한 두 번째 화면. 위 dispatch와 묶여 한 번에 다시 그려진다.
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 하이드레이션 뒤 저장소 값을 반영하는 의도된 갱신
@@ -108,7 +125,8 @@ export function CartProvider({ children, initialItems, persist = true }: CartPro
     window.addEventListener('storage', handleStorage)
     // 정리 함수: Provider가 사라질 때 이벤트 연결을 끊는다 (안 끊으면 사라진 컴포넌트에 계속 알림이 간다)
     return () => window.removeEventListener('storage', handleStorage)
-  }, [persist])
+    // showToast는 ToastProvider가 useCallback으로 고정한 함수라 바뀌지 않는다 → 이 effect는 처음 한 번만 실행된다
+  }, [persist, showToast])
 
   // ③ 저장하기 — 불러온 뒤에만, 장바구니가 바뀔 때마다
   useEffect(() => {

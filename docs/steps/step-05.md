@@ -1,6 +1,6 @@
 # Step 5. 장바구니 — Context + useReducer
 
-> 상태: 진행 중 (5-1 ~ 5-3 완료)
+> 상태: 완료 (2026-10-04)
 
 ## 목표
 지금까지의 상태(검색어·필터)는 **한 화면 안에서만** 쓰였다. 장바구니는 다르다.
@@ -17,7 +17,7 @@
 - [x] **5-1** 장바구니 상태 기본: reducer + Context Provider + `useCart`, 상세 '장바구니 담기', 헤더 개수 배지, 최소 `/cart`
 - [x] **5-2** 장바구니 페이지 완성: 수량 +/−, 삭제, 합계, 사진
 - [x] **5-3** localStorage 저장: 새로고침 유지, 하이드레이션 불일치 처리, 다른 탭과 동기화
-- [ ] **5-4** 마무리: 목록 카드에서 바로 담기, 담기 알림, 재고 한도 안내
+- [x] **5-4** 마무리: 목록 카드에서 바로 담기, 담기 알림, 재고 한도 안내
 
 ---
 
@@ -298,3 +298,96 @@ useEffect (화면 붙은 뒤): localStorage 읽기 → 정리(sanitize) → disp
 - 불러올 때 수량이 줄거나 상품이 빠져도 사용자에게 알려 주지 않는다. 실제 쇼핑몰은 "재고가 바뀌어 수량을 조정했습니다" 같은 안내를 띄운다 → 필요하면 5-4.
 - 스켈레톤은 2줄 고정이라 담긴 상품이 1개나 3개 이상이면 불러온 순간 높이가 바뀐다.
 - 로그인 사용자의 장바구니를 서버에 저장(여러 기기에서 같은 장바구니)은 Step 9.
+
+---
+
+## 5-4. 마무리 — 목록에서 바로 담기, 토스트 알림, 재고 한도
+
+### 목표
+- 상세에 들어가지 않고 **목록 카드에서 바로 담기**
+- 담은 결과를 눈에 띄게 알리는 **토스트**(공통 부품) — 버튼마다 알림 영역을 두지 않고 하나로
+- 상세 담기 버튼도 5-2의 원칙대로 **`aria-disabled`**(한도에 닿는 순간 포커스가 튕기지 않게)
+- 5-3에서 남긴 것: 불러올 때 **재고가 바뀌어 수량을 조정했으면 알리기**
+
+### 파일별 설명
+| 파일 | 역할 |
+|---|---|
+| `src/components/ui/Toast.tsx`·`.module.scss` (새 파일) | `ToastProvider`·`useToast().showToast({ message, action })`. 한 번에 하나, 5초 뒤 닫힘(마우스·포커스가 있으면 멈춤), 닫기 버튼 → 들어오기 전 위치로 포커스 복귀 |
+| `src/components/ui/Toast.stories.tsx` (새 파일) | Default(버튼으로 띄우기)·Shown·MessageOnly·LongMessage(모바일) |
+| `src/components/useAddToCart.ts` (새 파일) | 담기 버튼 공통 훅: `status`(soldOut·max·ready)·`quantity`·`add()`(담기 + 토스트, 불러오기 전 클릭 무시) |
+| `src/components/CardAddButton.tsx` (새 파일) | 카드의 '담기' 버튼. 이름에 상품명(`스마트워치 5세대 장바구니에 담기`) |
+| `src/components/AddToCartButton.tsx` | `useAddToCart`로 정리. 최대 수량 `aria-disabled`, 버튼 아래 알림 문구 → 토스트 (`.module.scss` 삭제) |
+| `src/components/Card.tsx`·`Card.module.scss` | 담기 버튼 추가. 카드를 세로 flex로 바꿔 버튼을 맨 아래에(`margin-top: auto`), `z-index`로 늘린 링크 위에. 카드 포커스 테두리는 `.link:focus-visible`일 때만 |
+| `src/components/CardSkeleton.tsx` | 버튼 자리 추가 (실제 카드와 높이 440px 일치 확인) |
+| `src/components/CartProvider.tsx` | 불러올 때 정리로 바뀐 게 있으면 토스트 |
+| `src/app/layout.tsx`·`.storybook/preview.tsx` | `ToastProvider`로 `CartProvider` 바깥을 감쌈 |
+| `src/styles/_tokens.scss` | `$z-toast: 20` (헤더보다 위) |
+| `src/components/Cart.stories.tsx` | `CardButton` 스토리, 설명 갱신 |
+
+### 핵심 개념
+
+**1. 커스텀 훅 — 화면 없는 로직 나누기 (`useAddToCart`)**
+상세 버튼과 카드 버튼은 모양이 다르지만 "품절이면 / 한도면 / 누르면 담고 알림"은 같아야 한다. 컴포넌트를 하나로 합치면 props로 모양을 갈라야 해서 복잡해진다. 대신 **로직만** 훅으로 빼고, 모양은 각 컴포넌트가 정한다. 이름이 `use`로 시작해야 안에서 `useCart`·`useToast` 같은 다른 훅을 쓸 수 있다.
+
+**2. 토스트도 Context — 알림 영역은 하나**
+- 담기 버튼이 카드 12개 + 상세에 있다. 버튼마다 `role="status"` 영역을 두면 스크린리더 알림 영역이 열 몇 개가 된다.
+- `ToastProvider`가 화면에 영역 하나를 **항상** 두고, 어디서든 `showToast()`로 내용을 넣는다(5-1에서 배운 "영역은 미리 있어야 읽힌다").
+- `ToastProvider`는 `CartProvider` **바깥**에 둔다. CartProvider가 불러오면서 `useToast()`를 쓰기 때문(Context는 자기보다 위의 Provider만 꺼낼 수 있다).
+- `showToast`는 `useCallback`으로 고정한다. Context로 나눠 주는 함수가 매번 새로 만들어지면 쓰는 컴포넌트가 전부 다시 그려지고, CartProvider의 불러오기 effect도 다시 실행된다.
+
+**3. 저절로 사라지는 알림의 접근성**
+- 5초 뒤 닫히지만, **마우스를 올리거나 키보드 포커스가 안에 있으면 멈춘다**. '장바구니 보기'를 누르려는데 사라지면 안 된다(WCAG 2.2.1 시간 조절).
+- 포커스를 토스트로 강제로 옮기지 않는다 — 계속 쇼핑하던 흐름을 끊지 않게.
+- 닫기(✕)를 누르면 버튼이 사라져 포커스가 튕긴다 → `onFocus`의 `relatedTarget`(어디서 왔는지)을 기억해 두었다가 그리로 되돌린다.
+- `prefers-reduced-motion`이면 올라오는 애니메이션을 끈다.
+
+**4. 카드 안의 버튼 — 늘린 링크와 함께 쓰기**
+- 카드 전체가 링크(`.link::after`가 카드를 덮음, 3-1)라 그냥 두면 버튼을 눌러도 링크가 눌린다 → 버튼에 `position: relative; z-index: 1`.
+- `<a>` 안에 `<button>`을 넣지 않는다(HTML 규칙 위반, 이동과 담기가 같이 일어남). 늘린 링크 방식이라 버튼을 링크 옆에 두고도 카드 전체를 클릭 영역으로 유지한다.
+- 카드 테두리(`:has(:focus-visible)`)를 `:has(.link:focus-visible)`로 좁혔다. 버튼 포커스 때 카드 전체가 강조되면 '카드(상세 링크)'에 있는 것처럼 보인다.
+- 버튼 이름: 화면에는 '담기'뿐이지만 카드가 12장이라 `aria-label="버티컬 무선 마우스 장바구니에 담기"`. 화면 글자('담기')를 이름 안에 그대로 포함한다(음성 제어 "담기 누르기", WCAG 2.5.3).
+
+**5. `disabled` vs `aria-disabled` 정리**
+| 상황 | 쓰는 것 | 이유 |
+|---|---|---|
+| 품절 — 처음부터 끝까지 못 누름 | `disabled` | Tab 순서에서 빠지는 게 편하다 |
+| 누르다가 한도에 닿음 (담기·수량 +) | `aria-disabled` + 클릭 직접 막기 | 누른 순간 비활성화되면 포커스가 body로 튕긴다 |
+
+**6. 불러올 때 조정 알림**
+`sanitizeCartItems` 전후를 비교해서 다르면 "재고가 바뀐 상품이 있어 장바구니 수량을 조정했습니다." 처음 불러올 때만 알린다(정리된 값이 다시 저장되므로 다음 새로고침에는 안 뜬다. 다른 탭에서 받은 값은 이미 정리된 값).
+
+### 확인 방법
+1. 홈 카드마다 '담기'. 품절 카드는 '품절'(비활성)
+2. 카드 '담기' → 상세로 이동하지 않고 배지 증가 + 토스트 "… 장바구니에 담았습니다. 현재 1개 [장바구니 보기] [✕]"
+3. 재고 3개짜리(27인치 4K 모니터)를 키보드로 연타 → 3개에서 '최대 수량', 포커스는 버튼에 그대로
+4. 토스트에 마우스를 올리고 기다리면 안 닫힘 → 마우스를 떼면 5초 뒤 닫힘. ✕ → 포커스가 담기 버튼으로
+5. 상세에서 Enter 연타 → '최대 수량을 담았습니다'에서 포커스 유지
+6. 개발자 도구에서 `shoppr-cart`의 수량을 재고보다 크게 → 새로고침 → 조정 알림, 한 번 더 새로고침하면 안 뜸
+7. Storybook `UI/Toast`, `Cart/AddToCartButton → CardButton`, `Product/Skeletons → CardSideBySide`
+
+검증 결과 (production 빌드 + headless Chrome, 2026-10-04)
+- 위 1~6 모두 확인. 카드 버튼 포커스 때 카드 box-shadow는 기본 그림자 그대로(테두리 없음)
+- hover 중 6초 뒤에도 토스트 유지 → 해제 5.6초 뒤 닫힘
+- 홈·상세(토스트 떠 있는 상태) axe 라이트·다크 위반 0, 390px 가로 스크롤 없음, 콘솔 에러·경고 0
+- 카드 스켈레톤 vs 실제 카드: 높이 440px, 버튼 위치 377px·높이 38px 같음
+- Storybook 스토리 52개 × 라이트/다크 렌더링 정상·axe 위반 0
+- `tsc`·ESLint·Stylelint·Prettier 통과
+
+---
+
+## Step 5 정리
+| 배운 것 | 어디에 |
+|---|---|
+| Context로 멀리 떨어진 컴포넌트가 상태 나눠 쓰기 | CartProvider·useCart, ToastProvider·useToast |
+| useReducer로 바꾸는 규칙을 한 곳에 (순수 함수, 구별된 유니온) | lib/cart.ts |
+| 파생 상태 — 합계는 저장하지 않고 계산 | getCartLines·getCartTotal |
+| 포커스 관리 — aria-disabled, 사라지는 버튼 뒤 focus() | CartContents, Toast, 담기 버튼 |
+| localStorage + 하이드레이션 불일치 + '아직 모름' 상태 | CartProvider hydrated, CartSkeleton |
+| 저장된 값 검사·정리, 버전 | cartStorage, sanitizeCartItems |
+| 커스텀 훅으로 로직 나누기 | useAddToCart |
+
+### 남은 것 (뒤 스텝에서)
+- 상품 데이터를 클라이언트에서 목 데이터 파일로 찾는다(CartProvider·CartContents) → **Step 6** API로
+- 주문하기 → **Step 9**, 로그인 사용자 장바구니 서버 저장 → **Step 9**
+- reducer·sanitize 단위 테스트 → **Step 10** (React 없이 테스트할 수 있게 순수 함수로 만들어 둠)
+- Zustand와 비교: 같은 장바구니를 Zustand로 만들면 Provider 없이 `useCartStore(s => s.count)`처럼 필요한 값만 구독해서 다시 그리기가 줄어든다. 지금 규모에서는 Context로 충분 — README의 기술 결정에 정리(Step 11)

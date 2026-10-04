@@ -31,8 +31,8 @@
     - 확인: 빌드 후 정적 서버 + 헤드리스 Chrome으로 모든 스토리 렌더링 + axe 검사(라이트/다크). 첫 로딩이 느리니 고정 대기 대신 렌더 완료를 기다릴 것
 - 구조
   - `src/app/` — 파일 기반 라우팅. `layout.tsx`(공통 틀·Header), `(catalog)/page.tsx`("/" — 괄호 폴더는 라우트 그룹이라 주소에 안 나타남. `await connection()`으로 요청마다 생성 — 쿼리별 목록을 HTML에 넣기 위해), `(catalog)/loading.tsx`(홈 이동 시 목록 스켈레톤), `products/[id]/page.tsx`(상세: `generateStaticParams` + `dynamicParams = false` + `generateMetadata`, 화면은 ProductDetail)·`loading.tsx`(상세 스켈레톤), `not-found.tsx`(404), `error.tsx`(기본 실행 에러)·`(catalog)/error.tsx`·`products/[id]/error.tsx`(구간별 에러: 그 자리에 맞는 문구·버튼), `global-error.tsx`(레이아웃 에러), `cart/page.tsx`(장바구니, 내용은 CartContents), `dev/skeleton/`(개발용 스켈레톤 미리보기, production에서 404)
-  - `src/components/ui/` — 기능과 무관한 기본 부품. Button(`Button`=`<button>` / `ButtonLink`=`<a>`, `variant`·`size`), Skeleton(스켈레톤 조각)
-  - `src/components/` — Header(서버 컴포넌트), ThemeToggle(`'use client'`), ProductCatalog(목록 화면, `'use client'`. 필터 상태는 주소 쿼리가 원본: `useSearchParams`로 읽고 `window.history.pushState`(선택)·`replaceState`(검색어)로 씀. useState·router.push 쓰지 않음), StatusView(404·에러 공통 화면), BackButton(이전 페이지로), ProductDetail(상세 화면, 서버 컴포넌트), CartProvider(`useReducer` + Context, `useCart()` 훅. layout에서 Header·main을 감쌈. localStorage 저장·불러오기·탭 동기화, `hydrated`. 스토리에서는 `persist={false}` + `initialItems`로 담긴 상태 재현), AddToCartButton·CartLink·CartContents(`useCart` 쓰는 작은 `'use client'`), CartSkeleton(장바구니 불러오기 전), CardSkeleton·CatalogSkeleton·ProductDetailSkeleton(로딩 스켈레톤, Suspense fallback·`loading.tsx`), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
+  - `src/components/ui/` — 기능과 무관한 기본 부품. Button(`Button`=`<button>` / `ButtonLink`=`<a>`, `variant`·`size`), Skeleton(스켈레톤 조각), Toast(`ToastProvider`·`useToast().showToast({ message, action })`, layout에서 CartProvider 바깥)
+  - `src/components/` — Header(서버 컴포넌트), ThemeToggle(`'use client'`), ProductCatalog(목록 화면, `'use client'`. 필터 상태는 주소 쿼리가 원본: `useSearchParams`로 읽고 `window.history.pushState`(선택)·`replaceState`(검색어)로 씀. useState·router.push 쓰지 않음), StatusView(404·에러 공통 화면), BackButton(이전 페이지로), ProductDetail(상세 화면, 서버 컴포넌트), CartProvider(`useReducer` + Context, `useCart()` 훅. layout에서 Header·main을 감쌈. localStorage 저장·불러오기·탭 동기화, `hydrated`. 스토리에서는 `persist={false}` + `initialItems`로 담긴 상태 재현), AddToCartButton·CardAddButton(상세·카드 담기 버튼, 공통 훅 `useAddToCart`)·CartLink·CartContents(`useCart` 쓰는 작은 `'use client'`), CartSkeleton(장바구니 불러오기 전), CardSkeleton·CatalogSkeleton·ProductDetailSkeleton(로딩 스켈레톤, Suspense fallback·`loading.tsx`), SearchBar, CategoryFilter, SortSelect, SoldOutToggle, CardGrid, Card, icons
   - `src/lib/` — products(`getProduct`·`getProductIds`, 데이터 접근은 여기로. Step 6에서 API로 교체), catalogParams(`parseCatalogParams`·`toCatalogSearch`: 주소 쿼리 q·category·sort·instock ↔ 필터 값, 읽을 때 값 검사), format, filterProducts, sortProducts (순수 함수), site(`SITE_NAME`, `formatTitle`), useReportError(에러 화면 공통 기록 훅), cartStorage(장바구니 localStorage 읽기·쓰기, 값 검사), cart(`cartReducer`(add·setQuantity·remove·replace)·`sanitizeCartItems`·`getCartCount`·`getCartLines`·`getCartTotal` 등 순수 함수. 장바구니 규칙은 여기에만) / `src/data/products.ts` (목 데이터) / `src/types/` (공통 타입)
   - import는 `@/` 별칭(= `src/`) 사용
 - 원칙: `page.tsx`·`layout.tsx`는 서버 컴포넌트로 두고, 상태·이벤트가 필요한 부분만 작은 `'use client'` 컴포넌트로 뺀다.
@@ -42,6 +42,7 @@
 - 원칙: 404·에러처럼 모양이 같은 안내 화면은 `StatusView`를 재사용하고, 각 파일은 문구와 버튼만 정한다. 공통 틀에는 문구를 넣지 않는다. 에러 화면은 `useReportError(error)`로 기록한다.
 - 원칙: 장바구니에는 `productId`·`quantity`만 저장하고, 이름·가격은 상품 데이터에서 찾는다. 규칙(재고 한도 등)은 reducer에 두고, 버튼의 비활성화는 이유를 보여 주는 역할.
 - 원칙: 누르는 중에 비활성화되거나 사라지는 버튼은 포커스가 body로 튕기지 않게 한다 — 비활성화는 `aria-disabled`(클릭은 직접 막기), 사라지면 `tabIndex={-1}` 대상으로 `focus()` 이동.
+- 원칙: 사용자 동작의 결과 알림은 버튼마다 영역을 만들지 말고 `useToast()`. 토스트는 포커스를 빼앗지 않고, 저절로 닫히는 시간은 hover·포커스 중 멈춘다.
 - 원칙: 브라우저에만 있는 값(localStorage 등)은 첫 렌더에 쓰지 않는다(하이드레이션 불일치). 서버와 같은 첫 화면 → useEffect에서 반영, 반영 전에는 '아직 모름'(스켈레톤)을 '비어 있음'과 구분한다.
 - 주의: `pkill -f next-server`처럼 `-f`로 프로세스를 끄면 그 문자열이 든 자기 셸 명령까지 죽는다. 검증 서버는 `ss -ltnp | grep :<포트>`로 PID를 찾아 `kill`한다. 검증이 끝나면 띄운 서버를 꼭 끈다(남은 서버가 옛 빌드를 계속 보여 준다).
 - 참고: axe로 다크 모드를 검사할 때는 `data-theme`을 바꾼 뒤 색 전환(300ms)이 끝날 때까지 기다린다. 바로 재면 중간 색으로 대비 위반이 잘못 나온다.
@@ -75,7 +76,7 @@
   - [x] 3-3 Storybook: 컴포넌트별 `*.stories.tsx`, Controls/Docs 자동 문서, a11y addon, 다크 모드 전환 툴바
   - [x] 3-4 코드 품질 도구: Prettier, Stylelint(SCSS), husky + lint-staged(커밋 전 자동 검사), `.editorconfig`·`.gitattributes`
 - [x] **Step 4** 라우팅 심화: 상품 상세 완성(`notFound()`, `generateMetadata`로 페이지별 SEO), 검색·필터·정렬을 `searchParams`(URL 쿼리)로 관리, `loading.tsx`·`error.tsx`
-- [ ] **Step 5** 장바구니: Context + `useReducer`(또는 Zustand), localStorage 저장
+- [x] **Step 5** 장바구니: Context + `useReducer`(또는 Zustand), localStorage 저장
 
 ### Phase 2. API 연동
 - [ ] **Step 6** Next.js Route Handler(`app/api`)로 목 API 만들기 → 서버 컴포넌트에서 fetch vs 클라이언트에서 fetch 비교. 로딩·에러·빈 상태 처리. (MSW는 Storybook·테스트용 목킹에 사용)
@@ -124,4 +125,5 @@
   - 5-1 완료: `lib/cart.ts` reducer, `CartProvider`·`useCart`, 상세 담기 버튼(재고 한도·`role="status"` 알림), 헤더 `CartLink` 배지, 최소 `/cart`, Storybook 전역 CartProvider 데코레이터 + `Cart.stories.tsx`.
   - 5-2 완료: `/cart` 완성 — 사진·수량 −/+·소계·삭제·주문 요약. reducer에 `setQuantity`(1~재고, 0이어도 삭제 안 함)·`remove`, `getCartLines`·`getCartTotal`. 끝에 닿은 버튼은 `aria-disabled`(포커스 유지), 삭제 뒤 제목/빈 문구로 포커스 이동. `CartProvider initialItems`(스토리용), `CartContents.stories.tsx`.
   - 5-3 완료: localStorage 저장(`lib/cartStorage.ts`, `{version, items}` + 모양 검사). 첫 화면은 서버와 같게 빈 장바구니 → useEffect에서 불러와 `replace`(`sanitizeCartItems`로 없는 상품·품절·재고 초과 정리). `hydrated` 전 `/cart`는 `CartSkeleton`(실제와 크기 일치 확인). `storage` 이벤트로 탭 간 동기화. Storybook은 `persist={false}`.
-  - 다음은 5-4 마무리(목록 카드에서 바로 담기, 담기 알림, 재고 한도 안내, 상세 담기 버튼 aria-disabled).
+  - 5-4 완료: 공통 토스트 `ui/Toast`(`useToast`, 5초·hover/포커스 시 멈춤·닫으면 포커스 복귀), 담기 공통 훅 `useAddToCart`, 카드 `CardAddButton`(늘린 링크 위 z-index, 카드 세로 flex), 상세 담기 버튼 `aria-disabled`, 불러올 때 수량 조정 알림. CardSkeleton 버튼 자리(높이 일치 확인).
+  - **Step 5 완료.** 다음은 Step 6 (Route Handler 목 API, 서버/클라이언트 fetch 비교).

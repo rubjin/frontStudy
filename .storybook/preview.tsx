@@ -1,6 +1,7 @@
 import type { Preview } from '@storybook/nextjs-vite'
 import { withThemeByDataAttribute } from '@storybook/addon-themes'
 import { CartProvider } from '../src/components/CartProvider'
+import { ToastProvider } from '../src/components/ui/Toast'
 // 실제 사이트(layout.tsx)와 같은 폰트·전역 스타일을 불러온다
 // → 스토리에서 보이는 모양 = 실제 사이트의 모양
 import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css'
@@ -24,9 +25,12 @@ const preview: Preview = {
     // persist={false} (Step 5-3): localStorage에 저장하지 않는다. 스토리들은 같은 주소(=같은 localStorage)라서
     // 저장하면 한 스토리에서 담은 상품이 다른 스토리에 나타난다.
     (Story) => (
-      <CartProvider persist={false}>
-        <Story />
-      </CartProvider>
+      // ToastProvider (Step 5-4): 담기 버튼이 useToast()로 알림을 띄운다. layout.tsx와 같은 순서(토스트가 바깥)
+      <ToastProvider>
+        <CartProvider persist={false}>
+          <Story />
+        </CartProvider>
+      </ToastProvider>
     ),
     // 다크 모드 전환 (addon-themes)
     // 실제 사이트처럼 <html data-theme="dark">를 붙였다 뗐다 한다.

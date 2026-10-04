@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import CardAddButton from './CardAddButton'
 import { formatPrice } from '@/lib/format'
 import type { Product } from '@/types/product'
 import styles from './Card.module.scss'
@@ -37,6 +38,11 @@ import styles from './Card.module.scss'
 // - product: 보여 줄 상품 객체
 // - eager:   true면 이미지를 즉시 불러온다. 첫 화면(첫 줄)에 보이는 카드에만 켠다.
 //            화면 밖 이미지까지 즉시 받으면 오히려 첫 화면이 느려지므로 기본은 false(지연 로딩)
+//
+// Step 5-4: 카드 아래에 '담기' 버튼(CardAddButton)을 넣었다.
+// - 카드 전체를 덮는 링크(::after) 위에 올라와야 눌린다 → .cartButton에 position: relative + z-index
+// - 링크 안에 버튼을 넣지 않는다. <a> 안의 <button>은 HTML 규칙 위반이고, 누르면 이동과 담기가 같이 일어난다.
+//   늘린 링크 방식이라 버튼을 링크 '옆'에 두고도 카드 전체를 클릭 영역으로 쓸 수 있다.
 interface CardProps {
   product: Product
   eager?: boolean
@@ -106,6 +112,8 @@ function Card({ product, eager = false }: CardProps) {
           <span className="sr-only">5점 만점에 {rating.toFixed(1)}점</span>
         </p>
       </div>
+
+      <CardAddButton product={product} className={styles.cartButton} />
     </article>
   )
 }

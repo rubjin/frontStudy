@@ -15,6 +15,11 @@ import styles from './Card.module.scss'
 // 카드와 다른 점
 // - <article>, <h2>, <a> 대신 <div>, <p>를 쓴다. 아직 내용이 없는데 '제목'이나 '링크'로 읽히면 안 되기 때문이다.
 // - .isSkeleton으로 hover 떠오르기 효과를 끈다.
+//
+// Step 5-4: 카드에 담기 버튼이 생겨 버튼 자리(.cartButton)도 넣었다.
+// 버튼 높이 = 여백 8px × 2 + 줄 높이 20px(아이콘 20px과 같음) + 테두리 1px × 2 (ui/Button secondary md)
+const BUTTON_HEIGHT = `calc(${toRem(36)} + 2px)`
+
 function CardSkeleton() {
   return (
     <div className={clsx(styles.card, styles.isSkeleton)}>
@@ -35,6 +40,7 @@ function CardSkeleton() {
           <Skeleton width={toRem(40)} />
         </p>
       </div>
+      <Skeleton block height={BUTTON_HEIGHT} className={styles.cartButton} />
     </div>
   )
 }
