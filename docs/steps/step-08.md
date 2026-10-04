@@ -1,6 +1,6 @@
 # Step 8. DB 연동 — Prisma + SQLite, 상품 관리(CRUD)
 
-> 상태: 진행 중 (8-1 완료)
+> 상태: 진행 중 (8-1, 8-2 완료)
 
 ## 목표
 지금까지 상품 데이터는 코드 파일(`src/data/products.ts`)이었다. 바꾸려면 코드를 고쳐 다시 배포해야 한다. 실제 서비스는 데이터가 **DB**에 있고, 관리자가 화면에서 추가·수정·삭제한다.
@@ -11,7 +11,7 @@
 
 ## 세부 단계
 - [x] **8-1** Prisma + SQLite 설치, 스키마·마이그레이션·시드, DB 클라이언트(`lib/db.ts`)
-- [ ] **8-2** 데이터 계층을 DB로 교체 (읽기). 교체 전후 API 결과 비교
+- [x] **8-2** 데이터 계층을 DB로 교체 (읽기). 교체 전후 API 결과 비교
 - [ ] **8-3** 상품 관리 화면 — Server Actions로 추가·수정·삭제, 입력값 검사, 캐시 갱신
 
 ---
@@ -85,3 +85,49 @@ npm run db:studio         # 브라우저에서 Product 표에 12행
 - `migrate dev --name init` → `CREATE TABLE "Product"` + `CREATE INDEX "Product_category_idx"`
 - 시드 → 12행(id 1~12, 이미지 경로 포함). 한 번 더 실행해도 12행(멱등)
 - `tsc`·ESLint·Prettier 통과. 아직 화면은 목 데이터 그대로(8-2에서 교체)
+
+---
+
+## 8-2. 데이터 계층을 DB로 교체
+
+### 바뀐 파일은 하나
+`src/lib/products.ts` **한 파일만** 고쳤다. `getProducts`·`getCategories`·`getProduct`·`getProductIds`의 이름·인자·돌려주는 모양이 같아서 `page.tsx`, `app/api`, 화면 컴포넌트, 장바구니, TanStack Query 코드는 그대로다. Step 4-1에 "나중에 DB로 바꿀 때 이 파일 안쪽만 바꾼다"고 적어 둔 그대로 됐다.
+
+### 걸러내기·정렬·나누기를 DB가 한다
+| 하는 일 | 예전 (JS 배열) | 지금 (Prisma → SQL) |
+|---|---|---|
+| 거르기 | `filterProducts` (`filter`) | `where: { category, stock: { gt: 0 }, OR: [{ name: { contains } }, …] }` → `WHERE` |
+| 정렬 | `sortProducts` (`sort`) | `orderBy: [{ price: 'asc' }, { id: 'asc' }]` → `ORDER BY` |
+| 나누기 | `slice` | `skip`·`take` → `OFFSET`·`LIMIT` |
+| 전체 개수 | `length` | `count({ where })` (목록과 `Promise.all`로 동시에) |
+| 카테고리 | `new Set` | `groupBy({ by: ['category'], _min: { id } })` → `GROUP BY` |
+| 하나 찾기 | `find` | `findUnique({ where: { id } })` |
+- 예전 방식은 상품이 100만 개면 100만 개를 메모리에 올려 걸렀다. DB는 조건에 맞는 8개만 읽어 보낸다.
+- `filterProducts`·`sortProducts`는 지우지 않았다 — MSW 목 핸들러(Storybook)가 계속 쓴다.
+
+### 핵심 개념
+
+**1. `toProduct` — DB 모양 → 화면 모양 통역**
+DB 행(`imageSrc`·`imageWidth`·`imageHeight`·`createdAt`…) → 화면 `Product`(`image: { src, width, height }`). DB 전용 열은 내보내지 않는다. 화면이 DB 구조를 모르게 하는 경계다.
+
+**2. 정렬이 같을 때의 순서까지 정한다**
+가격이 같은 상품이 있으면 DB는 순서를 보장하지 않는다. 그러면 '더 보기'로 나눠 받을 때 같은 상품이 두 페이지에 나오거나 빠질 수 있다. → 항상 두 번째 기준으로 `id`를 붙인다(예전 JS 정렬이 원래 순서를 유지하던 결과와도 같아진다).
+
+**3. 교체 전후를 '비교'로 확인한다**
+"같아 보인다"가 아니라, 교체 **전에** API 응답 24가지를 파일로 저장해 두고 교체 **후** 같은 요청의 응답과 비교했다(키 순서만 무시한 완전 일치). 리팩터링·이전 작업에서 쓰는 방법.
+
+**4. 정적 페이지는 DB가 바뀌어도 그대로다 (발견)**
+DB의 가격을 직접 바꿔 보면 API·홈(요청마다 생성)은 바로 바뀌지만, 상세 페이지(`●` SSG, 빌드 때 생성)는 **옛 가격 그대로**다. 코드 파일이 데이터일 때는 데이터를 바꾸면 어차피 다시 빌드했으니 문제가 없었다. → 8-3에서 수정할 때 해당 페이지를 다시 만들게(`revalidatePath`) 한다.
+
+### 확인 방법
+```bash
+npm run build && npx next start -p 3100
+curl 'localhost:3100/api/products?sort=price-asc&size=50'
+npm run db:studio      # 가격을 바꿔 보고 API·홈·상세 비교
+```
+
+검증 결과 (production 빌드, 2026-10-04)
+- 교체 전후 비교 **24개 항목 중 다른 것 0개**: 목록 기본·2페이지·전부, 정렬 3종, 카테고리 2종, 검색(`무선`, `usb`/`USB` 대소문자, 앞뒤 공백, 결과 없음), 품절 숨기기, 없는 카테고리, `ids=3,1,999`, 상세 `1`·`3`·`12`·`999`(404)·`02`(404)·`abc`(404), 카테고리 목록 순서, 상세 HTML
+- DB에서 2번 가격을 1,000원으로 바꾸면: API `1000`, 홈 HTML `₩1,000`, 상세 HTML `₩329,000`(정적, 옛 값) → 시드로 되돌림
+- 화면 회귀: 첫 HTML 8개 + 더 보기, 첫 화면 요청 0, 더 보기·포커스·뒤로·필터 정상, 장바구니 요청·삭제·새 상품, axe 라이트·다크 0
+- `tsc`·ESLint·Prettier 통과
