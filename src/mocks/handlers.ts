@@ -2,7 +2,7 @@ import { delay, http, HttpResponse } from 'msw'
 import { products } from '@/data/products'
 import { filterProducts, getCategories } from '@/lib/filterProducts'
 import { sortProducts } from '@/lib/sortProducts'
-import { parseCatalogParams, parseIdList } from '@/lib/catalogParams'
+import { parseCatalogParams, parseIdList, parsePaging } from '@/lib/catalogParams'
 import type { ApiErrorResponse, CategoryListResponse, ProductListResponse } from '@/types/api'
 
 // MSW 요청 핸들러 — 우리 API(/api/...)를 브라우저 안에서 흉내 낸다 (Step 6-4)
@@ -29,8 +29,16 @@ const productHandlers = [
     const ids = parseIdList(searchParams.get('ids'))
     const { query, category, sort, hideSoldOut } = parseCatalogParams(searchParams, null)
     const source = ids ? products.filter((p) => ids.includes(p.id)) : products
-    const items = sortProducts(filterProducts(source, { query, category, hideSoldOut }), sort)
-    return HttpResponse.json<ProductListResponse>({ items, total: items.length })
+    const all = sortProducts(filterProducts(source, { query, category, hideSoldOut }), sort)
+    if (ids) return HttpResponse.json<ProductListResponse>({ items: all, total: all.length, nextPage: null })
+    // 나눠 보내기 (Step 7-3) — 실제 API(lib/products.ts)와 같은 오프셋 방식
+    const { page, size } = parsePaging(searchParams)
+    const start = (page - 1) * size
+    return HttpResponse.json<ProductListResponse>({
+      items: all.slice(start, start + size),
+      total: all.length,
+      nextPage: start + size < all.length ? page + 1 : null,
+    })
   }),
   // :id — 주소의 이 자리 값이 params.id로 들어온다 (Next.js의 [id]와 같은 역할)
   http.get('/api/products/:id', ({ params }) => {

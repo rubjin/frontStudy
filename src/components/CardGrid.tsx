@@ -14,12 +14,14 @@ const EAGER_COUNT = 4
 // props
 // - products: 이미 걸러진 상품 배열
 // - query:    검색어 (결과가 없을 때 안내 문구에 쓰려고 받는다)
+// total (Step 7-3): 조건에 맞는 전체 개수. 나눠 받으면 products는 일부라서 개수 문구에는 total을 쓴다
 interface CardGridProps {
   products: Product[]
   query: string
+  total?: number
 }
 
-function CardGrid({ products, query }: CardGridProps) {
+function CardGrid({ products, query, total = products.length }: CardGridProps) {
   // 빈 상태 화면: 결과가 0개일 때 빈 화면 대신 이유와 다음 행동을 알려 준다.
   // 포트폴리오에서 '빈 상태/로딩/에러'까지 챙긴 UI는 좋은 인상을 준다.
   if (products.length === 0) {
@@ -40,7 +42,7 @@ function CardGrid({ products, query }: CardGridProps) {
     <>
       {/* aria-live="polite": 개수가 바뀌면 스크린리더가 하던 말을 끝낸 뒤 읽어 준다 */}
       <p aria-live="polite" className={styles.count}>
-        총 {products.length}개의 상품
+        총 {total}개의 상품
       </p>
       {/* 목록이므로 div 대신 ul/li를 쓴다 (시맨틱 마크업) */}
       <ul className={styles.grid}>

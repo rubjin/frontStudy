@@ -39,3 +39,10 @@
     transition: none;
   }
 }
+
+// 더 보기 버튼 영역 (Step 7-3) — 목록 아래 가운데
+.loadMore {
+  display: flex;
+  justify-content: center;
+  margin-top: space(8);
+}

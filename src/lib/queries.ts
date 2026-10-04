@@ -1,6 +1,6 @@
-import { queryOptions } from '@tanstack/react-query'
+import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query'
 import { fetchProduct, fetchProducts } from '@/lib/api'
-import type { CatalogFilters } from '@/lib/catalogParams'
+import { PRODUCTS_PAGE_SIZE, type CatalogFilters } from '@/lib/catalogParams'
 
 // 쿼리 정의 모음 — '어떤 키로, 어떻게 가져오는지' (Step 7-1)
 //
@@ -25,12 +25,19 @@ function normalizeFilters(filters: CatalogFilters): CatalogFilters {
 
 export const productQueries = {
   all: ['products'] as const,
-  // 상품 목록 (Step 7-2)
+  // 상품 목록 (Step 7-2) → 7-3에서 '나눠 받는 목록'(무한 쿼리)으로
+  // infiniteQueryOptions: 페이지를 차례로 이어 붙이는 쿼리. 캐시에는 { pages: [1페이지 응답, 2페이지 응답, ...] }가 쌓인다
+  // - initialPageParam: 첫 페이지 번호
+  // - getNextPageParam: 마지막으로 받은 응답을 보고 다음 페이지 번호를 정한다. undefined면 '더 없음'(hasNextPage = false)
+  //   → 서버가 알려 주는 nextPage를 그대로 쓴다. '다음이 있는지'는 데이터를 가진 서버가 판단하는 게 정확하다
   list: (filters: CatalogFilters) => {
     const normalized = normalizeFilters(filters)
-    return queryOptions({
+    return infiniteQueryOptions({
       queryKey: [...productQueries.all, 'list', normalized] as const,
-      queryFn: ({ signal }) => fetchProducts(normalized, signal),
+      queryFn: ({ pageParam, signal }) =>
+        fetchProducts(normalized, { page: pageParam, size: PRODUCTS_PAGE_SIZE }, signal),
+      initialPageParam: 1,
+      getNextPageParam: (lastPage) => lastPage.nextPage ?? undefined,
     })
   },
   detail: (id: number) =>

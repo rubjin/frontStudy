@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
 import clsx from 'clsx'
 import SearchBar from './SearchBar'
 import CategoryFilter from './CategoryFilter'
@@ -11,6 +11,7 @@ import SoldOutToggle from './SoldOutToggle'
 import CardGrid from './CardGrid'
 import CatalogSkeleton from './CatalogSkeleton'
 import { InlineError } from './ui/InlineError'
+import { Button } from './ui/Button'
 import { SORT_OPTIONS } from '@/lib/sortProducts'
 import { parseCatalogParams, toCatalogSearch, type CatalogFilters } from '@/lib/catalogParams'
 import { productQueries } from '@/lib/queries'
@@ -50,6 +51,14 @@ import styles from './ProductCatalog.module.scss'
 // - placeholderData: keepPreviousData — 새 조건의 결과가 오는 동안 이전 목록을 흐리게 보여 준다(스켈레톤으로 깜빡이지 않게).
 // - 검색어는 300ms debounce (lib/useDebouncedValue) — 입력이 멈췄을 때 한 번만 요청
 //
+// Step 7-3: 나눠 받기 — useInfiniteQuery + '더 보기' 버튼
+// - 처음엔 8개(PRODUCTS_PAGE_SIZE)만 받고, '더 보기'를 누르면 다음 8개를 이어 붙인다.
+// - 왜 스크롤하면 저절로 불러오는 '무한 스크롤'이 아니라 버튼인가? (접근성·사용성)
+//   · 무한 스크롤은 페이지 맨 아래(푸터)에 영영 닿을 수 없다. 키보드·스크린리더 사용자는 언제 내용이 늘어나는지 알기 어렵다.
+//   · 버튼은 사용자가 '더 볼지'를 정하고, 몇 개 중 몇 개를 봤는지 알 수 있다.
+// - 더 불러온 뒤에는 '새로 나온 첫 상품'으로 포커스를 옮긴다 → 키보드 사용자가 이어서 볼 수 있고,
+//   마지막 페이지라 버튼이 사라져도 포커스가 튕기지 않는다 (Step 5-2 원칙)
+//
 // props
 // - categories: 카테고리 버튼 목록 ('전체' 포함). 거의 바뀌지 않아 서버가 한 번 받아 넘긴다
 interface ProductCatalogProps {
@@ -84,10 +93,29 @@ function ProductCatalog({ categories }: ProductCatalogProps) {
   // 상품 목록 (Step 7-2) — 예전의 useMemo(걸러내기·정렬)는 서버(API)가 한다
   // - isPlaceholderData: 지금 보이는 것이 '이전 조건의 결과'인지 (새 결과를 받는 중)
   // - isFetching: 요청이 진행 중인지 (처음이든 다시 받기든)
-  const { data, error, isError, isFetching, isPlaceholderData, refetch } = useQuery({
+  // (7-3) useInfiniteQuery — data.pages에 받은 페이지들이 차례로 쌓인다
+  // - hasNextPage: 다음 페이지가 있는지 (getNextPageParam이 undefined가 아니면)
+  // - fetchNextPage(): 다음 페이지 받기 / isFetchingNextPage: 받는 중
+  // - isFetchNextPageError: '더 보기'만 실패 (이미 받은 페이지는 그대로 보여 준다)
+  const {
+    data,
+    error,
+    isError,
+    isFetching,
+    isPlaceholderData,
+    refetch,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+    isFetchNextPageError,
+  } = useInfiniteQuery({
     ...productQueries.list({ query: debouncedQuery, category, sort, hideSoldOut }),
     placeholderData: keepPreviousData,
   })
+
+  // 받은 페이지들을 한 줄로 이어 붙인다. 전체 개수는 서버가 알려 준 total
+  const items = data?.pages.flatMap((page) => page.items) ?? []
+  const total = data?.pages[0]?.total ?? 0
 
   // 결과가 바뀌는 중 — 아직 입력 중(요청 전)이거나 새 조건의 결과를 받는 중
   // → 목록을 흐리게 + aria-busy. 이전 결과를 지우지 않아 화면이 덜컹거리지 않는다
@@ -108,9 +136,25 @@ function ProductCatalog({ categories }: ProductCatalogProps) {
     void refetch()
   }
 
+  // 더 보기 (Step 7-3)
+  // focusIndexRef: 더 불러온 뒤 포커스를 줄 카드 번호(= 지금까지 받은 개수 = 새로 온 첫 카드). 화면에 안 보이는 값이라 ref
+  const focusIndexRef = useRef<number | null>(null)
+  function loadMore() {
+    if (isFetchingNextPage) return // aria-disabled라 클릭이 막히지 않으므로 직접 거른다
+    focusIndexRef.current = items.length
+    void fetchNextPage()
+  }
+  useEffect(() => {
+    const index = focusIndexRef.current
+    if (index === null || items.length <= index) return
+    focusIndexRef.current = null
+    // 새로 나온 첫 카드의 상품명 링크
+    resultsRef.current?.querySelectorAll<HTMLAnchorElement>('article h2 a')[index]?.focus()
+  }, [items.length])
+
   // 결과 영역 — 상태별로 (Step 7-2)
   let results
-  if (isError) {
+  if (isError && !isFetchNextPageError) {
     results = (
       <InlineError
         title="상품 목록을 불러오지 못했습니다."
@@ -124,7 +168,33 @@ function ProductCatalog({ categories }: ProductCatalogProps) {
     results = <CatalogSkeleton gridOnly />
   } else {
     // 빈 결과 문구는 '결과를 만든' 검색어로 (입력 중인 글자가 아니라)
-    results = <CardGrid products={data.items} query={debouncedQuery} />
+    results = (
+      <>
+        <CardGrid products={items} query={debouncedQuery} total={total} />
+        {/* 더 보기 영역 (Step 7-3) */}
+        {isFetchNextPageError ? (
+          <div className={styles.loadMore}>
+            <InlineError
+              title="상품을 더 불러오지 못했습니다."
+              description={
+                error instanceof ApiError && error.status === 0 ? error.message : '잠시 후 다시 시도해 주세요.'
+              }
+              onRetry={loadMore}
+              retrying={isFetchingNextPage}
+            />
+          </div>
+        ) : (
+          hasNextPage && (
+            <div className={styles.loadMore}>
+              {/* 몇 개 중 몇 개를 봤는지 함께 보여 준다 — 얼마나 남았는지 알 수 있게 */}
+              <Button variant="secondary" onClick={loadMore} aria-disabled={isFetchingNextPage}>
+                {isFetchingNextPage ? '불러오는 중…' : `더 보기 (${items.length} / ${total})`}
+              </Button>
+            </div>
+          )
+        )}
+      </>
+    )
   }
 
   return (

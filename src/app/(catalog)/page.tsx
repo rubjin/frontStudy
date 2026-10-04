@@ -3,7 +3,7 @@ import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import ProductCatalog from '@/components/ProductCatalog'
 import CatalogSkeleton from '@/components/CatalogSkeleton'
 import { getCategories, getProducts } from '@/lib/products'
-import { parseCatalogParams } from '@/lib/catalogParams'
+import { parseCatalogParams, PRODUCTS_PAGE_SIZE } from '@/lib/catalogParams'
 import { makeQueryClient } from '@/lib/queryClient'
 import { productQueries } from '@/lib/queries'
 
@@ -59,9 +59,15 @@ async function CatalogData({ searchParams }: { searchParams: PageProps<'/'>['sea
   const [categories] = await Promise.all([
     getCategories(),
     // ...productQueries.list(filters): 키는 브라우저와 같게, queryFn만 서버용(직접 호출)으로 바꾼다
-    queryClient.prefetchQuery({
+    // (Step 7-3) 나눠 받는 목록이라 prefetchInfiniteQuery — 첫 페이지만 미리 받는다
+    queryClient.prefetchInfiniteQuery({
       ...productQueries.list(filters),
-      queryFn: () => getProducts({ filters: { ...filters, query: filters.query.trim() } }),
+      queryFn: ({ pageParam }) =>
+        getProducts({
+          filters: { ...filters, query: filters.query.trim() },
+          page: pageParam,
+          size: PRODUCTS_PAGE_SIZE,
+        }),
     }),
   ])
 

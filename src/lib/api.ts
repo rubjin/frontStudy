@@ -46,10 +46,18 @@ export async function fetchJson<T>(url: string, { signal }: { signal?: AbortSign
   return (await response.json()) as T
 }
 
-// 상품 목록 (Step 7-2, 목록 화면). GET /api/products?q=...&category=...
-// 쿼리는 목록 화면 주소와 같은 형식이라 주소를 만드는 함수(toCatalogSearch)를 그대로 쓴다
-export async function fetchProducts(filters: CatalogFilters, signal?: AbortSignal): Promise<ProductListResponse> {
-  return fetchJson<ProductListResponse>(`/api/products${toCatalogSearch(filters)}`, { signal })
+// 상품 목록 (Step 7-2, 목록 화면). GET /api/products?q=...&category=...&page=2&size=8
+// 필터 쿼리는 목록 화면 주소와 같은 형식이라 주소를 만드는 함수(toCatalogSearch)를 그대로 쓴다
+// paging (Step 7-3): 몇 번째 페이지를 몇 개씩
+export async function fetchProducts(
+  filters: CatalogFilters,
+  paging: { page: number; size: number },
+  signal?: AbortSignal,
+): Promise<ProductListResponse> {
+  const params = new URLSearchParams(toCatalogSearch(filters))
+  params.set('page', String(paging.page))
+  params.set('size', String(paging.size))
+  return fetchJson<ProductListResponse>(`/api/products?${params}`, { signal })
 }
 
 // 상품 하나 (Step 7-1, 장바구니). GET /api/products/3

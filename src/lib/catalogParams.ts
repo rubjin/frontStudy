@@ -74,6 +74,21 @@ export function parseIdList(value: string | null, maxCount = 100): number[] | un
     .slice(0, maxCount)
 }
 
+// 목록 API의 페이지 크기 (Step 7-3) — 서버 미리 받기(page.tsx)와 브라우저(queries.ts)가 같은 값을 써야 해서 여기 둔다
+export const PRODUCTS_PAGE_SIZE = 8
+
+// 'page'·'size' 쿼리 읽기 (Step 7-3, API용). 1 이상의 정수만, size는 최대 50
+export function parsePaging(params: Pick<URLSearchParams, 'get'>): { page: number; size: number } {
+  const toPositiveInt = (value: string | null, fallback: number) => {
+    const n = Number(value)
+    return Number.isInteger(n) && n >= 1 ? n : fallback
+  }
+  return {
+    page: toPositiveInt(params.get('page'), 1),
+    size: Math.min(toPositiveInt(params.get('size'), PRODUCTS_PAGE_SIZE), 50),
+  }
+}
+
 // 필터 값 → 주소 쿼리 문자열 (쓰기). 예) '?q=%EB%AC%B4%EC%84%A0&sort=rating', 모두 기본값이면 ''
 //
 // URLSearchParams: 쿼리 문자열을 만들어 주는 브라우저 내장 도구.

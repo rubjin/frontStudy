@@ -11,9 +11,12 @@ import type { Product } from './product'
 
 /** GET /api/products */
 export interface ProductListResponse {
+  /** 이번 페이지의 상품 (Step 7-3부터 나눠 보낸다) */
   items: Product[]
-  /** 조건에 맞는 전체 개수 */
+  /** 조건에 맞는 전체 개수 (모든 페이지 합) */
   total: number
+  /** 다음 페이지 번호. 마지막 페이지면 null (Step 7-3) */
+  nextPage: number | null
 }
 
 /** GET /api/categories */

@@ -34,10 +34,18 @@ export interface ProductQuery {
   filters?: Partial<CatalogFilters>
   /** 이 id들만 (장바구니처럼 정해진 상품만 필요할 때). 순서는 상품 데이터 순서 */
   ids?: number[]
+  /** 페이지 번호(1부터)와 크기 (Step 7-3). size가 없으면 전부 */
+  page?: number
+  size?: number
 }
 
-// 상품 목록 — 걸러내기 → 정렬
-export async function getProducts({ filters = {}, ids }: ProductQuery = {}): Promise<ProductListResponse> {
+// 상품 목록 — 걸러내기 → 정렬 → (7-3) 잘라내기
+export async function getProducts({
+  filters = {},
+  ids,
+  page = 1,
+  size,
+}: ProductQuery = {}): Promise<ProductListResponse> {
   await simulateNetwork()
   const { query, category, sort, hideSoldOut } = { ...DEFAULT_FILTERS, ...filters }
 
@@ -45,8 +53,14 @@ export async function getProducts({ filters = {}, ids }: ProductQuery = {}): Pro
   const idSet = ids ? new Set(ids) : null
   const source = idSet ? products.filter((p) => idSet.has(p.id)) : products
 
-  const items = sortProducts(filterProducts(source, { query, category, hideSoldOut }), sort)
-  return { items, total: items.length }
+  const all = sortProducts(filterProducts(source, { query, category, hideSoldOut }), sort)
+  if (size === undefined) return { items: all, total: all.length, nextPage: null }
+
+  // (Step 7-3) 오프셋 방식: page 2, size 8 → 8번째부터 8개 (slice(8, 16))
+  // DB에서는 LIMIT 8 OFFSET 8 과 같다 (Step 8)
+  const start = (page - 1) * size
+  const items = all.slice(start, start + size)
+  return { items, total: all.length, nextPage: start + size < all.length ? page + 1 : null }
 }
 
 // 카테고리 목록 (상품 데이터에 있는 것만, 맨 앞에 '전체')

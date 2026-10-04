@@ -1,6 +1,6 @@
 # Step 7. TanStack Query — 서버 데이터 캐싱, 검색 debounce, 더 보기
 
-> 상태: 진행 중 (7-1, 7-2 완료)
+> 상태: 완료 (2026-10-04)
 
 ## 목표
 Step 6에서 데이터를 API로 받게 했더니, 직접 fetch할 때 챙길 것이 많았다(로딩·에러·다시 시도·취소·중복 요청). 그리고 두 가지 문제가 남았다.
@@ -20,7 +20,7 @@ Step 6에서 데이터를 API로 받게 했더니, 직접 fetch할 때 챙길 �
 ## 세부 단계
 - [x] **7-1** 설치·설정, 장바구니 상품 정보를 상품별 캐시로 → 중복 요청·워터폴 해결
 - [x] **7-2** 목록을 API로: 서버에서 미리 받아 캐시에 넣기(hydration), 필터별 캐시, 검색 debounce
-- [ ] **7-3** 더 보기: `useInfiniteQuery`로 나눠 받기
+- [x] **7-3** 더 보기: `useInfiniteQuery`로 나눠 받기
 
 ---
 
@@ -170,3 +170,89 @@ useQuery({ queryKey: ['products', 'detail', 3], queryFn: () => fetchProduct(3) }
 
 ### 남은 것
 - API가 조건에 맞는 상품을 **전부** 보낸다 → 7-3 나눠 받기(더 보기)
+
+---
+
+## 7-3. 더 보기 — `useInfiniteQuery`로 나눠 받기
+
+### 왜 나눠 받나?
+7-2까지 API는 조건에 맞는 상품을 **전부** 보냈다. 상품이 수천 개면 첫 화면이 느려지고, 보지도 않을 데이터를 받는다. 처음엔 8개만 받고, 사용자가 원하면 다음 8개를 이어 붙인다.
+
+### 흐름
+```
+서버 page.tsx   prefetchInfiniteQuery → 1페이지(8개)만 미리 받아 HTML에
+화면           data.pages = [ {items: 8개, total: 12, nextPage: 2} ]          [더 보기 (8 / 12)]
+더 보기 클릭    GET /api/products?page=2&size=8
+               data.pages = [ {8개, nextPage: 2}, {4개, nextPage: null} ]    버튼 사라짐 → 새로 나온 첫 상품으로 포커스
+필터 변경       새 키 → 1페이지부터 다시
+```
+
+### 파일별 설명
+| 파일 | 역할 |
+|---|---|
+| `src/types/api.ts` | `ProductListResponse`에 `nextPage: number \| null` |
+| `src/lib/catalogParams.ts` | `PRODUCTS_PAGE_SIZE = 8`(서버·브라우저 공통), `parsePaging`(1 이상 정수, size 최대 50) |
+| `src/lib/products.ts` | `getProducts({ page, size })` — 오프셋 방식 `slice((page-1)*size, page*size)`, `nextPage` 계산. size가 없으면 전부 |
+| `src/app/api/products/route.ts` | `?page=&size=`. `ids` 요청은 나누지 않음 |
+| `src/lib/api.ts` | `fetchProducts(filters, { page, size })` |
+| `src/lib/queries.ts` | `productQueries.list` → `infiniteQueryOptions`(`initialPageParam: 1`, `getNextPageParam: last => last.nextPage ?? undefined`) |
+| `src/app/(catalog)/page.tsx` | `prefetchInfiniteQuery` — 첫 페이지만 |
+| `src/components/ProductCatalog.tsx`·`.module.scss` | `useInfiniteQuery`, 페이지 이어 붙이기, 더 보기 버튼(받는 중 `aria-disabled`), 더 보기 실패는 목록 유지 + `InlineError`, 더 불러온 뒤 새 첫 상품으로 포커스 |
+| `src/components/CardGrid.tsx` | `total` prop — 받은 개수가 아니라 전체 개수 표시 |
+| `src/mocks/handlers.ts` | 같은 방식으로 나눠 응답 |
+
+### 핵심 개념
+
+**1. 무한 쿼리 — 페이지가 쌓이는 캐시**
+- `useQuery`의 `data`가 응답 하나라면, `useInfiniteQuery`의 `data`는 `{ pages: [응답1, 응답2, ...] }`. 화면에서는 `pages.flatMap(p => p.items)`로 이어 붙인다.
+- `getNextPageParam(마지막 응답)`이 다음 페이지 번호를 정한다. `undefined`면 `hasNextPage = false`. **'다음이 있는지'는 데이터를 가진 서버가** `nextPage`로 알려 주는 게 정확하다.
+- `fetchNextPage()` / `isFetchingNextPage` / `isFetchNextPageError`(더 보기만 실패 — 이미 받은 페이지는 그대로).
+
+**2. 오프셋 vs 커서**
+- 오프셋(지금): "8번째부터 8개". 간단하고 '몇 페이지'가 분명하다. DB의 `LIMIT 8 OFFSET 8`.
+- 커서: "마지막으로 본 상품 다음부터 8개". 보는 사이 상품이 추가·삭제돼도 중복·누락이 없다. 피드처럼 계속 바뀌는 목록에 쓴다. 상품 목록은 오프셋으로 충분.
+
+**3. 무한 스크롤 대신 '더 보기' 버튼 (접근성)**
+- 스크롤만으로 자동으로 불러오면 페이지 맨 아래(푸터)에 닿을 수 없고, 키보드·스크린리더 사용자는 언제 내용이 늘어나는지 모른다.
+- 버튼은 사용자가 정하고, `더 보기 (8 / 12)`로 얼마나 남았는지 알 수 있다.
+- 더 불러온 뒤 **새로 나온 첫 상품 링크로 포커스** — 이어서 Tab으로 보면 되고, 마지막 페이지라 버튼이 사라져도 포커스가 튕기지 않는다(5-2 원칙).
+
+**4. 캐시 덕분에 '뒤로 가기'가 자연스럽다**
+2페이지 상품의 상세로 갔다가 뒤로 오면 12개가 그대로다(요청 0). 캐시에 두 페이지가 남아 있기 때문. 새로고침하면 서버가 1페이지만 미리 받으므로 8개부터 — 몇 페이지까지 봤는지는 주소에 없다(필요하면 `?page=`를 주소에 넣는 방법이 있다).
+
+### 확인 방법
+1. `curl 'localhost:3000/api/products?page=2&size=8'` → 4개, `nextPage: null`
+2. 홈 → 카드 8개 + '더 보기 (8 / 12)' → 누르면 12개, 버튼 사라짐, 9번째 상품에 포커스
+3. 9~12번째 상품 상세 → 뒤로 → 12개 그대로
+4. 카테고리를 바꾸면 1페이지부터
+
+검증 결과 (production 빌드 + headless Chrome, 2026-10-04)
+- API: page 1 → 8개·nextPage 2 / page 2 → 4개·null / page 3 → 0개 / `page=abc` → 1페이지 / `size=999` → 50으로 제한(12개) / `ids` 10개 → 나누지 않고 10개
+- 첫 HTML 카드 8개 + '더 보기 (8 / 12)', 첫 화면 요청 0
+- 키보드로 더 보기 → 요청 `page=2&size=8` 1번 → 12개, 버튼 없음, 포커스 `A 오픈형 무선 이어폰`(9번째)
+- 2페이지 상품 상세 → 뒤로 → 12개, 요청 0
+- '주변기기' → `category=주변기기&page=1&size=8` → 4개, 버튼 없음
+- 더 보기 실패(네트워크 끊김, 자동 재시도 포함 2번) → 8개 유지 + "상품을 더 불러오지 못했습니다. 네트워크 연결을 확인해 주세요." → 다시 시도 1번 → 12개, 포커스 9번째 상품
+- axe 라이트·다크 0, 콘솔 0, Storybook 58개 정상
+- `tsc`·ESLint·Stylelint·Prettier 통과
+
+---
+
+## Step 7 정리
+| 배운 것 | 어디에 |
+|---|---|
+| 서버 상태 vs 클라이언트 상태, TanStack Query 설정(staleTime·retry) | `lib/queryClient.ts`, `QueryProvider` |
+| 쿼리 키 설계, `queryOptions`로 한 곳에서 정의 | `lib/queries.ts` |
+| 같은 키 = 요청 한 번·결과 공유 (중복·워터폴 해결) | 장바구니 `useQueries` + CartProvider `fetchQuery` |
+| 서버 prefetch + `HydrationBoundary` | `(catalog)/page.tsx` |
+| `keepPreviousData`, debounce, `aria-busy` | `ProductCatalog`, `useDebouncedValue` |
+| 나눠 받기 `useInfiniteQuery`, 더 보기 + 포커스 | `ProductCatalog` |
+
+### Phase 2(API 연동) 전체에서 바뀐 것
+- 브라우저 JS에 상품 데이터 0 — 데이터는 서버(`lib/products`)와 API에만
+- 목록: 서버가 걸러서 8개씩, 첫 HTML에 포함, 필터·검색은 캐시와 debounce
+- 장바구니: 브라우저가 필요한 상품만 API로, 상품별 캐시
+- 로딩·에러·빈 상태를 모든 데이터 영역에서 처리, Storybook은 MSW로 같은 상태 재현
+
+### 다음 (Step 8)
+`lib/products.ts` 안쪽을 목 데이터 → DB(Prisma)로 바꾼다. API 주소·응답 모양·화면 코드는 그대로여야 한다 — Step 6~7에서 계층을 나눈 효과를 확인하는 단계.
