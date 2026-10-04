@@ -1,4 +1,6 @@
+import { useState, type ReactNode } from 'react'
 import type { Preview } from '@storybook/nextjs-vite'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { withThemeByDataAttribute } from '@storybook/addon-themes'
 import { mswLoader } from 'msw-storybook-addon/csf3'
 import { handlers } from '../src/mocks/handlers'
@@ -15,6 +17,15 @@ import '../src/styles/globals.scss'
 // - 전역 CSS (위 import)
 // - decorators: 모든 스토리를 감싸는 포장지
 // - parameters: 애드온·프레임워크 옵션
+// TanStack Query (Step 7-1) — 스토리마다 '새' 캐시
+// 사이트처럼 하나를 같이 쓰면 Filled 스토리에서 받은 상품이 캐시에 남아, ServerError 스토리에서도 성공 화면이 나온다.
+// useState(() => ...): 이 컴포넌트가 처음 그려질 때 한 번만 만든다. 스토리를 바꾸면 새로 그려져서 새 캐시가 된다.
+// retry: false — 실패 스토리가 바로 실패 화면을 보이게 (사이트는 1번 다시 시도)
+function StoryQueryProvider({ children }: { children: ReactNode }) {
+  const [client] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }))
+  return <QueryClientProvider client={client}>{children}</QueryClientProvider>
+}
+
 const preview: Preview = {
   // MSW (Step 6-4): 스토리를 그리기 '전'에 서비스 워커를 켠다(loader = 스토리 전에 실행되는 준비 단계)
   // → 컴포넌트의 fetch('/api/...')를 src/mocks/handlers.ts가 가로채 응답한다. Next.js 서버 없이도 API가 있는 것처럼 동작
@@ -32,11 +43,13 @@ const preview: Preview = {
     // 저장하면 한 스토리에서 담은 상품이 다른 스토리에 나타난다.
     (Story) => (
       // ToastProvider (Step 5-4): 담기 버튼이 useToast()로 알림을 띄운다. layout.tsx와 같은 순서(토스트가 바깥)
-      <ToastProvider>
-        <CartProvider persist={false}>
-          <Story />
-        </CartProvider>
-      </ToastProvider>
+      <StoryQueryProvider>
+        <ToastProvider>
+          <CartProvider persist={false}>
+            <Story />
+          </CartProvider>
+        </ToastProvider>
+      </StoryQueryProvider>
     ),
     // 다크 모드 전환 (addon-themes)
     // 실제 사이트처럼 <html data-theme="dark">를 붙였다 뗐다 한다.

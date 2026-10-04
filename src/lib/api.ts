@@ -45,7 +45,20 @@ export async function fetchJson<T>(url: string, { signal }: { signal?: AbortSign
   return (await response.json()) as T
 }
 
-// 정해진 id의 상품들 (장바구니). GET /api/products?ids=1,2,5
+// 상품 하나 (Step 7-1, 장바구니). GET /api/products/3
+// 404(판매 종료 등으로 없는 상품)는 에러가 아니라 null — '없음'도 정상적인 답이다.
+// (에러로 던지면 장바구니 전체가 '불러오지 못했습니다'가 된다. 없는 상품은 장바구니에서 빼면 된다)
+export async function fetchProduct(id: number, signal?: AbortSignal): Promise<Product | null> {
+  try {
+    return await fetchJson<Product>(`/api/products/${id}`, { signal })
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null
+    throw error
+  }
+}
+
+// 정해진 id의 상품들 (6-3 장바구니에서 썼다. 7-1부터는 상품별 캐시를 위해 fetchProduct를 쓴다)
+// GET /api/products?ids=1,2,5
 export async function fetchProductsByIds(ids: number[], signal?: AbortSignal): Promise<Product[]> {
   if (ids.length === 0) return []
   const params = new URLSearchParams({ ids: ids.join(',') })

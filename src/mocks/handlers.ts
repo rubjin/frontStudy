@@ -53,20 +53,23 @@ export const handlers = {
 }
 
 // ─── 스토리에서 바꿔 끼우는 상황별 핸들러 ───────────────────
+// 상품 API 주소 두 개(목록, 하나)를 모두 덮는다. 'products' 키를 통째로 바꾸므로 하나만 적으면 나머지 주소는 처리할 곳이 없어진다.
+// (Step 7-1에서 장바구니가 목록(?ids=) 대신 상품 하나(/api/products/:id)를 쓰게 바뀌면서 발견)
+const PRODUCT_PATHS = ['/api/products', '/api/products/:id']
 
 // 응답이 오지 않음 → 로딩 화면 그대로 (delay('infinite'): 영원히 기다린다)
-export const productsLoading = [
-  http.get('/api/products', async () => {
+export const productsLoading = PRODUCT_PATHS.map((path) =>
+  http.get(path, async () => {
     await delay('infinite')
   }),
-]
+)
 
 // 서버 오류 500
-export const productsServerError = [
-  http.get('/api/products', () =>
-    HttpResponse.json<ApiErrorResponse>({ error: { message: '상품 목록을 불러오지 못했습니다.' } }, { status: 500 }),
+export const productsServerError = PRODUCT_PATHS.map((path) =>
+  http.get(path, () =>
+    HttpResponse.json<ApiErrorResponse>({ error: { message: '상품 정보를 불러오지 못했습니다.' } }, { status: 500 }),
   ),
-]
+)
 
 // 네트워크 끊김 — HttpResponse.error(): 응답 자체가 없음 (fetch가 실패로 끝난다)
-export const productsNetworkError = [http.get('/api/products', () => HttpResponse.error())]
+export const productsNetworkError = PRODUCT_PATHS.map((path) => http.get(path, () => HttpResponse.error()))

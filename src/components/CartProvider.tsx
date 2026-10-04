@@ -3,12 +3,13 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, useState, type ReactNode } from 'react'
 import { cartReducer, getCartCount, getQuantityInCart, initialCartState, sanitizeCartItems } from '@/lib/cart'
 import { CART_STORAGE_KEY, loadCartItems, saveCartItems } from '@/lib/cartStorage'
-import { fetchProductsByIds } from '@/lib/api'
+import { useQueryClient } from '@tanstack/react-query'
+import { productQueries } from '@/lib/queries'
 import { useToast } from './ui/Toast'
 import type { Product } from '@/types/product'
 import type { CartItem } from '@/types/cart'
 
-// 장바구니 상태를 사이트 전체에 나눠 주는 컴포넌트 + useCart 훅 (Step 5-1, 5-2 수량 변경·삭제, 5-3 localStorage 저장, 6-3 API로 재고 확인)
+// 장바구니 상태를 사이트 전체에 나눠 주는 컴포넌트 + useCart 훅 (Step 5-1, 5-2 수량 변경·삭제, 5-3 localStorage 저장, 6-3 API로 재고 확인, 7-1 TanStack Query 캐시)
 //
 // 왜 Context가 필요한가? — props 전달(드릴링) 문제
 // - 장바구니 숫자는 헤더(CartLink)에, 담기 버튼은 상세 페이지(AddToCartButton)에, 목록은 /cart 페이지에 있다.
@@ -88,6 +89,8 @@ export function CartProvider({ children, initialItems, persist = true }: CartPro
   // 저장된 장바구니를 불러왔는지. 저장소를 안 쓰면(persist=false) 불러올 것이 없으니 처음부터 true
   const [hydrated, setHydrated] = useState(!persist)
   const { showToast } = useToast()
+  // TanStack Query 캐시 저장소 (Step 7-1). 재고 확인 결과를 /cart 화면(useCartProducts)과 나눠 쓴다
+  const queryClient = useQueryClient()
 
   // ① 불러오기 + ④ 다른 탭과 맞추기 — 화면이 붙은 뒤 한 번 실행 (useEffect는 브라우저에서만 실행된다)
   useEffect(() => {
@@ -96,16 +99,18 @@ export function CartProvider({ children, initialItems, persist = true }: CartPro
     // 저장된 값을 꺼내 지금 상품 정보에 맞게 정리(판매 종료·재고 감소·품절)한 뒤 통째로 바꾼다
     // (Step 6-3) 지금 상품 정보는 API(/api/products?ids=...)로 받는다. 예전엔 목 데이터 파일을 import했다
     //   → 브라우저 JS 번들에서 상품 데이터가 빠졌다. 대신 '받는 동안'(hydrated = false)이 조금 길어진다(/cart는 스켈레톤)
-    // AbortController: Provider가 사라지면(개발 모드의 StrictMode는 일부러 한 번 붙였다 뗀다) 진행 중인 요청을 취소한다
-    const controller = new AbortController()
+    // (Step 7-1) fetchQuery: 캐시에 있으면 그것을, 없으면 요청해서 캐시에 넣고 돌려준다.
+    //   상품별 키(productQueries.detail)로 받아 두므로, 곧이어 /cart의 useCartProducts가 같은 키를 쓰면 요청 없이 바로 그린다.
+    //   Promise.all: 상품들을 동시에 요청 (6-2에서 배운 워터폴 피하기)
+    // cancelled: Provider가 사라진 뒤(개발 모드 StrictMode는 일부러 한 번 붙였다 뗀다) 늦게 온 결과를 쓰지 않게
+    let cancelled = false
     const saved = loadCartItems()
 
-    fetchProductsByIds(
-      saved.map((item) => item.productId),
-      controller.signal,
-    )
-      .then((latest) => {
-        if (controller.signal.aborted) return
+    Promise.all(saved.map((item) => queryClient.fetchQuery(productQueries.detail(item.productId))))
+      .then((results) => {
+        if (cancelled) return
+        // null(404, 판매 종료)은 빼고 넘긴다 → sanitizeCartItems가 장바구니에서 뺀다
+        const latest = results.flatMap((p) => (p ? [p] : []))
         const items = sanitizeCartItems(saved, latest)
         // fetch 응답을 받은 '뒤'(비동기)에 state를 바꾸므로 5-3 때의 eslint 예외 주석이 필요 없어졌다
         dispatch({ type: 'replace', items })
@@ -120,7 +125,7 @@ export function CartProvider({ children, initialItems, persist = true }: CartPro
         }
       })
       .catch(() => {
-        if (controller.signal.aborted) return
+        if (cancelled) return
         // 확인 실패(서버 오류·네트워크): 정리하지 못한 저장값을 그대로 쓴다. 장바구니를 통째로 잃는 것보다 낫다.
         // 재고 한도는 담기·수량 변경 때 reducer가 다시 검사하고, /cart 화면은 자기 요청의 실패를 따로 보여 준다
         dispatch({ type: 'replace', items: saved })
@@ -136,11 +141,11 @@ export function CartProvider({ children, initialItems, persist = true }: CartPro
     window.addEventListener('storage', handleStorage)
     // 정리 함수: Provider가 사라질 때 이벤트 연결을 끊는다 (안 끊으면 사라진 컴포넌트에 계속 알림이 간다)
     return () => {
-      controller.abort()
+      cancelled = true
       window.removeEventListener('storage', handleStorage)
     }
-    // showToast는 ToastProvider가 useCallback으로 고정한 함수라 바뀌지 않는다 → 이 effect는 처음 한 번만 실행된다
-  }, [persist, showToast])
+    // showToast(useCallback으로 고정)·queryClient(브라우저에 하나)는 바뀌지 않는다 → 이 effect는 처음 한 번만 실행된다
+  }, [persist, showToast, queryClient])
 
   // ③ 저장하기 — 불러온 뒤에만, 장바구니가 바뀔 때마다
   useEffect(() => {

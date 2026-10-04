@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import { CartProvider } from '@/components/CartProvider'
 import { ToastProvider } from '@/components/ui/Toast'
+import { QueryProvider } from '@/components/QueryProvider'
 import Header from '@/components/Header'
 import { SITE_NAME, formatTitle } from '@/lib/site'
 import { themeInitScript } from '@/lib/theme'
@@ -85,12 +86,15 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
             CartProvider는 클라이언트 컴포넌트지만, children으로 넣은 Header·페이지는 서버 컴포넌트 그대로다. */}
         {/* 토스트 알림 (Step 5-4): CartProvider보다 바깥에 둔다 — 장바구니가 불러오면서 '수량 조정' 알림을 띄우기 때문
             (Context는 자기보다 바깥(위)의 Provider만 꺼낼 수 있다) */}
-        <ToastProvider>
-          <CartProvider>
-            <Header />
-            <main className={styles.main}>{children}</main>
-          </CartProvider>
-        </ToastProvider>
+        {/* TanStack Query (Step 7-1): 서버 데이터 캐시. CartProvider가 쓰므로 가장 바깥 */}
+        <QueryProvider>
+          <ToastProvider>
+            <CartProvider>
+              <Header />
+              <main className={styles.main}>{children}</main>
+            </CartProvider>
+          </ToastProvider>
+        </QueryProvider>
       </body>
     </html>
   )
