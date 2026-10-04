@@ -1,16 +1,21 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useRef } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import clsx from 'clsx'
 import SearchBar from './SearchBar'
 import CategoryFilter from './CategoryFilter'
 import SortSelect from './SortSelect'
 import SoldOutToggle from './SoldOutToggle'
 import CardGrid from './CardGrid'
-import { filterProducts } from '@/lib/filterProducts'
-import { SORT_OPTIONS, sortProducts } from '@/lib/sortProducts'
+import CatalogSkeleton from './CatalogSkeleton'
+import { InlineError } from './ui/InlineError'
+import { SORT_OPTIONS } from '@/lib/sortProducts'
 import { parseCatalogParams, toCatalogSearch, type CatalogFilters } from '@/lib/catalogParams'
-import type { Product } from '@/types/product'
+import { productQueries } from '@/lib/queries'
+import { useDebouncedValue } from '@/lib/useDebouncedValue'
+import { ApiError } from '@/lib/api'
 import styles from './ProductCatalog.module.scss'
 
 // 상품 목록 화면 — 검색·필터·정렬 (Step 3-1 → Step 4-2에서 상태를 주소로 옮김)
@@ -30,27 +35,31 @@ import styles from './ProductCatalog.module.scss'
 // - router.push/replace는 '페이지 이동'이라 서버에 새 화면(RSC)을 요청한다. 검색어 한 글자마다 요청이 간다.
 // - window.history.pushState/replaceState는 주소만 바꾸고 서버 요청이 없다.
 //   Next.js가 이 호출을 감지해서 useSearchParams도 같이 갱신해 준다. (Next.js 공식 문서의 방법)
-// - 걸러내기는 어차피 브라우저에 있는 상품 데이터로 하므로 서버에 물어볼 필요가 없다.
-//   (Step 7에서 서버에 걸러 달라고 요청하게 바꾸면 그때 '주소가 바뀌면 다시 가져오기'를 붙인다)
+// - (Step 7-2) 주소가 바뀌면 필터 값이 바뀌고 → 쿼리 키가 바뀌고 → TanStack Query가 그 조건의 목록을 API로 받는다.
+//   페이지(RSC) 전체가 아니라 목록 데이터(JSON)만 요청한다.
 //
 // push vs replace — '뒤로 가기'를 눌렀을 때 무엇이 돌아오면 자연스러운가?
 // - 카테고리·정렬·품절 숨기기: 한 번 고르는 '선택' → pushState (방문 기록에 쌓임. 뒤로 가기 = 직전 선택으로)
 // - 검색어: 한 글자마다 바뀜 → replaceState (기록을 덮어씀. '무', '무선'... 글자마다 뒤로 가기를 눌러야 하면 불편하다)
 
-// Step 6-2: 상품·카테고리를 props로 받는다
-// - 예전: 이 파일이 data/products.ts를 직접 import → 'use client' 파일이라 상품 데이터 전체가 브라우저 JS 번들에 들어갔다.
-// - 지금: 서버 컴포넌트(page.tsx)가 서버에서 데이터를 받아 props로 넘긴다. 이 컴포넌트는 '어디서 왔는지' 모른다.
-//   → 데이터 출처가 API·DB로 바뀌어도 이 파일은 그대로다. Storybook에서는 가짜 데이터를 props로 넣으면 된다.
+// Step 6-2: 상품·카테고리를 props로 받았다 (전체 상품을 받아 브라우저에서 걸러냄)
+// Step 7-2: 상품 목록은 TanStack Query로 '걸러진 결과'를 API에서 받는다
+// - 왜? 상품이 수천 개가 되면 전부 받아 브라우저에서 거를 수 없다. 서버가 거르고 필요한 만큼만 보낸다(7-3 더 보기).
+// - 첫 화면: 서버(page.tsx)가 같은 키로 미리 받아 캐시에 넣어 둔다(HydrationBoundary) → 첫 HTML에 목록이 있고, 브라우저는 다시 요청하지 않는다.
+// - 필터를 바꾸면: 키 ['products','list',{필터}]가 바뀌어 그 조건으로 요청. 한 번 본 조건은 캐시에서 바로 나온다(뒤로 가기 즉시).
+// - placeholderData: keepPreviousData — 새 조건의 결과가 오는 동안 이전 목록을 흐리게 보여 준다(스켈레톤으로 깜빡이지 않게).
+// - 검색어는 300ms debounce (lib/useDebouncedValue) — 입력이 멈췄을 때 한 번만 요청
 //
 // props
-// - products:   전체 상품 (걸러내기·정렬은 여기서, 브라우저에서 한다 → 필터를 바꿀 때 서버 요청 0)
-// - categories: 카테고리 버튼 목록 ('전체' 포함)
+// - categories: 카테고리 버튼 목록 ('전체' 포함). 거의 바뀌지 않아 서버가 한 번 받아 넘긴다
 interface ProductCatalogProps {
-  products: Product[]
   categories: string[]
 }
 
-function ProductCatalog({ products, categories }: ProductCatalogProps) {
+// 검색어 입력이 이만큼 멈추면 요청한다 (ms)
+const SEARCH_DEBOUNCE_MS = 300
+
+function ProductCatalog({ categories }: ProductCatalogProps) {
   // 지금 주소의 쿼리와 경로("/") — 주소가 바뀌면 새 값으로 다시 그려진다
   const searchParams = useSearchParams()
   const pathname = usePathname()
@@ -69,12 +78,54 @@ function ProductCatalog({ products, categories }: ProductCatalogProps) {
     else window.history.replaceState(null, '', url)
   }
 
-  // 화면에 보여 줄 상품 목록 (파생 상태 + useMemo, Step 2-3)
-  // 필터 값이 하나라도 바뀌었을 때만 다시 계산한다. 계산 순서: ① 걸러내기 → ② 정렬
-  const visible = useMemo(() => {
-    const filtered = filterProducts(products, { query, category, hideSoldOut })
-    return sortProducts(filtered, sort)
-  }, [products, query, category, hideSoldOut, sort])
+  // 요청에 쓸 검색어 — 입력창(query)은 바로 바뀌고, 요청은 입력이 멈춘 뒤에 (Step 7-2)
+  const debouncedQuery = useDebouncedValue(query, SEARCH_DEBOUNCE_MS)
+
+  // 상품 목록 (Step 7-2) — 예전의 useMemo(걸러내기·정렬)는 서버(API)가 한다
+  // - isPlaceholderData: 지금 보이는 것이 '이전 조건의 결과'인지 (새 결과를 받는 중)
+  // - isFetching: 요청이 진행 중인지 (처음이든 다시 받기든)
+  const { data, error, isError, isFetching, isPlaceholderData, refetch } = useQuery({
+    ...productQueries.list({ query: debouncedQuery, category, sort, hideSoldOut }),
+    placeholderData: keepPreviousData,
+  })
+
+  // 결과가 바뀌는 중 — 아직 입력 중(요청 전)이거나 새 조건의 결과를 받는 중
+  // → 목록을 흐리게 + aria-busy. 이전 결과를 지우지 않아 화면이 덜컹거리지 않는다
+  const updating = query.trim() !== debouncedQuery.trim() || (isFetching && isPlaceholderData)
+
+  // 다시 시도 후 포커스 (Step 5-2 원칙) — 성공하면 '다시 시도' 버튼이 사라지므로 결과 영역으로 옮긴다
+  const resultsRef = useRef<HTMLDivElement>(null)
+  const pendingFocusRef = useRef(false)
+  useEffect(() => {
+    if (pendingFocusRef.current && !isError && data) {
+      pendingFocusRef.current = false
+      resultsRef.current?.focus()
+    }
+  }, [isError, data])
+
+  function retry() {
+    pendingFocusRef.current = true
+    void refetch()
+  }
+
+  // 결과 영역 — 상태별로 (Step 7-2)
+  let results
+  if (isError) {
+    results = (
+      <InlineError
+        title="상품 목록을 불러오지 못했습니다."
+        description={error instanceof ApiError && error.status === 0 ? error.message : '잠시 후 다시 시도해 주세요.'}
+        onRetry={retry}
+        retrying={isFetching}
+      />
+    )
+  } else if (!data) {
+    // 미리 받은 데이터가 없는 첫 요청 (사이트에서는 서버가 미리 받아 두므로 거의 없다. /dev/skeleton 등)
+    results = <CatalogSkeleton gridOnly />
+  } else {
+    // 빈 결과 문구는 '결과를 만든' 검색어로 (입력 중인 글자가 아니라)
+    results = <CardGrid products={data.items} query={debouncedQuery} />
+  }
 
   return (
     <>
@@ -98,7 +149,16 @@ function ProductCatalog({ products, categories }: ProductCatalogProps) {
         </div>
       </div>
 
-      <CardGrid products={visible} query={query} />
+      {/* 결과 영역. tabIndex={-1}: 다시 시도 후 코드로 포커스를 옮길 수 있게 (Tab 순서에는 안 들어감)
+          aria-busy: 바뀌는 중이라는 표시 — 스크린리더가 바뀌는 도중의 내용을 읽지 않고 기다린다 */}
+      <div
+        ref={resultsRef}
+        tabIndex={-1}
+        aria-busy={updating}
+        className={clsx(styles.results, updating && styles.updating)}
+      >
+        {results}
+      </div>
     </>
   )
 }

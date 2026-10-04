@@ -23,3 +23,19 @@
   align-items: center;
   gap: space(4);
 }
+
+// 결과 영역 (Step 7-2) — 다시 시도 후 코드로 포커스를 받는 자리라 기본 포커스 선은 숨긴다
+// (키보드로 Tab해서 오는 곳이 아니고, 포커스를 옮긴 뒤 스크린리더가 내용을 읽는 용도)
+.results {
+  outline: none;
+}
+
+// 새 결과를 받는 동안 이전 목록을 흐리게 — 바뀌는 중임을 보여 주되 내용은 지우지 않는다
+.updating {
+  opacity: 0.6;
+  transition: opacity $duration-fast;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import SkeletonPreview from './SkeletonPreview'
-import { getCategories, getProducts } from '@/lib/products'
+import { getCategories } from '@/lib/products'
 
 // 개발용 스켈레톤 미리보기 페이지 — 주소 "/dev/skeleton" (Step 3-2 보강)
 //
@@ -27,7 +27,7 @@ export default async function SkeletonDevPage() {
     notFound()
   }
 
-  // Step 6-2: 목록 데이터를 서버에서 받아 넘긴다 (홈 page.tsx와 같은 방식)
-  const [{ items }, categories] = await Promise.all([getProducts(), getCategories()])
-  return <SkeletonPreview products={items} categories={categories} />
+  // Step 6-2: 카테고리를 서버에서 받아 넘긴다. (7-2부터 목록은 ProductCatalog가 브라우저에서 API로 받는다)
+  const categories = await getCategories()
+  return <SkeletonPreview categories={categories} />
 }

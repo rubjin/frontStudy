@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import CatalogSkeleton from '@/components/CatalogSkeleton'
 import ProductCatalog from '@/components/ProductCatalog'
 import { Button } from '@/components/ui/Button'
-import type { Product } from '@/types/product'
 import styles from './SkeletonPreview.module.scss'
 
 // 스켈레톤 ↔ 실제 화면 전환 미리보기 (Step 3-2 보강, /dev/skeleton 전용)
@@ -21,13 +20,12 @@ type Mode = 'skeleton' | 'real' | 'loading'
 
 const LOADING_MS = 2000
 
-// props (Step 6-2): 실제 화면(ProductCatalog)에 넘길 데이터. page.tsx(서버)가 받아서 넘겨준다
+// props (Step 6-2, 7-2): 실제 화면(ProductCatalog)에 넘길 카테고리. page.tsx(서버)가 받아서 넘겨준다
 interface SkeletonPreviewProps {
-  products: Product[]
   categories: string[]
 }
 
-function SkeletonPreview({ products, categories }: SkeletonPreviewProps) {
+function SkeletonPreview({ categories }: SkeletonPreviewProps) {
   const [mode, setMode] = useState<Mode>('skeleton')
 
   // 'loading' 모드가 되면 타이머를 걸고, 시간이 지나면 'real'로 바꾼다.
@@ -75,7 +73,7 @@ function SkeletonPreview({ products, categories }: SkeletonPreviewProps) {
         </p>
       </div>
 
-      {showSkeleton ? <CatalogSkeleton /> : <ProductCatalog products={products} categories={categories} />}
+      {showSkeleton ? <CatalogSkeleton /> : <ProductCatalog categories={categories} />}
     </>
   )
 }

@@ -1,3 +1,4 @@
+import { toCatalogSearch, type CatalogFilters } from '@/lib/catalogParams'
 import type { Product } from '@/types/product'
 import type { ApiErrorResponse, ProductListResponse } from '@/types/api'
 
@@ -43,6 +44,12 @@ export async function fetchJson<T>(url: string, { signal }: { signal?: AbortSign
     throw new ApiError(response.status, body?.error?.message ?? '요청을 처리하지 못했습니다.')
   }
   return (await response.json()) as T
+}
+
+// 상품 목록 (Step 7-2, 목록 화면). GET /api/products?q=...&category=...
+// 쿼리는 목록 화면 주소와 같은 형식이라 주소를 만드는 함수(toCatalogSearch)를 그대로 쓴다
+export async function fetchProducts(filters: CatalogFilters, signal?: AbortSignal): Promise<ProductListResponse> {
+  return fetchJson<ProductListResponse>(`/api/products${toCatalogSearch(filters)}`, { signal })
 }
 
 // 상품 하나 (Step 7-1, 장바구니). GET /api/products/3

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import clsx from 'clsx'
 import { useCart } from './CartProvider'
 import { Button, ButtonLink } from './ui/Button'
+import { InlineError } from './ui/InlineError'
 import { Close, Minus, Plus } from './icons'
 import CartSkeleton from './CartSkeleton'
 import { useCartProducts } from './useCartProducts'
@@ -115,13 +116,13 @@ function CartContents() {
       {!hydrated || status === 'loading' ? (
         <CartSkeleton />
       ) : status === 'error' ? (
-        // 실패 안내 (Step 6-3). role="alert": 나타나는 즉시 스크린리더가 읽는다 (status보다 급한 알림)
-        <div role="alert" className={styles.error}>
-          <p className={styles.errorTitle}>장바구니 상품 정보를 불러오지 못했습니다.</p>
-          {/* 네트워크 끊김(status 0)은 할 일이 다르므로 그 문구를 보여 준다 */}
-          <p>{error?.status === 0 ? error.message : '잠시 후 다시 시도해 주세요.'}</p>
-          <Button onClick={retryLoad}>다시 시도</Button>
-        </div>
+        // 실패 안내 (Step 6-3, 7-2에서 ui/InlineError로 공통화)
+        // 네트워크 끊김(status 0)은 할 일이 다르므로 그 문구를 보여 준다
+        <InlineError
+          title="장바구니 상품 정보를 불러오지 못했습니다."
+          description={error?.status === 0 ? error.message : '잠시 후 다시 시도해 주세요.'}
+          onRetry={retryLoad}
+        />
       ) : lines.length === 0 ? (
         // 빈 장바구니: 다음에 할 일(상품 보러 가기)을 함께 안내한다
         <div className={styles.empty}>

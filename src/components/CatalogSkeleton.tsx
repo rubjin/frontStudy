@@ -37,28 +37,39 @@ const CONTROL_HEIGHT = `calc(${toRem(32)} + 2px)`
 // 검색창 높이 = 위아래 여백(12px × 2) + 줄 높이(24px) + 테두리(1px × 2)
 const SEARCH_HEIGHT = `calc(${toRem(48)} + 2px)`
 
-function CatalogSkeleton() {
+// props
+// - gridOnly: true면 검색창·툴바 없이 개수 + 카드 자리만 (Step 7-2)
+//   ProductCatalog가 검색창·툴바는 이미 그렸고 '목록 데이터만' 기다릴 때 쓴다
+interface CatalogSkeletonProps {
+  gridOnly?: boolean
+}
+
+function CatalogSkeleton({ gridOnly = false }: CatalogSkeletonProps) {
   return (
     <div role="status">
       <span className="sr-only">상품 목록을 불러오는 중입니다.</span>
 
       <div aria-hidden="true">
-        <div className={searchStyles.wrap}>
-          <Skeleton block height={SEARCH_HEIGHT} radius="lg" />
-        </div>
+        {!gridOnly && (
+          <>
+            <div className={searchStyles.wrap}>
+              <Skeleton block height={SEARCH_HEIGHT} radius="lg" />
+            </div>
 
-        <div className={catalogStyles.toolbar}>
-          <div className={filterStyles.group}>
-            {CHIP_WIDTHS.map((px, index) => (
-              // 순서가 절대 바뀌지 않는 고정 목록이라 index를 key로 써도 안전하다
-              <Skeleton key={index} width={toRem(px)} height={CONTROL_HEIGHT} radius="full" />
-            ))}
-          </div>
-          <div className={catalogStyles.options}>
-            <Skeleton width={toRem(120)} height={toRem(20)} />
-            <Skeleton width={toRem(112)} height={CONTROL_HEIGHT} />
-          </div>
-        </div>
+            <div className={catalogStyles.toolbar}>
+              <div className={filterStyles.group}>
+                {CHIP_WIDTHS.map((px, index) => (
+                  // 순서가 절대 바뀌지 않는 고정 목록이라 index를 key로 써도 안전하다
+                  <Skeleton key={index} width={toRem(px)} height={CONTROL_HEIGHT} radius="full" />
+                ))}
+              </div>
+              <div className={catalogStyles.options}>
+                <Skeleton width={toRem(120)} height={toRem(20)} />
+                <Skeleton width={toRem(112)} height={CONTROL_HEIGHT} />
+              </div>
+            </div>
+          </>
+        )}
 
         <p className={gridStyles.count}>
           <Skeleton width={toRem(96)} />

@@ -1,11 +1,13 @@
 import { queryOptions } from '@tanstack/react-query'
-import { fetchProduct } from '@/lib/api'
+import { fetchProduct, fetchProducts } from '@/lib/api'
+import type { CatalogFilters } from '@/lib/catalogParams'
 
 // 쿼리 정의 모음 — '어떤 키로, 어떻게 가져오는지' (Step 7-1)
 //
 // 쿼리 키(queryKey): 캐시에서 데이터를 찾는 이름. 배열로 쓰고, 앞에서부터 넓은 → 좁은 순서로 적는다.
 //   ['products']                     상품 관련 전부 (한꺼번에 무효화할 때)
 //   ['products', 'detail', 3]        상품 3번 하나
+//   ['products', 'list', {필터}]     이 필터 조건의 목록 (Step 7-2) — 객체도 키가 될 수 있다(내용이 같으면 같은 키)
 // 같은 키 = 같은 데이터. 두 컴포넌트가 같은 키를 쓰면 요청은 한 번만 나가고 결과를 나눠 쓴다.
 //
 // queryOptions(): 키와 가져오는 함수(queryFn)를 한 묶음으로 만든다.
@@ -15,8 +17,22 @@ import { fetchProduct } from '@/lib/api'
 // queryFn이 받는 signal: TanStack Query가 요청을 취소할 때 쓰는 AbortSignal.
 // 6-3에서 직접 만든 AbortController를 이제 라이브러리가 대신 관리한다.
 
+// 목록 키에 넣을 필터를 정리한다 — 검색어 앞뒤 공백 제거
+// '무선'과 '무선 '이 다른 키가 되면 같은 결과를 두 번 요청한다. 서버(미리 받기)와 브라우저가 같은 키를 만들어야 하는 이유도 있다
+function normalizeFilters(filters: CatalogFilters): CatalogFilters {
+  return { ...filters, query: filters.query.trim() }
+}
+
 export const productQueries = {
   all: ['products'] as const,
+  // 상품 목록 (Step 7-2)
+  list: (filters: CatalogFilters) => {
+    const normalized = normalizeFilters(filters)
+    return queryOptions({
+      queryKey: [...productQueries.all, 'list', normalized] as const,
+      queryFn: ({ signal }) => fetchProducts(normalized, signal),
+    })
+  },
   detail: (id: number) =>
     queryOptions({
       queryKey: [...productQueries.all, 'detail', id] as const,

@@ -1,6 +1,6 @@
 # Step 7. TanStack Query — 서버 데이터 캐싱, 검색 debounce, 더 보기
 
-> 상태: 진행 중 (7-1 완료)
+> 상태: 진행 중 (7-1, 7-2 완료)
 
 ## 목표
 Step 6에서 데이터를 API로 받게 했더니, 직접 fetch할 때 챙길 것이 많았다(로딩·에러·다시 시도·취소·중복 요청). 그리고 두 가지 문제가 남았다.
@@ -19,7 +19,7 @@ Step 6에서 데이터를 API로 받게 했더니, 직접 fetch할 때 챙길 �
 
 ## 세부 단계
 - [x] **7-1** 설치·설정, 장바구니 상품 정보를 상품별 캐시로 → 중복 요청·워터폴 해결
-- [ ] **7-2** 목록을 API로: 서버에서 미리 받아 캐시에 넣기(hydration), 필터별 캐시, 검색 debounce
+- [x] **7-2** 목록을 API로: 서버에서 미리 받아 캐시에 넣기(hydration), 필터별 캐시, 검색 debounce
 - [ ] **7-3** 더 보기: `useInfiniteQuery`로 나눠 받기
 
 ---
@@ -92,3 +92,81 @@ useQuery({ queryKey: ['products', 'detail', 3], queryFn: () => fetchProduct(3) }
 - 5-3 회귀(새로고침 유지·탭 동기화·값 정리·스켈레톤 크기·axe) 통과. 콘솔은 999번의 404 한 줄뿐(의도)
 - Storybook 55개 × 라이트/다크 정상·axe 0. 처음엔 상황별 MSW 핸들러가 목록 주소만 덮어서 장바구니 오류 스토리가 '비어 있음'으로 나옴 → 두 주소 모두 덮도록 수정
 - `tsc`·ESLint·Prettier 통과
+
+---
+
+## 7-2. 목록을 API로 — 서버에서 미리 받기(hydration), 필터별 캐시, 검색 debounce
+
+### 왜 바꾸나?
+6-2까지는 서버가 **전체 상품**을 넘기고 브라우저가 걸렀다. 상품이 수천 개면 전부 보낼 수 없다. 서버(API)가 걸러서 필요한 것만 보내야 한다(7-3에서 나눠 보내기까지).
+
+### 흐름
+```
+첫 요청  /?category=오디오
+  서버 page.tsx ─ CatalogData
+     queryClient.prefetchQuery(키 ['products','list',{오디오}], 서버용 queryFn = lib/products 직접)
+     <HydrationBoundary state={dehydrate(queryClient)}>      ← 캐시 내용을 HTML과 함께 보냄
+        <ProductCatalog />  useQuery(같은 키) → 캐시에 이미 있음 → 요청 없이 그림
+필터 변경  주소 쿼리 → 필터 → 키 변경 → GET /api/products?category=웨어러블  (한 번 본 조건은 캐시)
+검색어     입력창은 즉시, 요청은 입력이 300ms 멈춘 뒤 한 번
+```
+
+### 파일별 설명
+| 파일 | 역할 |
+|---|---|
+| `src/app/(catalog)/page.tsx` | `searchParams`로 필터를 읽어 `prefetchQuery`(카테고리와 `Promise.all`) → `HydrationBoundary`. `connection()` 제거(쿼리를 읽으면 자동으로 요청마다) |
+| `src/components/ProductCatalog.tsx` | 전체 상품 props·`useMemo` 걸러내기 제거 → `useQuery(productQueries.list(...))` + `keepPreviousData`. 바뀌는 중 흐리게·`aria-busy`, 실패 `InlineError`, 다시 시도 후 결과 영역으로 포커스 |
+| `src/lib/queries.ts` | `productQueries.list(filters)` — 키에 넣기 전 검색어 앞뒤 공백 정리 |
+| `src/lib/api.ts` | `fetchProducts(filters)` — 주소 만들기는 `toCatalogSearch` 그대로 |
+| `src/lib/useDebouncedValue.ts` (새 파일) | 값이 delay 동안 안 바뀌면 그 값을 돌려주는 훅 |
+| `src/components/ui/InlineError.tsx`·`.module.scss`·`.stories.tsx` (새 파일) | 영역 안 실패 안내 + 다시 시도(`retrying` 중 `aria-disabled`). 장바구니(6-3)에 있던 것을 공통으로 |
+| `src/components/CartContents.tsx`·`.module.scss` | `InlineError` 사용, `.error` 스타일 삭제 |
+| `src/components/CatalogSkeleton.tsx` | `gridOnly` — 검색창·툴바 없이 목록 자리만 |
+| `src/app/dev/skeleton/*` | 카테고리만 넘김(목록은 ProductCatalog가 받음) |
+
+### 핵심 개념
+
+**1. prefetch + hydration — 서버가 받은 것을 브라우저 캐시의 시작값으로**
+- `useQuery`만 쓰면 첫 화면에서 브라우저가 API를 요청한다 → 첫 HTML에 목록이 없고(SEO·체감 속도 손해), 요청이 한 번 더 왕복한다.
+- 서버에서 **같은 키**로 미리 받아(`prefetchQuery`) 캐시를 직렬화(`dehydrate`)해 보내면, 브라우저 캐시가 그 데이터로 시작한다(`HydrationBoundary`).
+- 키는 같고 `queryFn`만 서버용으로 바꾼다: `{ ...productQueries.list(filters), queryFn: () => getProducts(...) }` — 서버는 자기 API를 fetch하지 않는다(6-1 원칙).
+- 7-1의 `staleTime` 60초가 여기서도 중요하다. 0이면 브라우저가 받자마자 "오래됨"으로 보고 다시 요청한다.
+
+**2. 키가 같아야 캐시를 나눠 쓴다**
+서버와 브라우저가 키를 **똑같이** 만들어야 한다. 그래서 키를 만드는 곳을 `productQueries.list` 하나로 두고, 검색어 공백 정리도 그 안에서 한다. 카테고리 검사는 서버에서 하면 워터폴이 생겨(카테고리 목록 → 목록) 생략하고 동시에 받는다 — 정상 주소면 키가 같다.
+
+**3. `placeholderData: keepPreviousData` — 바뀌는 동안 이전 결과 유지**
+새 키는 캐시가 비어 있어 기본은 '로딩'(스켈레톤)이다. 필터를 누를 때마다 목록이 스켈레톤으로 깜빡이면 불편하다 → 이전 결과를 흐리게(`opacity: 0.6`) 보여 주고, 새 결과가 오면 바꾼다. `aria-busy="true"`로 스크린리더에 "바뀌는 중"을 알린다.
+
+**4. debounce — 연달아 일어나는 일을 마지막 한 번으로**
+- 입력창(주소의 `q`)은 바로 바뀌고, **요청에 쓰는 값만** 300ms 늦춘다(`useDebouncedValue`).
+- 값이 바뀔 때마다 타이머를 새로 걸고, 이전 타이머는 effect 정리 함수에서 취소 → 마지막 값만 남는다.
+- 입력 중(아직 요청 전)에도 목록을 흐리게 해서 "결과가 곧 바뀐다"를 보여 준다.
+
+**5. 무엇이 어디로 갔나 (Step 2 → 7)**
+| | Step 2 | Step 4-2 | Step 6-2 | Step 7-2 |
+|---|---|---|---|---|
+| 필터 상태 | useState | URL | URL | URL |
+| 상품 데이터 | import | import | 서버 → props | **TanStack Query** (서버 prefetch) |
+| 걸러내기·정렬 | 브라우저 useMemo | 〃 | 〃 | **서버(API)** |
+
+### 확인 방법
+1. `curl 'localhost:3000/?category=오디오'` → HTML에 오디오 상품만
+2. Network 탭: 첫 화면에 `/api/products` 요청 없음
+3. 검색창에 빠르게 '무선 이어폰' → 요청 1번, 입력 중 목록이 흐려짐
+4. 카테고리 바꾸기 → 요청 1번 → 뒤로 가기 → 요청 없이 즉시
+5. `npm run dev` → Devtools에서 `["products","list",{...}]` 키들 확인
+
+검증 결과 (production 빌드 + headless Chrome, 2026-10-04)
+- 첫 HTML(`?category=오디오&sort=rating`): 헤드폰 있음, 키보드 없음 (서버가 거른 결과)
+- 첫 화면 브라우저 `/api/products` 요청 **0**
+- '무선 이어폰' 80ms 간격 입력(6글자) → 요청 **1번** (`/api/products?q=무선+이어폰&sort=rating`), 입력 직후 `aria-busy="true"`
+- 카테고리 '오디오' → 요청 1번 / 뒤로 가기 → 요청 0, 즉시
+- 빈 결과 문구 정상, axe 라이트·다크 0, 콘솔 0
+- 목록 요청 실패(가로채기) → 요청 2번(자동 재시도 1) → InlineError → 다시 시도 1번 → 목록, 포커스가 결과 영역으로
+- 지연 1.5초: 스켈레톤 192ms → 목록 1661ms (카테고리·목록 동시라 지연 한 번)
+- Storybook 58개 × 라이트/다크 정상·axe 0
+- `tsc`·ESLint·Stylelint·Prettier 통과
+
+### 남은 것
+- API가 조건에 맞는 상품을 **전부** 보낸다 → 7-3 나눠 받기(더 보기)
