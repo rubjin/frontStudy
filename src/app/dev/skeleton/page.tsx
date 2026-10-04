@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import SkeletonPreview from './SkeletonPreview'
+import { getCategories, getProducts } from '@/lib/products'
 
 // 개발용 스켈레톤 미리보기 페이지 — 주소 "/dev/skeleton" (Step 3-2 보강)
 //
@@ -21,10 +22,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-export default function SkeletonDevPage() {
+export default async function SkeletonDevPage() {
   if (process.env.NODE_ENV === 'production') {
     notFound()
   }
 
-  return <SkeletonPreview />
+  // Step 6-2: 목록 데이터를 서버에서 받아 넘긴다 (홈 page.tsx와 같은 방식)
+  const [{ items }, categories] = await Promise.all([getProducts(), getCategories()])
+  return <SkeletonPreview products={items} categories={categories} />
 }

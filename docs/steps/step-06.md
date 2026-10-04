@@ -1,6 +1,6 @@
 # Step 6. API 연동 — Route Handler 목 API, 서버 vs 클라이언트에서 데이터 받기
 
-> 상태: 진행 중 (6-1 완료)
+> 상태: 진행 중 (6-1, 6-2 완료)
 
 ## 목표
 지금까지 상품 데이터는 `data/products.ts` 파일을 **화면 코드가 직접 import**했다. 브라우저 코드(`'use client'`)도 import해서 상품 데이터 전체가 자바스크립트 번들에 들어 있었다. 실제 서비스는 데이터가 서버(API·DB)에 있고, 화면은 그것을 **요청해서 받아야** 한다.
@@ -13,7 +13,7 @@
 
 ## 세부 단계
 - [x] **6-1** Route Handler 목 API: `/api/products`(검색·필터·정렬·ids), `/api/products/[id]`, `/api/categories`. 서버 전용 데이터 계층, 지연·실패 흉내
-- [ ] **6-2** 목록: 서버 컴포넌트에서 데이터 받기 + Suspense 스트리밍. 브라우저 번들에서 상품 데이터 빼기
+- [x] **6-2** 목록: 서버 컴포넌트에서 데이터 받기 + Suspense 스트리밍. 브라우저 번들에서 상품 데이터 빼기
 - [ ] **6-3** 장바구니: 클라이언트에서 fetch — 로딩·에러·재시도, 요청 취소(AbortController)
 - [ ] **6-4** Storybook: MSW로 API 흉내 (fetch하는 컴포넌트의 스토리)
 
@@ -100,3 +100,63 @@ MOCK_API_DELAY_MS=1200 MOCK_API_ERROR_RATE=1 npx next start -p 3100   # 1.2초 �
 
 ### 다음
 - 목록 화면은 아직 `ProductCatalog`('use client')가 데이터 파일을 직접 import한다 → 6-2
+
+---
+
+## 6-2. 목록 — 서버 컴포넌트에서 데이터 받기
+
+### 바뀐 흐름
+```
+예전: ProductCatalog('use client') ── import ──▶ data/products.ts   (상품 데이터가 브라우저 JS 번들에)
+지금: (catalog)/page.tsx (서버)
+       └ <Suspense fallback={<CatalogSkeleton />}>
+           └ CatalogData (async 서버 컴포넌트)
+               await Promise.all([getProducts(), getCategories()])   ← lib/products.ts 직접 호출
+               └ <ProductCatalog products={...} categories={...} />   ← props로 넘김
+```
+
+### 파일별 설명
+| 파일 | 역할 |
+|---|---|
+| `src/app/(catalog)/page.tsx` | `CatalogData`(async 서버 컴포넌트)를 Suspense 안에 두고 데이터를 받아 넘김 |
+| `src/components/ProductCatalog.tsx` | `products`·`categories`를 props로. 데이터 파일 import 제거. `useMemo` 의존성에 `products` 추가 |
+| `src/app/dev/skeleton/page.tsx`·`SkeletonPreview.tsx` | 같은 방식으로 데이터를 받아 넘김 |
+
+### 핵심 개념
+
+**1. 서버 컴포넌트는 async로 데이터를 기다릴 수 있다**
+`async function CatalogData() { const data = await getProducts() ... }` — useEffect·로딩 state 없이 그냥 `await`. 서버에서 끝까지 만든 결과(HTML)가 브라우저로 간다. 클라이언트 컴포넌트는 async가 될 수 없다(6-3에서 비교).
+
+**2. 스트리밍 — 기다리는 부분만 Suspense 안에**
+- `page`에서 바로 `await`하면 데이터가 올 때까지 **아무것도** 보내지 못한다(흰 화면).
+- 기다리는 부분을 `CatalogData`로 빼서 `<Suspense>` 안에 두면: ① 틀(h1 + 스켈레톤)을 먼저 보내고 ② 데이터가 준비되면 같은 응답에 이어서 목록을 보낸다. 브라우저가 스켈레톤 자리를 목록으로 바꿔 끼운다.
+- 4-3a에서 "홈 첫 로딩 1프레임 스켈레톤은 Step 6에서 재검토"라고 했던 그 Suspense가 이제 실제 역할을 한다.
+
+**3. `Promise.all` — 서로 상관없는 요청은 동시에**
+상품과 카테고리를 하나씩 `await`하면 지연이 더해진다(1초 + 1초). `Promise.all`로 동시에 보내면 둘 중 긴 쪽만큼(1초). 앞 요청 결과가 뒤 요청에 필요할 때만 순서대로 기다린다. (순서대로 기다리느라 늦어지는 것을 '워터폴'이라 부른다)
+
+**4. 데이터는 props로 — 컴포넌트는 출처를 모른다**
+`ProductCatalog`는 이제 데이터가 파일·API·DB 중 어디서 왔는지 모른다. 그래서 출처가 바뀌어도 그대로고, Storybook·테스트에서는 가짜 데이터를 props로 넣으면 된다. 서버 → 클라이언트 props는 JSON으로 바꿀 수 있는 값이어야 한다(Product는 해당).
+
+**5. 실패하면 error.tsx**
+`CatalogData`에서 에러가 나면 4-3b의 `(catalog)/error.tsx`가 보이고 '다시 시도'(`retry()`)로 서버에 다시 요청한다. 배포 모드 브라우저 콘솔의 `Minified React error #441`은 "서버 컴포넌트에서 에러가 났지만 메시지는 숨김"이라는 뜻으로, `useReportError`가 기록한 것이다. 실제 원인은 서버 로그에만 남는다(보안상 브라우저에 보내지 않음).
+
+### 확인 방법
+```bash
+npm run build                                    # / 는 그대로 ƒ
+MOCK_API_DELAY_MS=1500 npx next start -p 3100   # 새로고침 → 스켈레톤 1.5초 → 목록
+MOCK_API_ERROR_RATE=1 npx next start -p 3100    # 에러 화면
+MOCK_API_ERROR_RATE=0.6 npx next start -p 3100  # '다시 시도'를 몇 번 누르면 목록
+```
+
+검증 결과 (2026-10-04, 첫 HTML을 조각 단위로 받은 시각 기록)
+- 지연 없음: 230ms에 응답 끝, HTML에 상품명 포함
+- 지연 1.5초: **171ms**에 스켈레톤 조각 도착 → **1637ms**에 상품명 조각 도착(같은 응답 안에서 이어서). `<html lang="ko">` 정상
+- 실패 100%: 브라우저에서 "상품 목록을 불러오지 못했습니다 · 다시 시도 · 검색 조건 초기화"
+- 실패 60%: '다시 시도' 0~4번 만에 목록 12개로 복구
+- 정상: 필터('오디오') → `?category=오디오&sort=rating`, 3개, 콘솔 에러 0
+- `tsc`·ESLint 통과
+
+### 남은 것
+- 상품 데이터가 아직 브라우저 JS 묶음에 있다 — layout의 `CartProvider`와 `CartContents`가 데이터 파일을 import하기 때문 → 6-3
+- 필터를 바꿀 때 서버에 묻지 않고 받아 둔 전체 상품을 브라우저에서 거른다. 상품이 많아지면 서버에 걸러 달라고 해야 한다 → Step 7

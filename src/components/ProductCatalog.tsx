@@ -7,10 +7,10 @@ import CategoryFilter from './CategoryFilter'
 import SortSelect from './SortSelect'
 import SoldOutToggle from './SoldOutToggle'
 import CardGrid from './CardGrid'
-import { products } from '@/data/products'
-import { filterProducts, getCategories } from '@/lib/filterProducts'
+import { filterProducts } from '@/lib/filterProducts'
 import { SORT_OPTIONS, sortProducts } from '@/lib/sortProducts'
 import { parseCatalogParams, toCatalogSearch, type CatalogFilters } from '@/lib/catalogParams'
+import type { Product } from '@/types/product'
 import styles from './ProductCatalog.module.scss'
 
 // 상품 목록 화면 — 검색·필터·정렬 (Step 3-1 → Step 4-2에서 상태를 주소로 옮김)
@@ -31,17 +31,26 @@ import styles from './ProductCatalog.module.scss'
 // - window.history.pushState/replaceState는 주소만 바꾸고 서버 요청이 없다.
 //   Next.js가 이 호출을 감지해서 useSearchParams도 같이 갱신해 준다. (Next.js 공식 문서의 방법)
 // - 걸러내기는 어차피 브라우저에 있는 상품 데이터로 하므로 서버에 물어볼 필요가 없다.
-//   (Step 6에서 API로 바꾸면 그때 '주소가 바뀌면 다시 가져오기'를 붙인다)
+//   (Step 7에서 서버에 걸러 달라고 요청하게 바꾸면 그때 '주소가 바뀌면 다시 가져오기'를 붙인다)
 //
 // push vs replace — '뒤로 가기'를 눌렀을 때 무엇이 돌아오면 자연스러운가?
 // - 카테고리·정렬·품절 숨기기: 한 번 고르는 '선택' → pushState (방문 기록에 쌓임. 뒤로 가기 = 직전 선택으로)
 // - 검색어: 한 글자마다 바뀜 → replaceState (기록을 덮어씀. '무', '무선'... 글자마다 뒤로 가기를 눌러야 하면 불편하다)
 
-// 카테고리 목록은 상품 데이터가 바뀌지 않는 한 항상 같아서 컴포넌트 밖에서 한 번만 계산한다.
-// ※ Step 6에서 데이터를 API로 받아오면 컴포넌트 안으로 옮기게 된다.
-const categories = getCategories(products)
+// Step 6-2: 상품·카테고리를 props로 받는다
+// - 예전: 이 파일이 data/products.ts를 직접 import → 'use client' 파일이라 상품 데이터 전체가 브라우저 JS 번들에 들어갔다.
+// - 지금: 서버 컴포넌트(page.tsx)가 서버에서 데이터를 받아 props로 넘긴다. 이 컴포넌트는 '어디서 왔는지' 모른다.
+//   → 데이터 출처가 API·DB로 바뀌어도 이 파일은 그대로다. Storybook에서는 가짜 데이터를 props로 넣으면 된다.
+//
+// props
+// - products:   전체 상품 (걸러내기·정렬은 여기서, 브라우저에서 한다 → 필터를 바꿀 때 서버 요청 0)
+// - categories: 카테고리 버튼 목록 ('전체' 포함)
+interface ProductCatalogProps {
+  products: Product[]
+  categories: string[]
+}
 
-function ProductCatalog() {
+function ProductCatalog({ products, categories }: ProductCatalogProps) {
   // 지금 주소의 쿼리와 경로("/") — 주소가 바뀌면 새 값으로 다시 그려진다
   const searchParams = useSearchParams()
   const pathname = usePathname()
@@ -65,7 +74,7 @@ function ProductCatalog() {
   const visible = useMemo(() => {
     const filtered = filterProducts(products, { query, category, hideSoldOut })
     return sortProducts(filtered, sort)
-  }, [query, category, hideSoldOut, sort])
+  }, [products, query, category, hideSoldOut, sort])
 
   return (
     <>
