@@ -20,7 +20,8 @@
     "db:seed": "prisma db seed",
     "db:reset": "prisma migrate reset --force",
     "db:studio": "prisma studio",
-    "db:setup": "prisma migrate deploy && prisma db seed"
+    "db:setup": "prisma migrate deploy && prisma db seed",
+    "data:import": "tsx prisma/import-dummyjson.ts"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "^7.10.0",

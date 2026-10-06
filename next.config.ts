@@ -19,6 +19,10 @@ const nextConfig: NextConfig = {
     // 지정한 경로 밖의 이미지를 최적화하라는 요청은 거부(400)해서, 서버 자원을 악용하는 요청을 막는다.
     // search: '' → 주소 뒤에 ?query가 붙은 요청도 거부
     localPatterns: [{ pathname: '/images/**', search: '' }],
+    // remotePatterns (Step 8-4): 다른 사이트의 이미지 중 최적화해 줄 것. 여기 없는 주소는 next/image가 거부한다.
+    // DummyJSON 상품 사진만 허용 — 호스트·경로를 좁게 적어서, 아무 사이트 이미지나 우리 서버로 변환시키는 악용을 막는다.
+    // next/image는 원본을 서버가 받아 크기를 줄이고 WebP 등으로 바꿔 보낸다(1000px 원본 → 카드에는 작은 크기).
+    remotePatterns: [{ protocol: 'https', hostname: 'cdn.dummyjson.com', pathname: '/product-images/**', search: '' }],
   },
 }
 

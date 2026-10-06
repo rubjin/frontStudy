@@ -1,0 +1,2529 @@
+{
+  "source": "https://dummyjson.com/products?limit=0&select=id,title,category,price,rating,stock,images",
+  "importedAt": "2026-10-06T10:15:57.810Z",
+  "krwPerUsd": 1400,
+  "products": [
+    {
+      "id": 1,
+      "name": "Essence Mascara Lash Princess",
+      "price": 14000,
+      "category": "뷰티",
+      "rating": 2.56,
+      "stock": 99,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/beauty/essence-mascara-lash-princess/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 2,
+      "name": "Eyeshadow Palette with Mirror",
+      "price": 28000,
+      "category": "뷰티",
+      "rating": 2.86,
+      "stock": 34,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/beauty/eyeshadow-palette-with-mirror/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 3,
+      "name": "Powder Canister",
+      "price": 21000,
+      "category": "뷰티",
+      "rating": 4.64,
+      "stock": 89,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/beauty/powder-canister/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 4,
+      "name": "Red Lipstick",
+      "price": 18200,
+      "category": "뷰티",
+      "rating": 4.36,
+      "stock": 91,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/beauty/red-lipstick/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 5,
+      "name": "Red Nail Polish",
+      "price": 12600,
+      "category": "뷰티",
+      "rating": 4.32,
+      "stock": 79,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/beauty/red-nail-polish/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 6,
+      "name": "Calvin Klein CK One",
+      "price": 70000,
+      "category": "향수",
+      "rating": 4.37,
+      "stock": 29,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/fragrances/calvin-klein-ck-one/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 7,
+      "name": "Chanel Coco Noir Eau De",
+      "price": 182000,
+      "category": "향수",
+      "rating": 4.26,
+      "stock": 58,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/fragrances/chanel-coco-noir-eau-de/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 8,
+      "name": "Dior J'adore",
+      "price": 126000,
+      "category": "향수",
+      "rating": 3.8,
+      "stock": 98,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/fragrances/dior-j'adore/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 9,
+      "name": "Dolce Shine Eau de",
+      "price": 98000,
+      "category": "향수",
+      "rating": 3.96,
+      "stock": 4,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/fragrances/dolce-shine-eau-de/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 10,
+      "name": "Gucci Bloom Eau de",
+      "price": 112000,
+      "category": "향수",
+      "rating": 2.74,
+      "stock": 91,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/fragrances/gucci-bloom-eau-de/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 11,
+      "name": "Annibale Colombo Bed",
+      "price": 2660000,
+      "category": "가구",
+      "rating": 4.77,
+      "stock": 88,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/furniture/annibale-colombo-bed/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 12,
+      "name": "Annibale Colombo Sofa",
+      "price": 3500000,
+      "category": "가구",
+      "rating": 3.92,
+      "stock": 60,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/furniture/annibale-colombo-sofa/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 13,
+      "name": "Bedside Table African Cherry",
+      "price": 420000,
+      "category": "가구",
+      "rating": 2.87,
+      "stock": 64,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/furniture/bedside-table-african-cherry/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 14,
+      "name": "Knoll Saarinen Executive Conference Chair",
+      "price": 700000,
+      "category": "가구",
+      "rating": 4.88,
+      "stock": 26,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/furniture/knoll-saarinen-executive-conference-chair/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 15,
+      "name": "Wooden Bathroom Sink With Mirror",
+      "price": 1120000,
+      "category": "가구",
+      "rating": 3.59,
+      "stock": 7,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/furniture/wooden-bathroom-sink-with-mirror/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 16,
+      "name": "Apple",
+      "price": 2800,
+      "category": "식료품",
+      "rating": 4.19,
+      "stock": 8,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/apple/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 17,
+      "name": "Beef Steak",
+      "price": 18200,
+      "category": "식료품",
+      "rating": 4.47,
+      "stock": 86,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/beef-steak/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 18,
+      "name": "Cat Food",
+      "price": 12600,
+      "category": "식료품",
+      "rating": 3.13,
+      "stock": 46,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/cat-food/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 19,
+      "name": "Chicken Meat",
+      "price": 14000,
+      "category": "식료품",
+      "rating": 3.19,
+      "stock": 97,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/chicken-meat/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 20,
+      "name": "Cooking Oil",
+      "price": 7000,
+      "category": "식료품",
+      "rating": 4.8,
+      "stock": 10,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/cooking-oil/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 21,
+      "name": "Cucumber",
+      "price": 2100,
+      "category": "식료품",
+      "rating": 4.07,
+      "stock": 84,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/cucumber/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 22,
+      "name": "Dog Food",
+      "price": 15400,
+      "category": "식료품",
+      "rating": 4.55,
+      "stock": 71,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/dog-food/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 23,
+      "name": "Eggs",
+      "price": 4200,
+      "category": "식료품",
+      "rating": 2.53,
+      "stock": 9,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/eggs/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 24,
+      "name": "Fish Steak",
+      "price": 21000,
+      "category": "식료품",
+      "rating": 3.78,
+      "stock": 74,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/fish-steak/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 25,
+      "name": "Green Bell Pepper",
+      "price": 1800,
+      "category": "식료품",
+      "rating": 3.25,
+      "stock": 33,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/green-bell-pepper/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 26,
+      "name": "Green Chili Pepper",
+      "price": 1400,
+      "category": "식료품",
+      "rating": 3.66,
+      "stock": 3,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/green-chili-pepper/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 27,
+      "name": "Honey Jar",
+      "price": 9800,
+      "category": "식료품",
+      "rating": 3.97,
+      "stock": 34,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/honey-jar/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 28,
+      "name": "Ice Cream",
+      "price": 7700,
+      "category": "식료품",
+      "rating": 3.39,
+      "stock": 27,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/ice-cream/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 29,
+      "name": "Juice",
+      "price": 5600,
+      "category": "식료품",
+      "rating": 3.94,
+      "stock": 50,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/juice/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 30,
+      "name": "Kiwi",
+      "price": 3500,
+      "category": "식료품",
+      "rating": 4.93,
+      "stock": 99,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/kiwi/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 31,
+      "name": "Lemon",
+      "price": 1100,
+      "category": "식료품",
+      "rating": 3.53,
+      "stock": 31,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/lemon/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 32,
+      "name": "Milk",
+      "price": 4900,
+      "category": "식료품",
+      "rating": 2.61,
+      "stock": 27,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/milk/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 33,
+      "name": "Mulberry",
+      "price": 7000,
+      "category": "식료품",
+      "rating": 4.95,
+      "stock": 99,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/mulberry/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 34,
+      "name": "Nescafe Coffee",
+      "price": 11200,
+      "category": "식료품",
+      "rating": 4.82,
+      "stock": 57,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/nescafe-coffee/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 35,
+      "name": "Potatoes",
+      "price": 3200,
+      "category": "식료품",
+      "rating": 4.81,
+      "stock": 13,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/potatoes/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 36,
+      "name": "Protein Powder",
+      "price": 28000,
+      "category": "식료품",
+      "rating": 4.18,
+      "stock": 80,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/protein-powder/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 37,
+      "name": "Red Onions",
+      "price": 2800,
+      "category": "식료품",
+      "rating": 4.2,
+      "stock": 82,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/red-onions/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 38,
+      "name": "Rice",
+      "price": 8400,
+      "category": "식료품",
+      "rating": 3.18,
+      "stock": 59,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/rice/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 39,
+      "name": "Soft Drinks",
+      "price": 2800,
+      "category": "식료품",
+      "rating": 4.75,
+      "stock": 53,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/soft-drinks/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 40,
+      "name": "Strawberry",
+      "price": 5600,
+      "category": "식료품",
+      "rating": 3.08,
+      "stock": 46,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/strawberry/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 41,
+      "name": "Tissue Paper Box",
+      "price": 3500,
+      "category": "식료품",
+      "rating": 2.69,
+      "stock": 86,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/tissue-paper-box/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 42,
+      "name": "Water",
+      "price": 1400,
+      "category": "식료품",
+      "rating": 4.96,
+      "stock": 53,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/groceries/water/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 43,
+      "name": "Decoration Swing",
+      "price": 84000,
+      "category": "홈 데코",
+      "rating": 3.16,
+      "stock": 47,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/home-decoration/decoration-swing/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 44,
+      "name": "Family Tree Photo Frame",
+      "price": 42000,
+      "category": "홈 데코",
+      "rating": 4.53,
+      "stock": 77,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/home-decoration/family-tree-photo-frame/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 45,
+      "name": "House Showpiece Plant",
+      "price": 56000,
+      "category": "홈 데코",
+      "rating": 4.67,
+      "stock": 28,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/home-decoration/house-showpiece-plant/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 46,
+      "name": "Plant Pot",
+      "price": 21000,
+      "category": "홈 데코",
+      "rating": 3.01,
+      "stock": 59,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/home-decoration/plant-pot/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 47,
+      "name": "Table Lamp",
+      "price": 70000,
+      "category": "홈 데코",
+      "rating": 3.55,
+      "stock": 9,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/home-decoration/table-lamp/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 48,
+      "name": "Bamboo Spatula",
+      "price": 11200,
+      "category": "주방용품",
+      "rating": 3.27,
+      "stock": 37,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/bamboo-spatula/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 49,
+      "name": "Black Aluminium Cup",
+      "price": 8400,
+      "category": "주방용품",
+      "rating": 4.46,
+      "stock": 75,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/black-aluminium-cup/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 50,
+      "name": "Black Whisk",
+      "price": 14000,
+      "category": "주방용품",
+      "rating": 3.9,
+      "stock": 73,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/black-whisk/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 51,
+      "name": "Boxed Blender",
+      "price": 56000,
+      "category": "주방용품",
+      "rating": 4.56,
+      "stock": 9,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/boxed-blender/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 52,
+      "name": "Carbon Steel Wok",
+      "price": 42000,
+      "category": "주방용품",
+      "rating": 4.05,
+      "stock": 40,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/carbon-steel-wok/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 53,
+      "name": "Chopping Board",
+      "price": 18200,
+      "category": "주방용품",
+      "rating": 3.7,
+      "stock": 14,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/chopping-board/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 54,
+      "name": "Citrus Squeezer Yellow",
+      "price": 12600,
+      "category": "주방용품",
+      "rating": 4.63,
+      "stock": 22,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/citrus-squeezer-yellow/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 55,
+      "name": "Egg Slicer",
+      "price": 9800,
+      "category": "주방용품",
+      "rating": 3.09,
+      "stock": 40,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/egg-slicer/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 56,
+      "name": "Electric Stove",
+      "price": 70000,
+      "category": "주방용품",
+      "rating": 4.11,
+      "stock": 21,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/electric-stove/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 57,
+      "name": "Fine Mesh Strainer",
+      "price": 14000,
+      "category": "주방용품",
+      "rating": 3.04,
+      "stock": 85,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/fine-mesh-strainer/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 58,
+      "name": "Fork",
+      "price": 5600,
+      "category": "주방용품",
+      "rating": 3.11,
+      "stock": 7,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/fork/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 59,
+      "name": "Glass",
+      "price": 7000,
+      "category": "주방용품",
+      "rating": 4.02,
+      "stock": 46,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/glass/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 60,
+      "name": "Grater Black",
+      "price": 15400,
+      "category": "주방용품",
+      "rating": 3.21,
+      "stock": 84,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/grater-black/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 61,
+      "name": "Hand Blender",
+      "price": 49000,
+      "category": "주방용품",
+      "rating": 3.86,
+      "stock": 84,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/hand-blender/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 62,
+      "name": "Ice Cube Tray",
+      "price": 8400,
+      "category": "주방용품",
+      "rating": 4.71,
+      "stock": 13,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/ice-cube-tray/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 63,
+      "name": "Kitchen Sieve",
+      "price": 11200,
+      "category": "주방용품",
+      "rating": 3.09,
+      "stock": 68,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/kitchen-sieve/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 64,
+      "name": "Knife",
+      "price": 21000,
+      "category": "주방용품",
+      "rating": 3.26,
+      "stock": 7,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/knife/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 65,
+      "name": "Lunch Box",
+      "price": 18200,
+      "category": "주방용품",
+      "rating": 4.93,
+      "stock": 94,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/lunch-box/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 66,
+      "name": "Microwave Oven",
+      "price": 126000,
+      "category": "주방용품",
+      "rating": 4.82,
+      "stock": 59,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/microwave-oven/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 67,
+      "name": "Mug Tree Stand",
+      "price": 22400,
+      "category": "주방용품",
+      "rating": 2.64,
+      "stock": 88,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/mug-tree-stand/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 68,
+      "name": "Pan",
+      "price": 35000,
+      "category": "주방용품",
+      "rating": 2.79,
+      "stock": 90,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/pan/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 69,
+      "name": "Plate",
+      "price": 5600,
+      "category": "주방용품",
+      "rating": 3.65,
+      "stock": 66,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/plate/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 70,
+      "name": "Red Tongs",
+      "price": 9800,
+      "category": "주방용품",
+      "rating": 4.42,
+      "stock": 82,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/red-tongs/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 71,
+      "name": "Silver Pot With Glass Cap",
+      "price": 56000,
+      "category": "주방용품",
+      "rating": 3.22,
+      "stock": 40,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/silver-pot-with-glass-cap/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 72,
+      "name": "Slotted Turner",
+      "price": 12600,
+      "category": "주방용품",
+      "rating": 3.4,
+      "stock": 88,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/slotted-turner/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 73,
+      "name": "Spice Rack",
+      "price": 28000,
+      "category": "주방용품",
+      "rating": 4.87,
+      "stock": 79,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/spice-rack/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 74,
+      "name": "Spoon",
+      "price": 7000,
+      "category": "주방용품",
+      "rating": 4.03,
+      "stock": 59,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/spoon/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 75,
+      "name": "Tray",
+      "price": 23800,
+      "category": "주방용품",
+      "rating": 4.62,
+      "stock": 71,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/tray/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 76,
+      "name": "Wooden Rolling Pin",
+      "price": 16800,
+      "category": "주방용품",
+      "rating": 2.92,
+      "stock": 80,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/wooden-rolling-pin/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 77,
+      "name": "Yellow Peeler",
+      "price": 8400,
+      "category": "주방용품",
+      "rating": 4.24,
+      "stock": 35,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/kitchen-accessories/yellow-peeler/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 78,
+      "name": "Apple MacBook Pro 14 Inch Space Grey",
+      "price": 2800000,
+      "category": "노트북",
+      "rating": 3.65,
+      "stock": 24,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/laptops/apple-macbook-pro-14-inch-space-grey/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 79,
+      "name": "Asus Zenbook Pro Dual Screen Laptop",
+      "price": 2520000,
+      "category": "노트북",
+      "rating": 3.95,
+      "stock": 45,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/laptops/asus-zenbook-pro-dual-screen-laptop/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 80,
+      "name": "Huawei Matebook X Pro",
+      "price": 1960000,
+      "category": "노트북",
+      "rating": 4.98,
+      "stock": 75,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/laptops/huawei-matebook-x-pro/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 81,
+      "name": "Lenovo Yoga 920",
+      "price": 1540000,
+      "category": "노트북",
+      "rating": 2.86,
+      "stock": 40,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/laptops/lenovo-yoga-920/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 82,
+      "name": "New DELL XPS 13 9300 Laptop",
+      "price": 2100000,
+      "category": "노트북",
+      "rating": 2.67,
+      "stock": 74,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/laptops/new-dell-xps-13-9300-laptop/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 83,
+      "name": "Blue & Black Check Shirt",
+      "price": 42000,
+      "category": "남성 셔츠",
+      "rating": 3.64,
+      "stock": 38,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mens-shirts/blue-&-black-check-shirt/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 84,
+      "name": "Gigabyte Aorus Men Tshirt",
+      "price": 35000,
+      "category": "남성 셔츠",
+      "rating": 3.18,
+      "stock": 90,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mens-shirts/gigabyte-aorus-men-tshirt/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 85,
+      "name": "Man Plaid Shirt",
+      "price": 49000,
+      "category": "남성 셔츠",
+      "rating": 3.46,
+      "stock": 82,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mens-shirts/man-plaid-shirt/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 86,
+      "name": "Man Short Sleeve Shirt",
+      "price": 28000,
+      "category": "남성 셔츠",
+      "rating": 2.9,
+      "stock": 2,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mens-shirts/man-short-sleeve-shirt/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 87,
+      "name": "Men Check Shirt",
+      "price": 39200,
+      "category": "남성 셔츠",
+      "rating": 2.72,
+      "stock": 95,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mens-shirts/men-check-shirt/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 88,
+      "name": "Nike Air Jordan 1 Red And Black",
+      "price": 210000,
+      "category": "남성 신발",
+      "rating": 4.77,
+      "stock": 7,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mens-shoes/nike-air-jordan-1-red-and-black/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 89,
+      "name": "Nike Baseball Cleats",
+      "price": 112000,
+      "category": "남성 신발",
+      "rating": 3.88,
+      "stock": 12,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mens-shoes/nike-baseball-cleats/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 90,
+      "name": "Puma Future Rider Trainers",
+      "price": 126000,
+      "category": "남성 신발",
+      "rating": 4.9,
+      "stock": 90,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mens-shoes/puma-future-rider-trainers/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 91,
+      "name": "Sports Sneakers Off White & Red",
+      "price": 168000,
+      "category": "남성 신발",
+      "rating": 4.77,
+      "stock": 17,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mens-shoes/sports-sneakers-off-white-&-red/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 92,
+      "name": "Sports Sneakers Off White Red",
+      "price": 154000,
+      "category": "남성 신발",
+      "rating": 4.69,
+      "stock": 62,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mens-shoes/sports-sneakers-off-white-red/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 93,
+      "name": "Brown Leather Belt Watch",
+      "price": 126000,
+      "category": "남성 시계",
+      "rating": 4.19,
+      "stock": 32,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mens-watches/brown-leather-belt-watch/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 94,
+      "name": "Longines Master Collection",
+      "price": 2100000,
+      "category": "남성 시계",
+      "rating": 3.87,
+      "stock": 100,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mens-watches/longines-master-collection/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 95,
+      "name": "Rolex Cellini Date Black Dial",
+      "price": 12600000,
+      "category": "남성 시계",
+      "rating": 4.97,
+      "stock": 40,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mens-watches/rolex-cellini-date-black-dial/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 96,
+      "name": "Rolex Cellini Moonphase",
+      "price": 18200000,
+      "category": "남성 시계",
+      "rating": 2.58,
+      "stock": 36,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mens-watches/rolex-cellini-moonphase/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 97,
+      "name": "Rolex Datejust",
+      "price": 15400000,
+      "category": "남성 시계",
+      "rating": 3.66,
+      "stock": 86,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mens-watches/rolex-datejust/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 98,
+      "name": "Rolex Submariner Watch",
+      "price": 19600000,
+      "category": "남성 시계",
+      "rating": 2.69,
+      "stock": 55,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mens-watches/rolex-submariner-watch/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 99,
+      "name": "Amazon Echo Plus",
+      "price": 140000,
+      "category": "모바일 액세서리",
+      "rating": 4.99,
+      "stock": 61,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mobile-accessories/amazon-echo-plus/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 100,
+      "name": "Apple Airpods",
+      "price": 182000,
+      "category": "모바일 액세서리",
+      "rating": 4.15,
+      "stock": 67,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mobile-accessories/apple-airpods/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 101,
+      "name": "Apple AirPods Max Silver",
+      "price": 770000,
+      "category": "모바일 액세서리",
+      "rating": 3.47,
+      "stock": 59,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mobile-accessories/apple-airpods-max-silver/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 102,
+      "name": "Apple Airpower Wireless Charger",
+      "price": 112000,
+      "category": "모바일 액세서리",
+      "rating": 3.68,
+      "stock": 1,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mobile-accessories/apple-airpower-wireless-charger/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 103,
+      "name": "Apple HomePod Mini Cosmic Grey",
+      "price": 140000,
+      "category": "모바일 액세서리",
+      "rating": 4.62,
+      "stock": 27,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mobile-accessories/apple-homepod-mini-cosmic-grey/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 104,
+      "name": "Apple iPhone Charger",
+      "price": 28000,
+      "category": "모바일 액세서리",
+      "rating": 4.15,
+      "stock": 31,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mobile-accessories/apple-iphone-charger/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 105,
+      "name": "Apple MagSafe Battery Pack",
+      "price": 140000,
+      "category": "모바일 액세서리",
+      "rating": 3.62,
+      "stock": 1,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mobile-accessories/apple-magsafe-battery-pack/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 106,
+      "name": "Apple Watch Series 4 Gold",
+      "price": 490000,
+      "category": "모바일 액세서리",
+      "rating": 2.74,
+      "stock": 33,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mobile-accessories/apple-watch-series-4-gold/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 107,
+      "name": "Beats Flex Wireless Earphones",
+      "price": 70000,
+      "category": "모바일 액세서리",
+      "rating": 4.24,
+      "stock": 50,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mobile-accessories/beats-flex-wireless-earphones/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 108,
+      "name": "iPhone 12 Silicone Case with MagSafe Plum",
+      "price": 42000,
+      "category": "모바일 액세서리",
+      "rating": 3.62,
+      "stock": 69,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mobile-accessories/iphone-12-silicone-case-with-magsafe-plum/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 109,
+      "name": "Monopod",
+      "price": 28000,
+      "category": "모바일 액세서리",
+      "rating": 4.43,
+      "stock": 48,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mobile-accessories/monopod/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 110,
+      "name": "Selfie Lamp with iPhone",
+      "price": 21000,
+      "category": "모바일 액세서리",
+      "rating": 3.55,
+      "stock": 58,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mobile-accessories/selfie-lamp-with-iphone/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 111,
+      "name": "Selfie Stick Monopod",
+      "price": 18200,
+      "category": "모바일 액세서리",
+      "rating": 3.88,
+      "stock": 11,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mobile-accessories/selfie-stick-monopod/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 112,
+      "name": "TV Studio Camera Pedestal",
+      "price": 700000,
+      "category": "모바일 액세서리",
+      "rating": 2.78,
+      "stock": 15,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/mobile-accessories/tv-studio-camera-pedestal/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 113,
+      "name": "Generic Motorcycle",
+      "price": 5600000,
+      "category": "오토바이",
+      "rating": 4.91,
+      "stock": 34,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/motorcycle/generic-motorcycle/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 114,
+      "name": "Kawasaki Z800",
+      "price": 12600000,
+      "category": "오토바이",
+      "rating": 3.98,
+      "stock": 52,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/motorcycle/kawasaki-z800/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 115,
+      "name": "MotoGP CI.H1",
+      "price": 21000000,
+      "category": "오토바이",
+      "rating": 2.97,
+      "stock": 10,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/motorcycle/motogp-ci.h1/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 116,
+      "name": "Scooter Motorcycle",
+      "price": 4200000,
+      "category": "오토바이",
+      "rating": 2.53,
+      "stock": 84,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/motorcycle/scooter-motorcycle/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 117,
+      "name": "Sportbike Motorcycle",
+      "price": 10500000,
+      "category": "오토바이",
+      "rating": 3.94,
+      "stock": 0,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/motorcycle/sportbike-motorcycle/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 118,
+      "name": "Attitude Super Leaves Hand Soap",
+      "price": 12600,
+      "category": "스킨케어",
+      "rating": 3.19,
+      "stock": 94,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/skin-care/attitude-super-leaves-hand-soap/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 119,
+      "name": "Olay Ultra Moisture Shea Butter Body Wash",
+      "price": 18200,
+      "category": "스킨케어",
+      "rating": 4.51,
+      "stock": 34,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/skin-care/olay-ultra-moisture-shea-butter-body-wash/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 120,
+      "name": "Vaseline Men Body and Face Lotion",
+      "price": 14000,
+      "category": "스킨케어",
+      "rating": 3.16,
+      "stock": 95,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/skin-care/vaseline-men-body-and-face-lotion/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 121,
+      "name": "iPhone 5s",
+      "price": 280000,
+      "category": "스마트폰",
+      "rating": 2.83,
+      "stock": 25,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/smartphones/iphone-5s/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 122,
+      "name": "iPhone 6",
+      "price": 420000,
+      "category": "스마트폰",
+      "rating": 3.41,
+      "stock": 60,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/smartphones/iphone-6/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 123,
+      "name": "iPhone 13 Pro",
+      "price": 1540000,
+      "category": "스마트폰",
+      "rating": 4.12,
+      "stock": 56,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/smartphones/iphone-13-pro/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 124,
+      "name": "iPhone X",
+      "price": 1260000,
+      "category": "스마트폰",
+      "rating": 2.51,
+      "stock": 37,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/smartphones/iphone-x/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 125,
+      "name": "Oppo A57",
+      "price": 350000,
+      "category": "스마트폰",
+      "rating": 3.94,
+      "stock": 19,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/smartphones/oppo-a57/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 126,
+      "name": "Oppo F19 Pro Plus",
+      "price": 560000,
+      "category": "스마트폰",
+      "rating": 3.51,
+      "stock": 78,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/smartphones/oppo-f19-pro-plus/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 127,
+      "name": "Oppo K1",
+      "price": 420000,
+      "category": "스마트폰",
+      "rating": 4.25,
+      "stock": 55,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/smartphones/oppo-k1/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 128,
+      "name": "Realme C35",
+      "price": 210000,
+      "category": "스마트폰",
+      "rating": 4.2,
+      "stock": 48,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/smartphones/realme-c35/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 129,
+      "name": "Realme X",
+      "price": 420000,
+      "category": "스마트폰",
+      "rating": 3.7,
+      "stock": 12,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/smartphones/realme-x/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 130,
+      "name": "Realme XT",
+      "price": 490000,
+      "category": "스마트폰",
+      "rating": 4.58,
+      "stock": 80,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/smartphones/realme-xt/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 131,
+      "name": "Samsung Galaxy S7",
+      "price": 420000,
+      "category": "스마트폰",
+      "rating": 3.3,
+      "stock": 67,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/smartphones/samsung-galaxy-s7/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 132,
+      "name": "Samsung Galaxy S8",
+      "price": 700000,
+      "category": "스마트폰",
+      "rating": 4.4,
+      "stock": 0,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/smartphones/samsung-galaxy-s8/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 133,
+      "name": "Samsung Galaxy S10",
+      "price": 980000,
+      "category": "스마트폰",
+      "rating": 3.06,
+      "stock": 19,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/smartphones/samsung-galaxy-s10/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 134,
+      "name": "Vivo S1",
+      "price": 350000,
+      "category": "스마트폰",
+      "rating": 3.5,
+      "stock": 50,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/smartphones/vivo-s1/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 135,
+      "name": "Vivo V9",
+      "price": 420000,
+      "category": "스마트폰",
+      "rating": 3.6,
+      "stock": 82,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/smartphones/vivo-v9/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 136,
+      "name": "Vivo X21",
+      "price": 700000,
+      "category": "스마트폰",
+      "rating": 4.26,
+      "stock": 7,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/smartphones/vivo-x21/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 137,
+      "name": "American Football",
+      "price": 28000,
+      "category": "스포츠 용품",
+      "rating": 4.91,
+      "stock": 53,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sports-accessories/american-football/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 138,
+      "name": "Baseball Ball",
+      "price": 12600,
+      "category": "스포츠 용품",
+      "rating": 2.57,
+      "stock": 100,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sports-accessories/baseball-ball/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 139,
+      "name": "Baseball Glove",
+      "price": 35000,
+      "category": "스포츠 용품",
+      "rating": 3.96,
+      "stock": 22,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sports-accessories/baseball-glove/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 140,
+      "name": "Basketball",
+      "price": 21000,
+      "category": "스포츠 용품",
+      "rating": 4.66,
+      "stock": 75,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sports-accessories/basketball/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 141,
+      "name": "Basketball Rim",
+      "price": 56000,
+      "category": "스포츠 용품",
+      "rating": 4.6,
+      "stock": 43,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sports-accessories/basketball-rim/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 142,
+      "name": "Cricket Ball",
+      "price": 18200,
+      "category": "스포츠 용품",
+      "rating": 3.53,
+      "stock": 30,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sports-accessories/cricket-ball/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 143,
+      "name": "Cricket Bat",
+      "price": 42000,
+      "category": "스포츠 용품",
+      "rating": 3.17,
+      "stock": 98,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sports-accessories/cricket-bat/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 144,
+      "name": "Cricket Helmet",
+      "price": 63000,
+      "category": "스포츠 용품",
+      "rating": 4.69,
+      "stock": 10,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sports-accessories/cricket-helmet/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 145,
+      "name": "Cricket Wicket",
+      "price": 42000,
+      "category": "스포츠 용품",
+      "rating": 4.73,
+      "stock": 25,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sports-accessories/cricket-wicket/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 146,
+      "name": "Feather Shuttlecock",
+      "price": 8400,
+      "category": "스포츠 용품",
+      "rating": 2.85,
+      "stock": 95,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sports-accessories/feather-shuttlecock/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 147,
+      "name": "Football",
+      "price": 25200,
+      "category": "스포츠 용품",
+      "rating": 3.28,
+      "stock": 96,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sports-accessories/football/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 148,
+      "name": "Golf Ball",
+      "price": 14000,
+      "category": "스포츠 용품",
+      "rating": 4.3,
+      "stock": 84,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sports-accessories/golf-ball/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 149,
+      "name": "Iron Golf",
+      "price": 70000,
+      "category": "스포츠 용품",
+      "rating": 4.41,
+      "stock": 90,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sports-accessories/iron-golf/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 150,
+      "name": "Metal Baseball Bat",
+      "price": 42000,
+      "category": "스포츠 용품",
+      "rating": 4.66,
+      "stock": 16,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sports-accessories/metal-baseball-bat/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 151,
+      "name": "Tennis Ball",
+      "price": 9800,
+      "category": "스포츠 용품",
+      "rating": 4.06,
+      "stock": 28,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sports-accessories/tennis-ball/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 152,
+      "name": "Tennis Racket",
+      "price": 70000,
+      "category": "스포츠 용품",
+      "rating": 4.03,
+      "stock": 6,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sports-accessories/tennis-racket/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 153,
+      "name": "Volleyball",
+      "price": 16800,
+      "category": "스포츠 용품",
+      "rating": 3.84,
+      "stock": 0,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sports-accessories/volleyball/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 154,
+      "name": "Black Sun Glasses",
+      "price": 42000,
+      "category": "선글라스",
+      "rating": 4.41,
+      "stock": 60,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sunglasses/black-sun-glasses/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 155,
+      "name": "Classic Sun Glasses",
+      "price": 35000,
+      "category": "선글라스",
+      "rating": 3.86,
+      "stock": 1,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sunglasses/classic-sun-glasses/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 156,
+      "name": "Green and Black Glasses",
+      "price": 49000,
+      "category": "선글라스",
+      "rating": 4.55,
+      "stock": 24,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sunglasses/green-and-black-glasses/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 157,
+      "name": "Party Glasses",
+      "price": 28000,
+      "category": "선글라스",
+      "rating": 2.79,
+      "stock": 86,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sunglasses/party-glasses/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 158,
+      "name": "Sunglasses",
+      "price": 32200,
+      "category": "선글라스",
+      "rating": 3.02,
+      "stock": 27,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/sunglasses/sunglasses/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 159,
+      "name": "iPad Mini 2021 Starlight",
+      "price": 700000,
+      "category": "태블릿",
+      "rating": 3.18,
+      "stock": 47,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/tablets/ipad-mini-2021-starlight/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 160,
+      "name": "Samsung Galaxy Tab S8 Plus Grey",
+      "price": 840000,
+      "category": "태블릿",
+      "rating": 4.68,
+      "stock": 62,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/tablets/samsung-galaxy-tab-s8-plus-grey/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 161,
+      "name": "Samsung Galaxy Tab White",
+      "price": 490000,
+      "category": "태블릿",
+      "rating": 3.72,
+      "stock": 92,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/tablets/samsung-galaxy-tab-white/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 162,
+      "name": "Blue Frock",
+      "price": 42000,
+      "category": "상의",
+      "rating": 4.17,
+      "stock": 52,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/tops/blue-frock/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 163,
+      "name": "Girl Summer Dress",
+      "price": 28000,
+      "category": "상의",
+      "rating": 4.77,
+      "stock": 43,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/tops/girl-summer-dress/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 164,
+      "name": "Gray Dress",
+      "price": 49000,
+      "category": "상의",
+      "rating": 2.72,
+      "stock": 55,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/tops/gray-dress/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 165,
+      "name": "Short Frock",
+      "price": 35000,
+      "category": "상의",
+      "rating": 3.23,
+      "stock": 22,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/tops/short-frock/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 166,
+      "name": "Tartan Dress",
+      "price": 56000,
+      "category": "상의",
+      "rating": 4.05,
+      "stock": 73,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/tops/tartan-dress/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 167,
+      "name": "300 Touring",
+      "price": 40600000,
+      "category": "자동차",
+      "rating": 4.05,
+      "stock": 54,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/vehicle/300-touring/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 168,
+      "name": "Charger SXT RWD",
+      "price": 46200000,
+      "category": "자동차",
+      "rating": 2.58,
+      "stock": 57,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/vehicle/charger-sxt-rwd/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 169,
+      "name": "Dodge Hornet GT Plus",
+      "price": 35000000,
+      "category": "자동차",
+      "rating": 2.65,
+      "stock": 82,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/vehicle/dodge-hornet-gt-plus/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 170,
+      "name": "Durango SXT RWD",
+      "price": 51800000,
+      "category": "자동차",
+      "rating": 4.07,
+      "stock": 95,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/vehicle/durango-sxt-rwd/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 171,
+      "name": "Pacifica Touring",
+      "price": 44800000,
+      "category": "자동차",
+      "rating": 3.62,
+      "stock": 53,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/vehicle/pacifica-touring/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 172,
+      "name": "Blue Women's Handbag",
+      "price": 70000,
+      "category": "여성 가방",
+      "rating": 2.92,
+      "stock": 76,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-bags/blue-women's-handbag/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 173,
+      "name": "Heshe Women's Leather Bag",
+      "price": 182000,
+      "category": "여성 가방",
+      "rating": 4.92,
+      "stock": 99,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-bags/heshe-women's-leather-bag/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 174,
+      "name": "Prada Women Bag",
+      "price": 840000,
+      "category": "여성 가방",
+      "rating": 2.71,
+      "stock": 75,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-bags/prada-women-bag/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 175,
+      "name": "White Faux Leather Backpack",
+      "price": 56000,
+      "category": "여성 가방",
+      "rating": 3.36,
+      "stock": 39,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-bags/white-faux-leather-backpack/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 176,
+      "name": "Women Handbag Black",
+      "price": 84000,
+      "category": "여성 가방",
+      "rating": 2.89,
+      "stock": 11,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-bags/women-handbag-black/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 177,
+      "name": "Black Women's Gown",
+      "price": 182000,
+      "category": "여성 원피스",
+      "rating": 3.64,
+      "stock": 25,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-dresses/black-women's-gown/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 178,
+      "name": "Corset Leather With Skirt",
+      "price": 126000,
+      "category": "여성 원피스",
+      "rating": 3.05,
+      "stock": 30,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-dresses/corset-leather-with-skirt/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 179,
+      "name": "Corset With Black Skirt",
+      "price": 112000,
+      "category": "여성 원피스",
+      "rating": 4.52,
+      "stock": 33,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-dresses/corset-with-black-skirt/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 180,
+      "name": "Dress Pea",
+      "price": 70000,
+      "category": "여성 원피스",
+      "rating": 4.88,
+      "stock": 6,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-dresses/dress-pea/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 181,
+      "name": "Marni Red & Black Suit",
+      "price": 252000,
+      "category": "여성 원피스",
+      "rating": 4.48,
+      "stock": 62,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-dresses/marni-red-&-black-suit/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 182,
+      "name": "Green Crystal Earring",
+      "price": 42000,
+      "category": "여성 주얼리",
+      "rating": 3.96,
+      "stock": 54,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-jewellery/green-crystal-earring/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 183,
+      "name": "Green Oval Earring",
+      "price": 35000,
+      "category": "여성 주얼리",
+      "rating": 3.57,
+      "stock": 73,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-jewellery/green-oval-earring/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 184,
+      "name": "Tropical Earring",
+      "price": 28000,
+      "category": "여성 주얼리",
+      "rating": 4.4,
+      "stock": 1,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-jewellery/tropical-earring/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 185,
+      "name": "Black & Brown Slipper",
+      "price": 28000,
+      "category": "여성 신발",
+      "rating": 2.53,
+      "stock": 3,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-shoes/black-&-brown-slipper/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 186,
+      "name": "Calvin Klein Heel Shoes",
+      "price": 112000,
+      "category": "여성 신발",
+      "rating": 4.92,
+      "stock": 93,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-shoes/calvin-klein-heel-shoes/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 187,
+      "name": "Golden Shoes Woman",
+      "price": 70000,
+      "category": "여성 신발",
+      "rating": 3.26,
+      "stock": 88,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-shoes/golden-shoes-woman/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 188,
+      "name": "Pampi Shoes",
+      "price": 42000,
+      "category": "여성 신발",
+      "rating": 3.05,
+      "stock": 49,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-shoes/pampi-shoes/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 189,
+      "name": "Red Shoes",
+      "price": 49000,
+      "category": "여성 신발",
+      "rating": 3.25,
+      "stock": 7,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-shoes/red-shoes/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 190,
+      "name": "IWC Ingenieur Automatic Steel",
+      "price": 7000000,
+      "category": "여성 시계",
+      "rating": 2.93,
+      "stock": 90,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-watches/iwc-ingenieur-automatic-steel/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 191,
+      "name": "Rolex Cellini Moonphase",
+      "price": 22400000,
+      "category": "여성 시계",
+      "rating": 3.83,
+      "stock": 52,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-watches/rolex-cellini-moonphase/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 192,
+      "name": "Rolex Datejust Women",
+      "price": 15400000,
+      "category": "여성 시계",
+      "rating": 2.86,
+      "stock": 4,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-watches/rolex-datejust-women/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 193,
+      "name": "Watch Gold for Women",
+      "price": 1120000,
+      "category": "여성 시계",
+      "rating": 4.24,
+      "stock": 0,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-watches/watch-gold-for-women/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    },
+    {
+      "id": 194,
+      "name": "Women's Wrist Watch",
+      "price": 182000,
+      "category": "여성 시계",
+      "rating": 3.52,
+      "stock": 12,
+      "image": {
+        "src": "https://cdn.dummyjson.com/product-images/womens-watches/women's-wrist-watch/1.webp",
+        "width": 1000,
+        "height": 1000
+      }
+    }
+  ]
+}

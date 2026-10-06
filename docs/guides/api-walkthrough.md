@@ -152,8 +152,9 @@ export function serverErrorResponse(error: unknown, message: string) {
 ```bash
 curl -i localhost:3000/api/products/3
 # HTTP/1.1 200 OK
-# {"id":3,"name":"휴대용 블루투스 스피커","price":79000,"category":"오디오","rating":4.1,"stock":0,
-#  "image":{"src":"/images/products/3.jpg","width":1000,"height":1000}}
+# {"id":3,"name":"Powder Canister","price":21000,"category":"뷰티","rating":4.64,"stock":89,
+#  "image":{"src":"https://cdn.dummyjson.com/product-images/beauty/powder-canister/1.webp","width":1000,"height":1000}}
+# (Step 8-4부터 DummyJSON 데이터. SEED_DATA=mock으로 시드하면 예전 목 데이터 "휴대용 블루투스 스피커")
 
 curl -i localhost:3000/api/products/03     # 404 — '03' 같은 주소는 거절 (2장 정규식)
 curl -i -X POST localhost:3000/api/products/3   # 405 — GET만 만들었으므로

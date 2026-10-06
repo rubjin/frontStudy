@@ -1,6 +1,6 @@
 # 프로젝트 구조 — 폴더·파일별 역할
 
-> 2026-10-06 기준 (Step 8 완료). 파일마다 맨 위 주석에 "언제(Step), 왜" 만들었는지 더 자세히 적혀 있다.
+> 2026-10-06 기준 (Step 8 완료, 8-4 실데이터 보강 포함). 파일마다 맨 위 주석에 "언제(Step), 왜" 만들었는지 더 자세히 적혀 있다.
 > 이 문서는 **어디에 무엇이 있고, 무엇을 고치려면 어디를 열어야 하는지** 찾는 지도다.
 
 ---
@@ -16,7 +16,7 @@ frontStudy/
 │  ├─ lib/               ← 화면이 아닌 코드: 데이터 함수, 규칙, 계산, 훅
 │  ├─ types/             ← 여러 파일이 같이 쓰는 데이터 모양(타입)
 │  ├─ styles/            ← 디자인 토큰, mixin, 테마, 전역 CSS
-│  ├─ data/              ← 목 데이터 (이제 DB 시드와 Storybook만 사용)
+│  ├─ data/              ← 목 데이터 12개 (Storybook·MSW와 `SEED_DATA=mock` 시드에서만 사용)
 │  ├─ mocks/             ← Storybook용 가짜 API (MSW)
 │  └─ generated/         ← Prisma가 만든 DB 클라이언트 (자동 생성, 커밋 안 함)
 ├─ prisma/               ← DB 설계도·변경 이력·초기 데이터
@@ -254,7 +254,7 @@ src/app/
 
 | 폴더/파일 | 역할 |
 |---|---|
-| `src/data/products.ts` | 상품 12개 목 데이터. Step 8부터 **사이트 코드는 import하지 않는다** — DB 시드(`prisma/seed.ts`)와 MSW(`src/mocks`)만 사용 |
+| `src/data/products.ts` | 상품 12개 목 데이터(로컬 이미지). **사이트 코드는 import하지 않는다** — MSW(`src/mocks`, Storybook)와 `SEED_DATA=mock` 시드만 사용. 사이트의 실제 데이터는 8-4부터 DummyJSON 194개 |
 | `src/mocks/handlers.ts` | Storybook용 가짜 API(MSW). 기본 핸들러 + 상황별 `productsLoading`·`productsServerError`·`productsNetworkError` |
 | `src/generated/prisma/` | `prisma generate`가 만든 타입 있는 DB 클라이언트. **커밋 안 함**, `npm install` 때 자동 생성 |
 
@@ -267,10 +267,12 @@ src/app/
 | `schema.prisma` | DB 설계도. `model Product` = 테이블. 고친 뒤 `npm run db:migrate` |
 | `migrations/…_init/migration.sql` | 스키마 변경 이력(실제 SQL). DB를 같은 상태로 다시 만들 수 있게 커밋한다 |
 | `migrations/migration_lock.toml` | 어떤 DB 종류(sqlite)용 이력인지 |
-| `seed.ts` | 초기 데이터 넣기 (`data/products.ts` → DB, upsert) |
+| `seed.ts` | 초기 데이터 넣기 — 상품 테이블을 비우고 한꺼번에 넣는다(트랜잭션). 기본은 `data/dummyjson-products.json`(194개), `SEED_DATA=mock`이면 `src/data/products.ts`(12개) |
+| `import-dummyjson.ts` | `npm run data:import` — DummyJSON에서 상품을 받아 우리 모양으로 변환(원화 가격·한글 카테고리·이미지 크기 측정)해 JSON으로 저장. 데이터를 새로 받을 때만, 인터넷 필요 |
+| `data/dummyjson-products.json` | 위 스크립트가 만든 스냅샷(커밋). 시드는 네트워크 없이 이 파일을 읽는다 |
 | `dev.db` | SQLite DB 파일. **커밋 안 함** — `npm run db:setup`으로 만든다 |
 
-DB 명령: `db:setup`(처음 한 번: 마이그레이션 + 시드) · `db:migrate`(스키마 변경) · `db:reset`(처음부터) · `db:studio`(브라우저로 DB 보기)
+DB 명령: `db:setup`(처음 한 번: 마이그레이션 + 시드) · `db:seed`(데이터만 처음 상태로) · `db:migrate`(스키마 변경) · `db:reset`(처음부터) · `db:studio`(브라우저로 DB 보기) · `data:import`(DummyJSON 스냅샷 새로 받기)
 
 ---
 
@@ -278,7 +280,7 @@ DB 명령: `db:setup`(처음 한 번: 마이그레이션 + 시드) · `db:migrat
 
 | 폴더 | 역할 |
 |---|---|
-| `public/images/products/{id}.jpg` | 상품 샘플 이미지 12장(크기·비율 제각각). `/images/products/1.jpg` 주소로 그대로 서비스 |
+| `public/images/products/{id}.jpg` | 목 데이터용 샘플 이미지 12장(크기·비율 제각각). Storybook과 `SEED_DATA=mock`에서 사용. 실데이터 사진은 `cdn.dummyjson.com`에서 받는다 |
 | `docs/steps/step-NN.md` | 스텝별 학습 기록: 목표·한 일·파일별 설명·핵심 개념·확인 방법·검증 결과 |
 | `docs/guides/` | 주제별 안내서 (이 문서, API 따라가기) |
 | `.storybook/main.ts` | Storybook 설정: 스토리 위치, 애드온(a11y·themes·docs), Sass 경로를 Next와 같게, 정적 폴더 |
@@ -294,9 +296,9 @@ DB 명령: `db:setup`(처음 한 번: 마이그레이션 + 시드) · `db:migrat
 
 | 파일 | 역할 |
 |---|---|
-| `package.json` | 패키지 목록과 명령(`dev`·`build`·`lint`·`lint:css`·`format`·`storybook`·`db:*`). `postinstall`이 Prisma 클라이언트 생성 |
+| `package.json` | 패키지 목록과 명령(`dev`·`build`·`lint`·`lint:css`·`format`·`storybook`·`db:*`·`data:import`). `postinstall`이 Prisma 클라이언트 생성 |
 | `package-lock.json` | 설치된 패키지의 정확한 버전 기록 (사람이 고치지 않음) |
-| `next.config.ts` | Next.js 설정: Sass `loadPaths`(src), 이미지 허용 경로(`/images/**`) |
+| `next.config.ts` | Next.js 설정: Sass `loadPaths`(src), 이미지 허용 경로(내 사이트 `/images/**`, 외부 `cdn.dummyjson.com/product-images/**`) |
 | `tsconfig.json` | TypeScript 설정: `@/` = `src/` 별칭, 엄격 모드 |
 | `prisma.config.ts` | Prisma CLI 설정: 스키마 위치, 마이그레이션 폴더, 시드 명령, `.env` 읽기 |
 | `.env` | 기본 환경 변수(`DATABASE_URL`). 비밀이 아닌 기본값이라 커밋. 개인 값은 `.env.local`(커밋 안 함) |
