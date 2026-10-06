@@ -283,7 +283,7 @@ DB 명령: `db:setup`(처음 한 번: 마이그레이션 + 시드) · `db:seed`(
 |---|---|
 | `public/images/products/{id}.jpg` | 목 데이터용 샘플 이미지 12장(크기·비율 제각각). Storybook과 `SEED_DATA=mock`에서 사용. 실데이터 사진은 `cdn.dummyjson.com`에서 받는다 |
 | `docs/steps/step-NN.md` | 스텝별 학습 기록: 목표·한 일·파일별 설명·핵심 개념·확인 방법·검증 결과 |
-| `docs/guides/` | 주제별 안내서 (이 문서, API 따라가기) |
+| `docs/guides/` | 주제별 안내서 (이 문서, API 따라가기, 역할 경계) |
 | `.storybook/main.ts` | Storybook 설정: 스토리 위치, 애드온(a11y·themes·docs), Sass 경로를 Next와 같게, 정적 폴더 |
 | `.storybook/preview.tsx` | 모든 스토리 공통: 전역 CSS·폰트, 다크 모드 툴바, Provider(Query·Toast·Cart), MSW 시작 |
 | `.storybook/public/mockServiceWorker.js` | MSW 서비스 워커(생성 파일). 사이트 `public/`이 아니라 여기에 둬서 배포에 섞이지 않음 |
