@@ -19,7 +19,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:reset": "prisma migrate reset --force",
-    "db:studio": "prisma studio",
+    "db:studio": "tsx prisma/studio.ts",
     "db:setup": "prisma migrate deploy && prisma db seed",
     "data:import": "tsx prisma/import-dummyjson.ts"
   },

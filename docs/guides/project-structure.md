@@ -269,6 +269,7 @@ src/app/
 | `migrations/migration_lock.toml` | 어떤 DB 종류(sqlite)용 이력인지 |
 | `seed.ts` | 초기 데이터 넣기 — 상품 테이블을 비우고 한꺼번에 넣는다(트랜잭션). 기본은 `data/dummyjson-products.json`(194개), `SEED_DATA=mock`이면 `src/data/products.ts`(12개) |
 | `import-dummyjson.ts` | `npm run data:import` — DummyJSON에서 상품을 받아 우리 모양으로 변환(원화 가격·한글 카테고리·이미지 크기 측정)해 JSON으로 저장. 데이터를 새로 받을 때만, 인터넷 필요 |
+| `studio.ts` | `npm run db:studio` — Prisma Studio(브라우저로 DB 보기·고치기) 실행 도우미. Prisma 7.10 Studio가 `file:./…` 주소를 못 읽는 버그를 피하려고 절대 경로 주소로 바꿔 넘긴다 |
 | `data/dummyjson-products.json` | 위 스크립트가 만든 스냅샷(커밋). 시드는 네트워크 없이 이 파일을 읽는다 |
 | `dev.db` | SQLite DB 파일. **커밋 안 함** — `npm run db:setup`으로 만든다 |
 

@@ -227,7 +227,8 @@ SEED_DATA=mock npm run db:seed    예전 목 데이터 12개로
 | `prisma/data/dummyjson-products.json` (새 파일) | 변환 결과 스냅샷(194개, 64KB). 출처·받은 시각·환율을 함께 기록 |
 | `prisma/seed.ts` | 데이터 묶음 선택(`SEED_DATA`), upsert → **비우고 한꺼번에 넣기**(`$transaction([deleteMany, createMany])`) |
 | `next.config.ts` | `images.remotePatterns`에 `cdn.dummyjson.com/product-images/**`만 허용 |
-| `package.json` | `data:import` 명령 |
+| `package.json` | `data:import` 명령, `db:studio` → `tsx prisma/studio.ts` |
+| `prisma/studio.ts` (새 파일) | Prisma Studio 실행 도우미 — SQLite 주소를 절대 경로로 바꿔 넘김 (아래 "있었던 일") |
 
 ### 변환 규칙 (외부 모양 → 우리 모양)
 | DummyJSON | 우리 | 규칙 |
@@ -257,6 +258,10 @@ SEED_DATA=mock npm run db:seed    예전 목 데이터 12개로
 ### 있었던 일
 - `npm run db:reset`은 Prisma가 AI 도구 실행을 감지하면 사용자 동의를 요구한다(DB 전체 초기화라서). 스키마는 그대로이고 시드가 테이블을 비우므로 `npm run db:seed`로 충분했다.
 - 이미지 크기를 재려고 받은 원본은 194개 11MB, 8개씩 동시에 받아 약 3초.
+- **`npm run db:studio`가 실행되지 않았다** — `Prisma Studio is not supported for the "file:./prisma/dev.db" protocol.`
+  - 원인(Prisma 7.10 버그): Studio는 주소에서 DB 종류를 `://` 앞부분으로 읽는다. `file:./…`에는 `://`가 없어 주소 전체를 종류 이름으로 본다.
+  - `file://./prisma/dev.db`로 쓰면 Studio가 `//` 뒤를 절대 경로로 읽어 `C:prismadev.db`에 **빈 DB를 새로 만든다** → 상대 경로는 못 쓴다.
+  - 해결: `prisma/studio.ts`가 `.env`의 주소를 절대 경로 주소(`file:///C:/…/prisma/dev.db`)로 바꿔 `--url`로 넘긴다. `.env`는 그대로(마이그레이션·시드·사이트는 원래 주소로 잘 동작). Prisma를 올리면 `npx prisma studio`가 그냥 되는지 다시 확인한다.
 
 ### 확인 방법
 ```bash

@@ -60,6 +60,7 @@
 - 스텝별 설명: `docs/steps/`
 - 데이터: 사이트 상품은 **DummyJSON 194개 스냅샷**(`prisma/data/dummyjson-products.json`, 커밋). 새로 받기 `npm run data:import`(`prisma/import-dummyjson.ts`: 달러×1,400원 100원 단위, 카테고리 한글 표, 이미지 크기 측정) → `npm run db:seed`. 시드는 테이블을 비우고 넣음(트랜잭션), `SEED_DATA=mock`이면 목 데이터 12개. 상품명은 영어(검색도 영어)
 - 주의: `npm run db:reset`은 Prisma가 AI 실행을 감지해 사용자 동의를 요구한다. 데이터만 되돌릴 때는 `npm run db:seed`로 충분
+- Prisma 7.10 버그: `prisma studio`가 `file:./prisma/dev.db`(`://` 없음)를 "지원하지 않는 프로토콜"로 거부. `file://./…`는 `C:prismadev.db`에 빈 DB를 만든다. → `npm run db:studio`는 `prisma/studio.ts`가 절대 경로 `file:///C:/…`로 바꿔 `--url`로 실행. Prisma를 올리면 다시 확인
 - DB: **Prisma 7 + SQLite** (`prisma/schema.prisma`, `prisma.config.ts`, DB 파일 `prisma/dev.db`는 커밋 안 함). 새 작업 폴더에서는 `npm install`(클라이언트 생성) 후 `npm run db:setup`(마이그레이션 + 시드). 스키마 변경은 `npm run db:migrate`, 다시 시작 `db:reset`, 보기 `db:studio`. 생성된 클라이언트는 `src/generated/prisma`(커밋 안 함, `@/generated/prisma/client`). 서버 코드는 `lib/db.ts`의 `prisma`만 쓴다
 - 주의: `npx prisma init`은 AI 도구용 skills 파일(.claude/skills 등)까지 만든다. 다시 실행하지 말고, 했다면 지운다
 - 실행: `npm run dev` / 빌드: `npm run build` / 린트: `npm run lint` / 타입 검사: `npx tsc --noEmit` / 포맷: `npm run format`(고치기)·`npm run format:check`(검사)
@@ -154,3 +155,4 @@
   - **Step 8 완료.** 다음은 Step 9 (인증 + 주문, `proxy.ts`).
 - 2026-10-06: 새 PC 작업 폴더 설정(`npm install`·`db:setup`·build) 후 에러 해결. 안내서 `docs/guides/api-walkthrough.md`(샘플 GET /api/products/3)·`project-structure.md` 추가.
   - 8-4 보강: 실데이터 — DummyJSON 194개(24 카테고리)를 스냅샷 JSON으로 받아 시드, 외부 이미지 `remotePatterns`. 화면·API·데이터 계층 코드 변경 없음. 검증: 이미지 최적화 7.6KB WebP·허용 외 호스트 400, 정적 페이지 202, axe 0. 남은 것: 카테고리 칩 25개가 모바일에서 286px 차지 → 칩 UI 개선 필요, 상품명 영어.
+  - `npm run db:studio` 실행 안 됨(Prisma 7.10 Studio 버그) → `prisma/studio.ts` 우회. 실제 dev.db 열림·빈 DB 생성 없음 확인.
