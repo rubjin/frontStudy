@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createProduct, deleteProduct, updateProduct } from '@/lib/products'
 import { productInputSchema, toFieldErrors, type ProductFieldErrors } from '@/lib/productInput'
-import { isAdminEnabled } from '@/lib/admin'
+import { canManageProducts } from '@/lib/session'
 
 // 상품 추가·수정·삭제 Server Actions (Step 8-3)
 //
@@ -47,7 +47,7 @@ function formValues(formData: FormData): Record<string, string> {
 
 // useActionState와 함께 쓰는 액션은 (이전 state, formData) 두 인자를 받는다
 export async function createProductAction(_prev: ProductFormState, formData: FormData): Promise<ProductFormState> {
-  if (!isAdminEnabled()) return { message: '상품을 관리할 권한이 없습니다.' }
+  if (!(await canManageProducts())) return { message: '상품을 관리할 권한이 없습니다.' }
 
   const values = formValues(formData)
   const parsed = productInputSchema.safeParse(values)
@@ -68,7 +68,7 @@ export async function updateProductAction(
   _prev: ProductFormState,
   formData: FormData,
 ): Promise<ProductFormState> {
-  if (!isAdminEnabled()) return { message: '상품을 관리할 권한이 없습니다.' }
+  if (!(await canManageProducts())) return { message: '상품을 관리할 권한이 없습니다.' }
 
   const values = formValues(formData)
   const parsed = productInputSchema.safeParse(values)
@@ -83,7 +83,7 @@ export async function updateProductAction(
 
 // 삭제 — 확인 대화상자는 버튼(DeleteProductButton)이 띄운다
 export async function deleteProductAction(id: number): Promise<void> {
-  if (!isAdminEnabled()) throw new Error('상품을 관리할 권한이 없습니다.')
+  if (!(await canManageProducts())) throw new Error('상품을 관리할 권한이 없습니다.')
   await deleteProduct(id) // 이미 없으면 false지만 결과(목록에서 사라짐)는 같으므로 그대로 진행
   revalidateProductPages(id)
   redirect('/admin/products?done=deleted')

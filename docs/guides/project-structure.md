@@ -93,7 +93,7 @@ src/app/
 │  └─ page.module.scss
 │
 ├─ admin/                "/admin/..." 관리 화면 (Step 8-3)
-│  ├─ layout.tsx         요청마다 열어도 되는지 검사(isAdminEnabled). 아니면 안내 화면
+│  ├─ layout.tsx         요청마다 로그인·관리자 확인(lib/session.ts, Step 9-2). 아니면 로그인 페이지 / 403 안내
 │  └─ products/
 │     ├─ page.tsx        상품 관리 표 (DB 직접 조회) + 처리 결과 문구(?done=…)
 │     ├─ page.module.scss
@@ -209,7 +209,7 @@ src/app/
 | `cartStorage.ts` | 브라우저 | 장바구니 localStorage 읽기·쓰기 (`{ version, items }` + 모양 검사) |
 | `catalogParams.ts` | 둘 다 | 주소 쿼리 ↔ 필터 값 변환(`parseCatalogParams`·`toCatalogSearch`), 페이지 나누기 값 검사, `PRODUCTS_PAGE_SIZE` |
 | `productInput.ts` | 서버(검사) | 관리 폼 입력 검사 규칙(zod 스키마)과 `ProductInput` 타입 — 상품 입력 규칙은 여기에만. 검사는 Server Action에서, 폼은 타입만 가져다 쓴다 |
-| `admin.ts` | 서버 | 관리 화면을 열어도 되는지 (개발 모드 또는 `ADMIN_ENABLED=1`, Step 9에서 로그인으로 교체 예정) |
+| `session.ts` | 서버 | 로그인·권한 확인(DAL, Step 9-2): `getSession`·`isAdmin`·`requireSession`·`canManageProducts`. (8-3의 임시 `admin.ts`를 대신함) |
 | `filterProducts.ts` · `sortProducts.ts` | 둘 다 | 걸러내기·정렬 순수 함수와 상수(`ALL_CATEGORIES`='전체', `SORT_OPTIONS`). 실제 걸러내기·정렬은 Step 8부터 DB가 하고, 함수는 MSW가, 상수는 목록 화면·데이터 계층이 쓴다 |
 | **표시·기타** | | |
 | `format.ts` | 둘 다 | `formatPrice(189000)` → `₩189,000` (`Intl`) |

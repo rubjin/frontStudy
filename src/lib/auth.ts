@@ -37,6 +37,16 @@ export const auth = betterAuth({
     autoSignIn: true,
   },
 
+  // 사용자 표에 우리 필드 추가 (Step 9-2) — Better Auth 기본 필드(이름·이메일 …) 말고 우리 서비스에 필요한 것
+  // - role: 'user' | 'admin'. 세션을 꺼내면 session.user.role로 함께 온다
+  // - input: false → 회원가입 요청에 role을 넣어 보내도 무시한다. (넣으면 누구나 'admin'으로 가입할 수 있다!)
+  //   관리자 지정은 서버에서만: npm run auth:make-admin -- 이메일
+  user: {
+    additionalFields: {
+      role: { type: 'string', defaultValue: 'user', input: false },
+    },
+  },
+
   // nextCookies: Server Action 안에서 Better Auth를 부를 때 응답 쿠키(로그인 쿠키)가 실제 브라우저에 실리게 한다.
   // 플러그인 배열의 '마지막'에 둬야 한다 (Better Auth 문서)
   plugins: [nextCookies()],

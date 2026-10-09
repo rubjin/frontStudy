@@ -69,30 +69,37 @@ export const handlers = {
 }
 
 // 로그인한 상태 — Better Auth의 get-session 응답 모양 { session, user } (실제 API와 같은 필드)
+// role (Step 9-2): lib/auth.ts에서 더한 사용자 필드. 'user' | 'admin'
 const now = new Date().toISOString()
-export const authSignedIn = [
-  http.get('/api/auth/get-session', () =>
-    HttpResponse.json({
-      session: {
-        id: 'session-1',
-        userId: 'user-1',
-        token: 'story-token',
-        expiresAt: now,
-        createdAt: now,
-        updatedAt: now,
-      },
-      user: {
-        id: 'user-1',
-        name: '홍길동',
-        email: 'hong@example.com',
-        emailVerified: false,
-        createdAt: now,
-        updatedAt: now,
-      },
-    }),
-  ),
-  http.post('/api/auth/sign-out', () => HttpResponse.json({ success: true })),
-]
+function signedInAs(user: { id: string; name: string; email: string; role: 'user' | 'admin' }) {
+  return [
+    http.get('/api/auth/get-session', () =>
+      HttpResponse.json({
+        session: {
+          id: `session-${user.id}`,
+          userId: user.id,
+          token: 'story-token',
+          expiresAt: now,
+          createdAt: now,
+          updatedAt: now,
+        },
+        user: { ...user, emailVerified: false, createdAt: now, updatedAt: now },
+      }),
+    ),
+    http.post('/api/auth/sign-out', () => HttpResponse.json({ success: true })),
+  ]
+}
+
+// 일반 회원으로 로그인
+export const authSignedIn = signedInAs({ id: 'user-1', name: '홍길동', email: 'hong@example.com', role: 'user' })
+
+// 관리자로 로그인 (Step 9-2) — 헤더에 '관리' 링크
+export const authSignedInAdmin = signedInAs({
+  id: 'admin-1',
+  name: '관리자',
+  email: 'admin@example.com',
+  role: 'admin',
+})
 
 // 로그인 상태를 확인하는 중 (응답이 오지 않음) → 헤더에 회색 자리
 export const authLoading = [

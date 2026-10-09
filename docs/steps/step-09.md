@@ -1,6 +1,6 @@
 # Step 9. 인증과 주문 — Better Auth, 보호된 페이지, 주문하기
 
-> 상태: 진행 중 (9-1 완료)
+> 상태: 진행 중 (9-1, 9-2 완료)
 
 ## 목표
 지금까지 Shoppr에는 "누구"라는 개념이 없었다. 장바구니는 브라우저에만 있고, 관리 화면은 임시 스위치(`lib/admin.ts`)로 열고 닫았다.
@@ -19,7 +19,7 @@
 
 ## 세부 단계
 - [x] **9-1** 로그인 기본: Better Auth 설치, 사용자·세션 테이블, 회원가입·로그인·로그아웃, 헤더 로그인 상태
-- [ ] **9-2** 권한: 관리자 역할, 임시 권한(`lib/admin.ts`) → 로그인 검사, `proxy.ts`로 보호된 주소
+- [x] **9-2** 권한: 관리자 역할, 임시 권한(`lib/admin.ts`) → 로그인 검사(DAL `lib/session.ts`), `proxy.ts`로 보호된 주소
 - [ ] **9-3** 주문: 주문하기(서버에서 재고·가격 재확인, 재고 차감), 주문 완료, 내 주문 목록
 - [ ] **9-4** 마무리: 테스트 계정 시드, 접근성 점검, 문서
 
@@ -139,5 +139,103 @@ npm run build && npm run start
 
 ### 알려진 한계 · 다음에 할 일
 - 이메일 인증·비밀번호 재설정 없음 (메일 서버 필요). 같은 이메일 중복 가입 시 '이미 가입됨'을 알려 준다.
-- 관리 화면은 아직 임시 스위치(`lib/admin.ts`) → 9-2에서 로그인·역할 검사로
+- ~~관리 화면은 아직 임시 스위치(`lib/admin.ts`)~~ → 9-2에서 로그인·역할 검사로
 - 장바구니는 아직 브라우저에만 있다(로그인과 무관) → 9-3 주문 때 서버로 보낸다
+
+---
+
+## 9-2. 권한 — 관리자 역할, 세션 확인 한 곳에(DAL), `proxy.ts`
+
+### 왜?
+8-3의 관리 화면은 임시 스위치(`lib/admin.ts`: 개발 모드이거나 `ADMIN_ENABLED=1`이면 **누구에게나** 열림)였다. 이제 로그인이 생겼으니 **"관리자로 로그인한 사람만"**으로 바꾼다.
+
+### 검사가 세 겹인 이유
+```
+요청 /admin/products/5/edit
+ ① proxy.ts          로그인 쿠키가 '있는지'만 (DB 조회 없음, 빠름)   없으면 → /login?next=/admin/products/5/edit
+ ② admin/layout.tsx  세션이 진짜인지(DB) + 관리자인지                 아니면 → 로그인 페이지 / 403 안내
+ ③ actions.ts        Server Action 안에서 다시 관리자인지              아니면 → "권한이 없습니다"
+```
+- ①은 **빠른 문지기**: 로그인 안 한 대부분의 사람을 페이지를 그리기 전에 돌려보낸다. 쿠키가 있어도 만료·위조일 수 있으니 이것만 믿으면 안 된다.
+- ②는 **페이지 보호**: 화면(관리 데이터)이 나가기 전에 진짜로 확인.
+- ③은 **기능 보호**: Server Action은 화면과 상관없이 직접 호출할 수 있다(8-3). 화면을 막아도 함수 안에서 다시 검사해야 한다.
+- ②③은 같은 함수(`lib/session.ts`)를 쓴다 — Next.js 문서가 말하는 **데이터 접근 계층(DAL)**: 권한 검사를 한 곳에 모아 빠뜨리거나 다르게 짜지 않게.
+
+### 파일별 설명
+| 파일 | 역할 |
+|---|---|
+| `prisma/schema.prisma` + 마이그레이션 `add_user_role` | `User.role` (`'user'` 기본, `'admin'`) |
+| `src/lib/auth.ts` | `user.additionalFields.role` — `input: false`(가입 요청으로 정할 수 없음) |
+| `src/lib/session.ts` (새) | DAL: `getSession`(요청 안에서 `cache`), `isAdmin`, `loginPath`, `requireSession`, `canManageProducts` |
+| `src/proxy.ts` (새) | `/admin/:path*`에서 로그인 쿠키가 없으면 `/login?next=원래 주소` |
+| `src/app/admin/layout.tsx` | 임시 스위치 → 세션·역할 확인. 로그인 안 함 → 로그인 페이지, 관리자 아님 → 403 안내 |
+| `src/app/admin/products/actions.ts` | `isAdminEnabled()` → `await canManageProducts()` |
+| `src/lib/admin.ts` | **삭제** (`ADMIN_ENABLED` 환경 변수도 더 이상 쓰지 않음) |
+| `prisma/make-admin.ts` (새) | `npm run auth:make-admin -- 이메일 [--revoke]` — 관리자 지정·해제 |
+| `src/lib/auth-client.ts` | `inferAdditionalFields<typeof auth>()` — 브라우저에서도 `session.user.role` 타입 |
+| `src/components/UserMenu.tsx` (+stories) | 관리자에게만 '관리' 링크 |
+| `src/mocks/handlers.ts` | `signedInAs()`로 정리, `authSignedInAdmin` |
+| `package.json` | `auth:make-admin`, `db:migrate` 정리(`postdb:migrate`로 generate) |
+
+### 핵심 개념
+
+**1. 인증(Authentication)과 인가(Authorization)**
+| | 인증 (9-1) | 인가 (9-2) |
+|---|---|---|
+| 질문 | 누구인가? | 이 사람이 이걸 해도 되나? |
+| 방법 | 이메일·비밀번호 → 세션 | 세션의 `role`을 보고 판단 |
+| 실패하면 | 로그인 페이지로 | 403 "관리자만 이용할 수 있습니다" |
+
+로그인 안 한 사람을 403 화면에 두면 "로그인하면 되나?"를 모르고, 로그인한 일반 회원을 로그인 페이지로 보내면 이미 로그인했는데 어리둥절하다 → 둘을 다르게 안내한다.
+
+**2. 사용자가 역할을 정할 수 없게 — `input: false`**
+가입 요청은 누구나 만들어 보낼 수 있다(브라우저 개발자 도구, curl). `role`을 입력으로 받으면 `{"role":"admin"}`을 끼워 넣어 관리자로 가입할 수 있다. `input: false`면 보내도 무시된다. (확인: 가입 API에 `role: "admin"` → 저장된 값 `user`)
+
+**3. 첫 관리자는 명령으로**
+'관리자 지정' 화면은 그 화면을 쓸 관리자가 이미 있어야 한다. 첫 관리자는 서버(DB)에 접근할 수 있는 사람만 만들 수 있어야 하므로 명령(`npm run auth:make-admin`)으로. 역할은 요청마다 DB에서 읽으므로 다시 로그인하지 않아도 다음 요청부터 바뀐다.
+
+**4. `proxy.ts` — Next.js 16의 middleware**
+- `src/proxy.ts`(app과 같은 위치)에 `proxy` 함수를 내보내면, `matcher`에 맞는 요청에서 페이지보다 먼저 실행된다.
+- `matcher`로 범위를 좁힌다. 없으면 이미지·CSS 요청까지 모두 검사한다.
+- 쿠키만 보는 검사라 DB가 필요 없고 빠르다. 대신 진짜 검사가 아니다(Better Auth 문서: "THIS IS NOT SECURE!").
+- 레이아웃은 지금 주소를 몰라 `?next`를 관리 목록으로만 주지만, proxy는 요청 주소를 알아서 **원래 페이지로 정확히** 돌려보낸다.
+
+**5. 메뉴 숨기기는 보안이 아니다**
+헤더의 '관리' 링크는 관리자에게만 보이지만, 이건 편의다. 주소를 직접 쳐도 ①②가 막고, 폼을 손에 넣어도 ③이 막는다.
+
+**6. `cache()` — 한 요청 안에서 세션 조회 한 번**
+레이아웃·페이지·컴포넌트가 각각 `getSession()`을 불러도 같은 요청 안에서는 결과를 재사용한다(React `cache`). 다음 요청에서는 새로 조회한다.
+
+### 있었던 일
+- **마이그레이션이 5분 넘게 멈춤 → "database is locked"**
+  - 9-1에서 `db:migrate`를 `prisma migrate dev && prisma generate`로 바꿨는데, `npm run db:migrate -- --name add_user_role`의 `--name`이 **뒤의 `generate`로** 넘어갔다. 이름이 없는 `migrate dev`는 이름을 묻는 입력을 기다리며 멈췄고, 그 프로세스가 DB를 잠갔다.
+  - 해결: 멈춘 프로세스를 끄고, `"db:migrate": "prisma migrate dev"` + `"postdb:migrate": "prisma generate"`로 나눴다. npm은 `post이름` 스크립트를 자동으로 이어서 실행하고, `--` 뒤 옵션은 `migrate dev`로 간다.
+
+### 확인 방법
+```bash
+npm run db:migrate                                  # 새 PC면 db:setup
+npm run build && npm run start
+# /signup으로 관리자로 쓸 계정을 가입한 뒤
+npm run auth:make-admin -- 그이메일@example.com
+```
+1. 로그아웃 상태로 `/admin/products/5/edit` → `/login?next=/admin/products/5/edit` → 관리자로 로그인 → 그 수정 페이지
+2. 일반 회원으로 로그인 → `/admin/products` → "관리자만 이용할 수 있습니다"(403), 헤더에 '관리' 링크 없음
+3. 관리자로 로그인 → 헤더 '관리' 링크 → 상품 관리 표
+4. `npm run auth:make-admin -- 이메일 --revoke` → 새로고침하면 403
+
+검증 결과 (production 빌드 + DB 복사본 + curl·headless Chrome, 2026-10-09)
+- 빌드: 상세 `●` 유지, `ƒ Proxy (Middleware)`, 관리 페이지 `ƒ`
+- 쿠키 없음: `/admin/products` → 307 `/login?next=%2Fadmin%2Fproducts`, `/admin/products/5/edit` → 307 `next=%2Fadmin%2Fproducts%2F5%2Fedit`, `/products/5` → 200(proxy 대상 아님)
+- 가짜 쿠키 → 307 로그인 페이지
+- 가입 API에 `"role":"admin"` → 저장 `user`
+- 일반 회원: 헤더에 '관리' 없음, `/admin/products` → 403 안내(axe 라이트/다크 0)
+- `auth:make-admin` → 헤더에 '관리', `/admin/products` 표 194행 / `--revoke` → 다시 403
+- **관리 폼을 연 채 쿠키를 일반 회원 것으로 바꿔 제출 → "상품을 관리할 권한이 없습니다."** (Server Action 자체 검사)
+- 로그아웃 상태 수정 페이지 → 로그인 → 같은 수정 페이지로 복귀
+- 콘솔 에러 0, Storybook 72개(새 `SignedInAdmin`) × 라이트/다크 정상·axe 0
+- `tsc`·ESLint·Stylelint·Prettier 통과
+
+### 알려진 한계 · 다음에 할 일
+- 관리자 지정 화면 없음(명령으로만). 관리자 여러 명·세부 권한(상품만, 주문만)은 Better Auth `admin` 플러그인이나 권한 표로 확장할 수 있다.
+- 403 안내는 상태 코드 200 + noindex (`forbidden()`은 아직 실험 기능, `notFound()`는 16.3.6 버그)
+- 9-3: 주문하기·내 주문 목록 — `proxy.ts` matcher와 `requireSession`을 주문 페이지에도 쓴다

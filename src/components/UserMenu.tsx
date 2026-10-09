@@ -26,6 +26,9 @@ import styles from './UserMenu.module.scss'
 // - 로그인은 Server Action(서버)에서 일어나서, 브라우저의 useSession은 바뀐 것을 모른다.
 // - 로그인·가입 페이지에서 다른 페이지로 넘어갈 때(= 성공해서 이동했을 때) refetch()로 다시 묻는다.
 //
+// Step 9-2: 관리자(role === 'admin')에게만 '관리' 링크 → /admin/products
+// - 링크를 숨기는 건 '편의'일 뿐 보안이 아니다. 주소를 직접 쳐도 관리 화면은 admin/layout.tsx가 막는다.
+//
 // 로그아웃 뒤 포커스
 // - '로그아웃' 버튼이 '로그인' 링크로 바뀌며 사라진다 → 포커스가 body로 튕긴다(5-2 원칙)
 //   → 새로 나타난 '로그인' 링크로 포커스를 옮긴다.
@@ -91,6 +94,11 @@ function UserMenu() {
       <span className={styles.name}>
         <span className={styles.nameText}>{session.user.name}</span>님
       </span>
+      {session.user.role === 'admin' && (
+        <ButtonLink href="/admin/products" variant="ghost">
+          관리
+        </ButtonLink>
+      )}
       <Button variant="ghost" onClick={signOut} aria-disabled={signingOut}>
         로그아웃
       </Button>

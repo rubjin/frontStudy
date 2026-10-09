@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import UserMenu from './UserMenu'
-import { authLoading, authSignedIn } from '@/mocks/handlers'
+import { authLoading, authSignedIn, authSignedInAdmin } from '@/mocks/handlers'
 
 // 헤더 로그인 상태 스토리 (Step 9-1)
 // UserMenu는 GET /api/auth/get-session으로 로그인 상태를 받는다 → MSW 핸들러(src/mocks/handlers.ts)로 상태별 재현
@@ -29,6 +29,11 @@ export const SignedOut: Story = {}
 /** 로그인 상태 — 이름 + 로그아웃 (이름은 640px 이상에서만 보인다) */
 export const SignedIn: Story = {
   parameters: { msw: { handlers: { auth: authSignedIn } } },
+}
+
+/** 관리자로 로그인 (Step 9-2) — '관리' 링크가 더 보인다 */
+export const SignedInAdmin: Story = {
+  parameters: { msw: { handlers: { auth: authSignedInAdmin } } },
 }
 
 /** 로그인 상태 확인 중 — 버튼 크기의 회색 자리 */
