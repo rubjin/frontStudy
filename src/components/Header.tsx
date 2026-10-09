@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import CartLink from './CartLink'
 import ThemeToggle from './ThemeToggle'
+import UserMenu from './UserMenu'
 import { SITE_NAME } from '@/lib/site'
 import styles from './Header.module.scss'
 
@@ -29,6 +30,8 @@ function Header() {
         </Link>
         {/* 오른쪽 버튼 묶음 */}
         <div className={styles.actions}>
+          {/* 로그인 상태 (Step 9-1) — 사람마다 달라서 브라우저에서 확인하는 작은 'use client' (UserMenu 주석) */}
+          <UserMenu />
           <CartLink />
           <ThemeToggle />
         </div>

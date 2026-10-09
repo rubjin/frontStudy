@@ -54,11 +54,53 @@ const categoryHandlers = [
   http.get('/api/categories', () => HttpResponse.json<CategoryListResponse>({ items: getCategories(products) })),
 ]
 
+// 로그인 상태 (Step 9-1) — 헤더의 UserMenu가 authClient.useSession()으로 GET /api/auth/get-session 을 부른다
+// 기본은 '로그아웃 상태'(null). 로그인한 화면은 스토리에서 auth: authSignedIn 으로 바꿔 끼운다
+const authHandlers = [
+  http.get('/api/auth/get-session', () => HttpResponse.json(null)),
+  http.post('/api/auth/sign-out', () => HttpResponse.json({ success: true })),
+]
+
 // 기본 핸들러 — .storybook/preview.tsx가 모든 스토리에 깐다
 export const handlers = {
   products: productHandlers,
   categories: categoryHandlers,
+  auth: authHandlers,
 }
+
+// 로그인한 상태 — Better Auth의 get-session 응답 모양 { session, user } (실제 API와 같은 필드)
+const now = new Date().toISOString()
+export const authSignedIn = [
+  http.get('/api/auth/get-session', () =>
+    HttpResponse.json({
+      session: {
+        id: 'session-1',
+        userId: 'user-1',
+        token: 'story-token',
+        expiresAt: now,
+        createdAt: now,
+        updatedAt: now,
+      },
+      user: {
+        id: 'user-1',
+        name: '홍길동',
+        email: 'hong@example.com',
+        emailVerified: false,
+        createdAt: now,
+        updatedAt: now,
+      },
+    }),
+  ),
+  http.post('/api/auth/sign-out', () => HttpResponse.json({ success: true })),
+]
+
+// 로그인 상태를 확인하는 중 (응답이 오지 않음) → 헤더에 회색 자리
+export const authLoading = [
+  http.get('/api/auth/get-session', async () => {
+    await delay('infinite')
+    return HttpResponse.json(null)
+  }),
+]
 
 // ─── 스토리에서 바꿔 끼우는 상황별 핸들러 ───────────────────
 // 상품 API 주소 두 개(목록, 하나)를 모두 덮는다. 'products' 키를 통째로 바꾸므로 하나만 적으면 나머지 주소는 처리할 곳이 없어진다.

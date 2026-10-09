@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import Header from './Header'
 import ThemeToggle from './ThemeToggle'
+import { authSignedIn } from '@/mocks/handlers'
 
 // Header · ThemeToggle 스토리 (Step 3-3)
 //
@@ -27,6 +28,11 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Default: Story = {}
+
+/** 로그인한 상태 (Step 9-1) — 헤더 오른쪽에 이름 + 로그아웃 */
+export const SignedIn: Story = {
+  parameters: { msw: { handlers: { auth: authSignedIn } } },
+}
 
 /** 다크 모드 버튼 단독. 눌러서 아이콘·버튼 이름(Accessibility 탭)이 바뀌는지 확인 */
 export const ThemeToggleOnly: Story = {

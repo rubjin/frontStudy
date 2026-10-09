@@ -1,0 +1,30 @@
+@use 'styles' as *;
+
+// 헤더의 로그인 상태 (Step 9-1)
+
+.root {
+  display: flex;
+  align-items: center;
+  gap: space(1);
+}
+
+// '홍길동님' — 좁은 화면에서는 숨긴다 (로그아웃 버튼만)
+.name {
+  display: none;
+  @include text(sm);
+  color: var(--color-text-secondary);
+
+  @include mq(sm) {
+    display: flex;
+  }
+}
+
+// 이름이 길면 말줄임 (헤더 높이·버튼 자리를 지키려고)
+.nameText {
+  max-width: to-rem(120);
+  overflow: hidden;
+  font-weight: $font-weight-medium;
+  color: var(--color-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

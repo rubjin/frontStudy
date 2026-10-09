@@ -4,7 +4,7 @@ import { useActionState, useEffect, useId, useRef } from 'react'
 import { Button, ButtonLink } from './ui/Button'
 import type { ProductFormState } from '@/app/admin/products/actions'
 import type { ProductInput } from '@/lib/productInput'
-import styles from './ProductForm.module.scss'
+import styles from './ui/Form.module.scss'
 
 // 상품 추가·수정 폼 (Step 8-3, 관리 화면)
 //

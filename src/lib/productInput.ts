@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { toFieldErrors as toFieldErrorsOf, type FieldErrors } from '@/lib/fieldErrors'
 
 // 상품 입력값 검사 규칙 — 관리 화면의 추가·수정 폼 (Step 8-3)
 //
@@ -54,14 +55,9 @@ export const productInputSchema = z.object({
 export type ProductInput = z.infer<typeof productInputSchema>
 
 /** 칸별 에러 문구 */
-export type ProductFieldErrors = Partial<Record<keyof ProductInput, string>>
+export type ProductFieldErrors = FieldErrors<ProductInput>
 
-// zod 에러 → 칸별 첫 번째 문구 ({ price: '가격을 숫자로 입력해 주세요.' })
+// zod 에러 → 칸별 첫 번째 문구. Step 9-1에서 공통 함수(lib/fieldErrors.ts)로 옮기고 여기서는 상품 칸 이름으로 고정해 부른다
 export function toFieldErrors(error: z.ZodError): ProductFieldErrors {
-  const errors: ProductFieldErrors = {}
-  for (const issue of error.issues) {
-    const field = issue.path[0] as keyof ProductInput
-    errors[field] ??= issue.message // ??= : 아직 없을 때만 넣는다 (칸마다 첫 문구 하나)
-  }
-  return errors
+  return toFieldErrorsOf<ProductInput>(error)
 }

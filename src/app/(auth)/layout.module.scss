@@ -1,0 +1,40 @@
+@use 'styles' as *;
+
+// 회원가입·로그인 공통 틀 (Step 9-1)
+// 폼 너비(ui/Form.module.scss의 .form 최대 480px)에 맞춰 가운데 정렬
+
+.root {
+  max-width: to-rem(480);
+  margin: space(6) auto 0;
+}
+
+.title {
+  margin-bottom: space(2);
+  @include text(2xl);
+  font-weight: $font-weight-bold;
+}
+
+.lead {
+  margin-bottom: space(8);
+  color: var(--color-text-secondary);
+}
+
+// 폼 아래 "계정이 없으신가요? 회원가입" 안내
+.switch {
+  margin-top: space(8);
+  padding-top: space(6);
+  border-top: 1px solid var(--color-border);
+  @include text(sm);
+  color: var(--color-text-secondary);
+
+  a {
+    border-radius: $radius-md;
+    color: var(--color-primary-text);
+    font-weight: $font-weight-medium;
+    text-decoration: underline;
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+  }
+}
