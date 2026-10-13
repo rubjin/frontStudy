@@ -44,10 +44,23 @@
   font-weight: $font-weight-bold;
 }
 
+// 로고 글자 'Shoppr'
+// (Step 9-3) 640px 미만에서는 화면에서만 숨긴다 — 로그인하면 오른쪽 메뉴(내 주문·관리·로그아웃)가 늘어나 자리가 모자라다.
+// display: none이 아니라 sr-only: 'S' 마크는 aria-hidden이라, 글자까지 없애면 로고 링크의 이름이 사라진다.
 .logoText {
-  @include text(xl);
-  font-weight: $font-weight-bold;
-  letter-spacing: -0.025em; // 제목용 글자는 자간을 살짝 좁히면 단단해 보인다
+  @include sr-only;
+
+  @include mq(sm) {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    @include text(xl);
+    font-weight: $font-weight-bold;
+    letter-spacing: -0.025em; // 제목용 글자는 자간을 살짝 좁히면 단단해 보인다
+  }
 }
 
 // 오른쪽 버튼 묶음: 장바구니 · 다크 모드 (Step 5-1)

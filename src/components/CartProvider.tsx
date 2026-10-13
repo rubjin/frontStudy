@@ -59,6 +59,8 @@ interface CartContextValue {
   setQuantity: (product: Product, quantity: number) => void
   /** 장바구니에서 빼기 (5-2) */
   removeItem: (productId: number) => void
+  /** 모두 비우기 (9-3, 주문을 마친 뒤). 저장소(localStorage)도 함께 비워진다 */
+  clear: () => void
   /** 저장된 장바구니를 불러왔는지 (5-3). false인 동안 items가 비어 있는 것은 '아직 모름'이다 */
   hydrated: boolean
 }
@@ -165,6 +167,8 @@ export function CartProvider({ children, initialItems, persist = true }: CartPro
       setQuantity: (product, quantity) =>
         dispatch({ type: 'setQuantity', productId: product.id, quantity, maxQuantity: product.stock }),
       removeItem: (productId) => dispatch({ type: 'remove', productId }),
+      // 비우기 = 빈 목록으로 통째로 바꾸기 (5-3의 'replace'를 그대로 쓴다). 저장 effect가 빈 장바구니를 저장한다
+      clear: () => dispatch({ type: 'replace', items: [] }),
       hydrated,
     }),
     [state, hydrated],

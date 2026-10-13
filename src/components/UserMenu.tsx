@@ -94,6 +94,10 @@ function UserMenu() {
       <span className={styles.name}>
         <span className={styles.nameText}>{session.user.name}</span>님
       </span>
+      {/* 내 주문 (Step 9-3) — 로그인한 사람 모두 */}
+      <ButtonLink href="/orders" variant="ghost">
+        내 주문
+      </ButtonLink>
       {session.user.role === 'admin' && (
         <ButtonLink href="/admin/products" variant="ghost">
           관리

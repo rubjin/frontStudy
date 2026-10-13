@@ -5,6 +5,12 @@ import CartContents from './CartContents'
 import CardAddButton from './CardAddButton'
 import { products } from '@/data/products'
 import { toRem } from '@/lib/units'
+import type { PlaceOrderState } from '@/app/orders/actions'
+
+// 주문 Server Action 대신 넣는 가짜 함수 (Step 9-3 — CartContents가 placeOrder를 props로 받게 됨)
+async function fakePlaceOrder(): Promise<PlaceOrderState> {
+  return { status: 'problems', problems: [{ productId: 0, message: '스토리에서는 실제로 주문되지 않습니다.' }] }
+}
 
 // 장바구니 스토리 (Step 5-1. 장바구니 화면 스토리는 5-2에서 CartContents.stories.tsx로 옮김, 5-4에서 토스트·카드 버튼 반영)
 //
@@ -71,7 +77,7 @@ export const Together: Story = {
         <AddToCartButton product={inStock} />
         <CartLink />
       </div>
-      <CartContents />
+      <CartContents placeOrder={fakePlaceOrder} />
     </div>
   ),
 }

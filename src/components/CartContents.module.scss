@@ -209,6 +209,7 @@ $thumb-size-mobile: to-rem(72);
 
 .continue {
   width: 100%;
+  margin-top: space(3); // 위 '주문하기'(Step 9-3)와 간격
 }
 
 // ─── 빈 장바구니 ─────────────────────────────────────────

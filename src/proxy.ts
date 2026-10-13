@@ -29,7 +29,8 @@ export function proxy(request: NextRequest) {
 }
 
 // matcher: 로그인이 필요한 주소에서만 실행한다 (모든 요청에서 돌면 이미지·CSS 요청까지 검사하게 된다)
-// :path* = 그 아래 모든 경로. (9-3에서 주문 관련 주소를 더한다)
+// :path* = 그 아래 모든 경로. '/orders'(목록)도 '/orders/:path*'에 포함된다(0개 이상)
+// (9-3) 내 주문 목록·주문 상세 추가. 장바구니(/cart)는 로그인 없이도 볼 수 있어 넣지 않는다 — 주문할 때 확인한다
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/orders/:path*'],
 }

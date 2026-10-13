@@ -61,6 +61,9 @@ const authHandlers = [
   http.post('/api/auth/sign-out', () => HttpResponse.json({ success: true })),
 ]
 
+// 로그아웃 상태를 명시적으로 쓰고 싶을 때 (Step 9-3) — 컴포넌트 스토리의 기본값이 '로그인'일 때 덮어쓴다
+export const authSignedOut = authHandlers
+
 // 기본 핸들러 — .storybook/preview.tsx가 모든 스토리에 깐다
 export const handlers = {
   products: productHandlers,

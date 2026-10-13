@@ -10,6 +10,8 @@ import { InlineError } from './ui/InlineError'
 import { Close, Minus, Plus } from './icons'
 import CartSkeleton from './CartSkeleton'
 import { useCartProducts } from './useCartProducts'
+import CheckoutButton from './CheckoutButton'
+import type { PlaceOrderState } from '@/app/orders/actions'
 import { formatPrice } from '@/lib/format'
 import { getCartLines, getCartTotal } from '@/lib/cart'
 import type { Product } from '@/types/product'
@@ -50,7 +52,14 @@ import styles from './CartContents.module.scss'
 // 썸네일 칸의 실제 표시 크기 (CartContents.module.scss .thumb와 맞춘다) — next/image가 알맞은 크기의 파일을 고르는 데 쓴다
 const THUMB_SIZES = '96px'
 
-function CartContents() {
+// props (Step 9-3)
+// - placeOrder: 주문 Server Action. 서버 페이지(cart/page.tsx)가 넘겨준다 → CheckoutButton으로 전달
+//   (이 파일이 직접 import하면 Storybook에서 서버 전용 코드를 불러오게 된다. 스토리는 가짜 함수를 넘긴다)
+interface CartContentsProps {
+  placeOrder: (lines: { productId: number; quantity: number }[]) => Promise<PlaceOrderState>
+}
+
+function CartContents({ placeOrder }: CartContentsProps) {
   const { items, setQuantity, removeItem, hydrated } = useCart()
   // 담긴 상품들의 정보 (Step 6-3). 장바구니를 불러온 뒤(hydrated)에만 요청한다
   const { products, status, error, retry } = useCartProducts(
@@ -190,7 +199,14 @@ function CartContents() {
                         </Button>
                       </div>
                       {/* + 가 왜 안 눌리는지 글로 알려 준다 (흐린 버튼만으로는 이유를 알 수 없다) */}
-                      {atMax && <p className={styles.hint}>재고 {product.stock}개까지</p>}
+                      {/* (9-3) 주문하려다 재고가 바뀐 걸 알게 되면 담은 수량이 재고보다 많을 수 있다 → 할 일을 알려 준다 */}
+                      {product.stock === 0 ? (
+                        <p className={styles.hint}>품절 — 삭제해 주세요</p>
+                      ) : quantity > product.stock ? (
+                        <p className={styles.hint}>재고 {product.stock}개 — 수량을 줄여 주세요</p>
+                      ) : (
+                        atMax && <p className={styles.hint}>재고 {product.stock}개까지</p>
+                      )}
                     </div>
 
                     <p className={styles.subtotal}>
@@ -229,7 +245,8 @@ function CartContents() {
                 <dd className={styles.total}>{formatPrice(total)}</dd>
               </div>
             </dl>
-            {/* 주문하기는 Step 9(주문 기능)에서. 지금은 쇼핑을 이어가는 링크만 */}
+            {/* 주문하기 (Step 9-3) — 로그인 확인·재고 부족 안내까지 CheckoutButton이 맡는다 */}
+            <CheckoutButton placeOrder={placeOrder} />
             <ButtonLink href="/" variant="secondary" className={styles.continue}>
               쇼핑 계속하기
             </ButtonLink>

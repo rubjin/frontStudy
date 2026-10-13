@@ -1,0 +1,38 @@
+@use 'styles' as *;
+
+// 장바구니 '주문하기' 버튼 + 안내 + 실패 목록 (Step 9-3)
+
+.root {
+  display: grid;
+  gap: space(2);
+}
+
+// 주문 요약 칸 너비를 꽉 채운다 (아래 '쇼핑 계속하기'와 같은 폭)
+.button {
+  width: 100%;
+}
+
+.note {
+  @include text(xs);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+// 주문할 수 없는 상품 목록
+.problems {
+  padding: space(3) space(4);
+  border: 1px solid var(--color-danger);
+  border-radius: $radius-md;
+  @include text(sm);
+  color: var(--color-danger);
+
+  ul {
+    margin-top: space(1);
+    padding-left: space(4);
+    list-style: disc;
+  }
+}
+
+.problemsTitle {
+  font-weight: $font-weight-medium;
+}

@@ -6,6 +6,12 @@
   display: flex;
   align-items: center;
   gap: space(1);
+
+  // 버튼 글자는 한 줄로 (Step 9-3) — 좁은 화면에서 '내 주문'이 '내/주/문' 세로로 꺾이지 않게
+  a,
+  button {
+    white-space: nowrap;
+  }
 }
 
 // '홍길동님' — 좁은 화면에서는 숨긴다 (로그아웃 버튼만)

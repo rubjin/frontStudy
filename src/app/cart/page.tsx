@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import CartContents from '@/components/CartContents'
+import { placeOrderAction } from '@/app/orders/actions'
 import styles from './page.module.scss'
 
 // 장바구니 페이지 — 주소 "/cart" (Step 5-1, 5-2에서 내용 완성)
@@ -19,7 +20,8 @@ export default function CartPage() {
   return (
     <>
       <h1 className={styles.title}>장바구니</h1>
-      <CartContents />
+      {/* 주문 Server Action을 props로 넘긴다 (Step 9-3) — 서버 컴포넌트는 Server Action을 클라이언트 컴포넌트에 넘길 수 있다 */}
+      <CartContents placeOrder={placeOrderAction} />
     </>
   )
 }
