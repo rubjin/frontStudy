@@ -6,6 +6,12 @@ import { CartProvider } from './CartProvider'
 import type { CartItem } from '@/types/cart'
 import { toRem } from '@/lib/units'
 import { productsLoading, productsNetworkError, productsServerError } from '@/mocks/handlers'
+import type { PlaceOrderState } from '@/app/orders/actions'
+
+// 주문 Server Action 대신 넣는 가짜 함수 (Step 9-3) — 주문 버튼 동작은 CheckoutButton 스토리에서 자세히 본다
+async function fakePlaceOrder(): Promise<PlaceOrderState> {
+  return { status: 'problems', problems: [{ productId: 0, message: '스토리에서는 실제로 주문되지 않습니다.' }] }
+}
 
 // 장바구니 화면 스토리 (Step 5-2, 5-3에서 Loading 추가, 6-4에서 API 상태 추가)
 //
@@ -29,6 +35,7 @@ const filled: CartItem[] = [
 const meta = {
   title: 'Cart/CartContents',
   component: CartContents,
+  args: { placeOrder: fakePlaceOrder },
   decorators: [
     (Story, { parameters }) => (
       <CartProvider initialItems={parameters.cartItems as CartItem[] | undefined} persist={false}>

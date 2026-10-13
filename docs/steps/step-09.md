@@ -1,6 +1,6 @@
 # Step 9. 인증과 주문 — Better Auth, 보호된 페이지, 주문하기
 
-> 상태: 진행 중 (9-1, 9-2 완료)
+> 상태: 진행 중 (9-1, 9-2, 9-3 완료)
 
 ## 목표
 지금까지 Shoppr에는 "누구"라는 개념이 없었다. 장바구니는 브라우저에만 있고, 관리 화면은 임시 스위치(`lib/admin.ts`)로 열고 닫았다.
@@ -20,7 +20,7 @@
 ## 세부 단계
 - [x] **9-1** 로그인 기본: Better Auth 설치, 사용자·세션 테이블, 회원가입·로그인·로그아웃, 헤더 로그인 상태
 - [x] **9-2** 권한: 관리자 역할, 임시 권한(`lib/admin.ts`) → 로그인 검사(DAL `lib/session.ts`), `proxy.ts`로 보호된 주소
-- [ ] **9-3** 주문: 주문하기(서버에서 재고·가격 재확인, 재고 차감), 주문 완료, 내 주문 목록
+- [x] **9-3** 주문: 주문하기(서버에서 재고·가격 재확인, 재고 차감 트랜잭션), 주문 완료, 내 주문 목록
 - [ ] **9-4** 마무리: 테스트 계정 시드, 접근성 점검, 문서
 
 ---
@@ -140,7 +140,7 @@ npm run build && npm run start
 ### 알려진 한계 · 다음에 할 일
 - 이메일 인증·비밀번호 재설정 없음 (메일 서버 필요). 같은 이메일 중복 가입 시 '이미 가입됨'을 알려 준다.
 - ~~관리 화면은 아직 임시 스위치(`lib/admin.ts`)~~ → 9-2에서 로그인·역할 검사로
-- 장바구니는 아직 브라우저에만 있다(로그인과 무관) → 9-3 주문 때 서버로 보낸다
+- ~~장바구니는 아직 브라우저에만 있다~~ → 9-3에서 주문할 때 상품 id·수량을 서버로 보낸다 (장바구니 자체는 여전히 브라우저에)
 
 ---
 
@@ -239,3 +239,108 @@ npm run auth:make-admin -- 그이메일@example.com
 - 관리자 지정 화면 없음(명령으로만). 관리자 여러 명·세부 권한(상품만, 주문만)은 Better Auth `admin` 플러그인이나 권한 표로 확장할 수 있다.
 - 403 안내는 상태 코드 200 + noindex (`forbidden()`은 아직 실험 기능, `notFound()`는 16.3.6 버그)
 - 9-3: 주문하기·내 주문 목록 — `proxy.ts` matcher와 `requireSession`을 주문 페이지에도 쓴다
+
+---
+
+## 9-3. 주문 — 서버에서 재고·가격 재확인, 재고 차감, 내 주문
+
+### 흐름
+```
+/cart  CheckoutButton ('주문하기')
+  로그아웃이면 → /login?next=/cart
+  placeOrderAction([{ productId, quantity }])        ← 가격은 보내지 않는다
+    ① 로그인 확인 (lib/session.ts)
+    ② 입력 검사 (lib/orderInput.ts — zod, 같은 상품 합치기)
+    ③ lib/orders.ts placeOrder — 한 트랜잭션
+         DB에서 지금 가격·재고 읽기 → 모자라면 아무것도 안 바꾸고 problems
+         재고 차감 (조건부: stock >= 수량) → 주문 + 주문 상품(스냅숏) 만들기
+    ④ revalidatePath (홈, 관리 목록, 그 상품 상세, 내 주문)
+  ok       → 장바구니 비우기 → 상품 캐시 무효화 → /orders/번호?placed=1
+  problems → 상품별 이유 목록 + 장바구니에 지금 재고 안내
+/orders           내 주문 목록 (내 것만)
+/orders/[id]      주문 상세 (내 것이 아니면 '찾을 수 없음')
+```
+
+### 파일별 설명
+| 파일 | 역할 |
+|---|---|
+| `prisma/schema.prisma` + 마이그레이션 `add_orders` | `Order`(사용자·총액·일시), `OrderItem`(주문 당시 이름·가격·사진 스냅숏, 상품 삭제 시 `productId` null) |
+| `src/types/order.ts` (새) | `Order`, `OrderLine`, `OrderProblem` |
+| `src/lib/orderInput.ts` (새) | 주문 입력 zod 규칙(최대 50종·수량 1~99), `mergeOrderLines` |
+| `src/lib/orders.ts` (새, 서버 전용) | `placeOrder`(트랜잭션), `getMyOrders`, `getMyOrder`(내 주문만) |
+| `src/app/orders/actions.ts` (새) | `placeOrderAction` — 로그인 → 검사 → 주문 → revalidate, 결과를 돌려줌(redirect 안 함) |
+| `src/app/orders/page.tsx`, `[id]/page.tsx` (새) | 내 주문 목록 / 주문 상세(주문 완료 안내 겸용). `requireSession` |
+| `src/components/CheckoutButton.tsx` (+scss, stories, 새) | 주문하기 버튼: 로그인 여부, 주문 중, 결과 처리, 실패 목록(`role="alert"`) |
+| `src/components/OrderList.tsx`·`OrderDetail.tsx` (+scss, `Orders.stories.tsx`, 새) | 주문 목록·상세 화면 (서버 컴포넌트, 데이터는 props) |
+| `src/components/CartContents.tsx` | `placeOrder` props → CheckoutButton. 재고보다 많이 담긴 줄 안내("수량을 줄여 주세요", "품절 — 삭제해 주세요") |
+| `src/app/cart/page.tsx` | 서버 페이지가 Server Action을 props로 넘김 |
+| `src/components/CartProvider.tsx` | `clear()` — 주문 뒤 장바구니 비우기 |
+| `src/components/UserMenu.tsx`·`.module.scss` | '내 주문' 링크, 버튼 글자 한 줄(`nowrap`) |
+| `src/components/Header.module.scss` | 640px 미만에서 로고 글자 'Shoppr'를 화면에서만 숨김(sr-only) |
+| `src/proxy.ts` | matcher에 `/orders/:path*` |
+| `src/lib/format.ts` | `formatDateTime` (서울 시간) |
+| `src/mocks/handlers.ts` | `authSignedOut` |
+
+### 핵심 개념
+
+**1. 장바구니는 '지금 가격', 주문은 '그때 가격' — 스냅숏**
+| | 장바구니 (Step 5) | 주문 (9-3) |
+|---|---|---|
+| 저장 | 상품 id·수량만 | 이름·가격·사진을 **복사** |
+| 가격이 바뀌면 | 장바구니도 새 가격 | 주문은 그대로 (영수증) |
+| 상품이 삭제되면 | 장바구니에서 빠짐 | 기록은 남음, 링크만 사라짐("판매 종료") |
+
+**2. 브라우저가 보낸 가격은 믿지 않는다**
+주문 요청에는 `productId`와 `quantity`만 있다. 가격을 보내게 하면 개발자 도구로 1원으로 바꿔 보낼 수 있다. 총액은 서버가 **DB 가격**으로 계산한다. (확인: 총액 2,248,400원 = DB 가격 1,120,000×2 + 2,800×3)
+
+**3. 트랜잭션 — 전부 되거나 전부 안 되거나**
+"재고 차감"과 "주문 만들기" 중 하나만 성공하면 안 된다(재고만 사라지거나, 재고를 안 줄인 주문이 생김). `prisma.$transaction(async (tx) => …)` 안의 작업은 함수가 끝까지 성공해야 확정되고, 중간에 에러가 나면 전부 취소된다. 상품 하나라도 재고가 모자라면 다른 상품의 재고도 줄지 않는다.
+
+**4. 동시에 마지막 1개를 주문하면? — 조건부 차감**
+"재고 확인"과 "재고 차감" 사이에 다른 주문이 끼어들 수 있다(경쟁 상태). 그래서 차감할 때 조건을 함께 건다:
+```ts
+tx.product.updateMany({ where: { id, stock: { gte: quantity } }, data: { stock: { decrement: quantity } } })
+// 조건에 안 맞으면 0줄 → 그 사이 재고가 줄었다는 뜻 → 에러를 던져 트랜잭션 전체 취소
+```
+DB가 "확인하고 줄이기"를 한 번에 하므로 재고가 음수가 될 수 없다.
+
+**5. 남의 주문을 볼 수 없게 — IDOR 막기**
+주문 번호는 1, 2, 3 … 이라 짐작하기 쉽다. 번호만으로 찾으면 `/orders/1`을 넣어 남의 주문을 볼 수 있다(흔한 보안 실수, IDOR). `getMyOrder(내 id, 번호)`는 **내 주문 중에서만** 찾고, 남의 주문이면 없는 주문과 **똑같이** 안내한다('남의 것'이라고 알려 주면 그 번호의 주문이 있다는 게 드러난다).
+
+**6. Server Action을 props로 넘기기**
+`CartContents`('use client')가 `app/orders/actions.ts`를 직접 import하면 Storybook에서 서버 전용 코드(`server-only`)를 불러오다 깨진다. 서버 페이지(`cart/page.tsx`)가 `placeOrderAction`을 props로 넘기고, 스토리는 가짜 함수를 넘긴다 — 성공·재고 부족·주문 중을 서버 없이 재현할 수 있다.
+
+**7. redirect 대신 결과 돌려주기**
+주문이 성공하면 브라우저가 할 일이 있다: 장바구니 비우기(localStorage), 상품 캐시 무효화(재고가 줄었으므로). 액션에서 바로 redirect하면 그럴 틈이 없다 → `{ status: 'ok', orderId }`를 받아 화면이 정리하고 이동한다.
+
+### 있었던 일
+- **좁은 화면 헤더가 깨짐**: 관리자로 로그인하면 '내 주문·관리·로그아웃'이 늘어나 360px에서 '내/주/문'이 한 글자씩 세로로 꺾였다(가로 넘침은 없어 넘침 검사로는 못 잡고 스크린샷으로 발견). → 버튼 글자 `nowrap` + 640px 미만에서 로고 글자 숨김(sr-only라 로고 링크 이름은 유지). 320px까지 한 줄 확인.
+- **품절된 줄의 안내가 "재고 0개까지"**: 주문하려다 재고가 바뀐 걸 알게 된 경우를 위해 "품절 — 삭제해 주세요", "재고 N개 — 수량을 줄여 주세요"로 상황별 문구.
+- 테스트 스크립트에서 DB를 고칠 때 셸 따옴표(`"Order"` 표 이름) 문제로 실패 → 셸을 거치지 않는 `execFileSync`로.
+
+### 확인 방법
+```bash
+npm run db:migrate && npm run build && npm run start
+```
+1. 로그아웃 상태로 상품을 담고 `/cart` → '로그인하고 주문하기' → 로그인 → 장바구니로 돌아옴 → '주문하기'
+2. '주문 완료' 화면: 안내 문구, 주문 번호·일시, 상품·수량·총액. 헤더 장바구니 배지가 사라짐
+3. 상품 상세에서 재고가 줄었는지 (재고 5개 이하면 "품절 임박 · N개 남음")
+4. '내 주문' → 목록에 방금 주문
+5. 다른 계정으로 로그인해 `/orders/1` → "주문을 찾을 수 없습니다"
+6. 재고 부족: `npm run db:studio`로 담은 상품의 재고를 줄인 뒤 '주문하기' → 상품별 이유 목록, 재고·주문 수 그대로
+
+검증 결과 (production 빌드 + DB 복사본 + headless Chrome, 2026-10-13)
+- 로그아웃: `/orders` → `/login?next=%2Forders`, 장바구니 '로그인하고 주문하기' → `/login?next=%2Fcart`
+- 주문 성공: `/orders/1?placed=1` "주문 완료" + 안내, 총액 ₩2,248,400(DB 가격 계산), 장바구니 비워짐, DB 재고 7→5·8→5, 상세(●) "품절 임박 · 5개 남음"으로 갱신, 내 주문 목록 1건
+- 그 사이 재고 1·품절로 바꾸고 주문 → "Wooden Bathroom Sink With Mirror: 재고가 1개 남았습니다." / "Apple: 품절되었습니다.", **DB 재고·주문 수 그대로**(트랜잭션 취소), 장바구니 안내 "재고 1개 — 수량을 줄여 주세요" / "품절 — 삭제해 주세요"
+- 다른 계정으로 남의 주문 `/orders/1` → "주문을 찾을 수 없습니다", `/orders/abc`도 같음
+- 헤더: 관리자 320·360·390px 한 줄(버튼 높이 36 동일), 가로 넘침 없음, 1280px 로고 글자 보임
+- axe 주문 완료·내 주문·실패 안내 라이트/다크 0, 콘솔 에러 0
+- Storybook 81개(새 CheckoutButton 4·Orders 5) × 라이트/다크 렌더링 정상·axe 0
+- `tsc`·ESLint·Stylelint·Prettier 통과
+
+### 알려진 한계 · 다음에 할 일
+- 결제 없음 — 주문 접수까지만 ("결제 없이 주문만 접수됩니다" 안내). 실제로는 결제(PG) 성공 뒤 주문 확정, 실패 시 재고 되돌리기가 필요하다.
+- 주문 취소·배송 상태 없음 (`Order`에 `status`를 더하고 취소 시 재고를 되돌리는 트랜잭션)
+- 장바구니는 여전히 브라우저(localStorage)에만 — 다른 기기에서 로그인하면 장바구니가 따라오지 않는다
+- 동시 주문(마지막 1개를 두 사람이 동시에)은 조건부 차감으로 막도록 짰지만, 실제 동시 요청으로는 시험하지 않았다 → Step 10 테스트에서

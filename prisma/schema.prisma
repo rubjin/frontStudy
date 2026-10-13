@@ -46,6 +46,9 @@ model Product {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // 이 상품이 들어간 주문 상품들 (Step 9-3) — 관계 필드라 DB 열은 생기지 않는다
+  orderItems OrderItem[]
+
   // 색인(index): 책의 찾아보기처럼, 카테고리로 거르는 조회를 빠르게 한다
   @@index([category])
 }
@@ -71,6 +74,7 @@ model User {
   updatedAt     DateTime  @default(now()) @updatedAt
   sessions      Session[]
   accounts      Account[]
+  orders        Order[] // 이 사용자의 주문들 (Step 9-3)
 }
 
 // 로그인 세션 — "이 브라우저는 로그인되어 있다"는 기록. 쿠키에는 token만 들어가고, 누구인지는 이 표에서 찾는다
@@ -119,4 +123,44 @@ model Verification {
   updatedAt  DateTime @default(now()) @updatedAt
 
   @@index([identifier])
+}
+
+// ─── 주문 (Step 9-3) ─────────────────────────────────────────────────────
+
+// 주문 한 건
+model Order {
+  id        Int         @id @default(autoincrement())
+  userId    String
+  // 사용자를 지우면 그 사용자의 주문도 지운다 (탈퇴 = 개인 정보 삭제). 실제 쇼핑몰은 법적 보관 기간 때문에 다르게 한다
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// 총 금액(원) — 주문할 때 서버가 DB 가격으로 계산한 값. 화면이 보낸 금액은 믿지 않는다
+  total     Int
+  createdAt DateTime    @default(now())
+  items     OrderItem[]
+
+  // '내 주문 목록'은 사용자별·최신순으로 찾는다 → 그 순서대로 색인
+  @@index([userId, createdAt])
+}
+
+// 주문에 담긴 상품 한 줄 — 주문 당시의 '사진'(스냅숏)
+// 장바구니는 상품 id만 두고 이름·가격을 매번 상품 표에서 찾는다(항상 지금 가격, Step 5).
+// 주문은 반대다: 주문한 뒤 가격이 바뀌거나 상품이 삭제돼도 '그때 얼마에 샀는지'는 그대로여야 한다(영수증).
+// → 이름·가격·사진을 복사해 저장한다.
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  /// 원래 상품 (상품이 삭제되면 null — 주문 기록은 남는다)
+  productId Int?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  /// 주문 당시 상품명
+  name      String
+  /// 주문 당시 단가(원)
+  price     Int
+  quantity  Int
+  /// 주문 당시 대표 사진 주소 (목록에 작게 보여 줄 때)
+  imageSrc  String?
+
+  @@index([orderId])
+  @@index([productId])
 }

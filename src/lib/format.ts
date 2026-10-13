@@ -18,3 +18,16 @@ const priceFormatter = new Intl.NumberFormat('ko-KR', {
 export function formatPrice(price: number): string {
   return priceFormatter.format(price)
 }
+
+// 날짜·시각 표시 (Step 9-3, 주문 일시) — 예) 2026. 10. 9. 오후 6:30
+// Intl.DateTimeFormat: 나라별 날짜 표기를 브라우저·Node가 알아서 만들어 준다 (formatPrice의 Intl.NumberFormat과 같은 방식)
+// timeZone을 서울로 고정 — 서버(배포 시 보통 UTC)와 브라우저가 같은 시각을 보여 주게
+const dateTimeFormatter = new Intl.DateTimeFormat('ko-KR', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'Asia/Seoul',
+})
+
+export function formatDateTime(date: Date): string {
+  return dateTimeFormatter.format(date)
+}
