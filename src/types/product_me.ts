@@ -1,6 +1,5 @@
 
 //상품데이터 구조 정의 설계도, 데이터 저장하는 파일은 아님
-
 export interface ProductImage {
   src: string
   width: number
