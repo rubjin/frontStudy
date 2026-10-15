@@ -1,3 +1,10 @@
+// ** 참고 일반적 규칙
+
+// camelCase — 일반 변수와 함수: sortProducts, productList
+// UPPER_SNAKE_CASE — 고정 설정값이나 상수: SORT_OPTIONS, API_BASE_URL
+// PascalCase — 타입이나 인터페이스: Product, SortOption
+
+
 //셀렉트 소팅을 위한 것
 import type { Product } from '@/types/product'
 
