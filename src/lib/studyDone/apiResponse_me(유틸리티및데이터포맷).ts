@@ -14,7 +14,9 @@ export function errorResponse(status: number, message: string): Response {
     return Response.json(body, { status })
 }
 
-//예상못한 서버오류 시 1. 오류정보 서버로그에 남김 2. 에러응답 반환
+//예상못한 서버오류 시 
+// 1. 오류정보 서버로그에 남김 
+// 2. 에러응답 반환
 //error: unknwon 타입이유는 오류전달 타입 미리 확정불가
 export function serverResponse(error: unknown, message: string): Response {
     console.error(error)

@@ -36,18 +36,18 @@ const SORT_VALUES = new Set<string>(SORT_OPTIONS.map((option => option.value)))
 
 //url 주소 검색 조건을 읽어서 객체로 반환하는 함수
 //url 검색조건 : ?q=셔츠&category=상의&instock=1 -> parseCatalogParams() 값을읽고, 유효성검사, 기본값 적용
-//Pick<>  URLSearchParams : url 검색조건을 다루는 객체타입에서 get에 해당하는 부분만 선택
-// (get()메서드를 사용할 수 있는 객체를 받겠다)
+//Pick<>  URLSearchParams : url 검색조건을 다루는 객체타입에서 get(선택할 메서드 이름)에 해당하는 부분만 선택
+// (URLSearchParams객체에 덜 의존하는 형태로 설계할 수 있으므로)
 export function parseCatalogParams(
     params: Pick<URLSearchParams, 'get'>,
-    categories: readonly string[] | null, //사용가능한 카테고리 목록
+    categories: readonly string[] | null, //사용가능한 카테고리 목록(변경불가 문자열 배열 또는 null(목록없음))
 ): CatalogFilters {
-    const sort = params.get(KEYS.sort) ?? ''
-    const category = params.get(KEYS.category) ?? ''
+    const sort = params.get(KEYS.sort) ?? '' //왼쪽값이 null or undefined 면 오른쪽 값 사용
+    const category = params.get(KEYS.category) ?? '' //
     return {
         query: params.get(KEYS.query) ?? DEFAULT_FITLER.query,
         category: category && (categories === null || categories.includes(category)) ? category : DEFAULT_FITLER.category,
-        sort: SORT_VALUES.has(sort) ? (sort as SortValue) : DEFAULT_FITLER.sort,
-        hideSoldOut: params.get(KEYS.hideSoldOut) === '1',
+        sort: SORT_VALUES.has(sort) ? (sort as SortValue) : DEFAULT_FITLER.sort, //as SortValue 타입단언
+        hideSoldOut: params.get(KEYS.hideSoldOut) === '1', //'1'을 쓰는 이유는 쿼리값이 문자열이기 때문
     }
 }
